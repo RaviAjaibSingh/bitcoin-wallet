@@ -27,14 +27,17 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach
  */
 public final class Constants
 {
-	public static final boolean TEST = R.class.getPackage().getName().contains("_test");
+	/* BEGIN CUSTOM CHANGE */
+	// public static final boolean TEST = R.class.getPackage().getName().contains("_test");
+	public static final boolean TEST = !com.ravsing.securecoincard.Constants.PRODUCTION_BUILD;
+	/* END CUSTOM CHANGE */
 
 	/** Network this wallet is on (e.g. testnet or mainnet). */
 	public static final NetworkParameters NETWORK_PARAMETERS = TEST ? TestNet3Params.get() : MainNetParams.get();

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SecureCoinCard</string>
+    <string name="action_settings">Settings</string>
+    <string name="main_welcome_message">Please hold your SecureCoinCard against the back of the phone to continue.</string>
+    <string name="main_card_not_recognized">You are holding an unrecognized card against the device.</string>
+
+</resources>

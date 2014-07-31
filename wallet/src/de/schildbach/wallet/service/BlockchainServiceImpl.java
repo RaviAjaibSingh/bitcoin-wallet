@@ -92,7 +92,7 @@ import de.schildbach.wallet.util.CrashReporter;
 import de.schildbach.wallet.util.GenericUtils;
 import de.schildbach.wallet.util.ThrottlingWalletChangeListener;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach

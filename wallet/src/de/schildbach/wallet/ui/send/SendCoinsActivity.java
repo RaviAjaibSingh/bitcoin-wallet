@@ -30,7 +30,7 @@ import com.actionbarsherlock.view.MenuItem;
 import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.ui.AbstractBindServiceActivity;
 import de.schildbach.wallet.ui.HelpDialogFragment;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach

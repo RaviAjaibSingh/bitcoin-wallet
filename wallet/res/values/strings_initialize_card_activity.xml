@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="initialize_card_activity_title">Initialize SecureCoinCard</string>
+    <string name="initialize_card_enter_new_password">Enter new password</string>
+    <string name="initialize_card_confirm_new_password">Confirm password</string>
+    <string name="initialize_card_button_initialize_card">Initialize Card</string>
+    <string name="initialize_card_error_passwords_dont_match">Passwords don\'t match</string>
+    <string name="initialize_card_no_password_entered">No password entered</string>
+</resources>

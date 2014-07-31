@@ -68,7 +68,7 @@ import de.schildbach.wallet.service.BlockchainServiceImpl;
 import de.schildbach.wallet.util.CrashReporter;
 import de.schildbach.wallet.util.Io;
 import de.schildbach.wallet.util.LinuxSecureRandom;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach
@@ -289,9 +289,13 @@ public class WalletApplication extends Application
 		}
 
 		// this check is needed so encrypted wallets won't get their private keys removed accidently
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		for (final ECKey key : wallet.getKeys())
 			if (key.getPrivKeyBytes() == null)
 				throw new Error("found read-only key, but wallet is likely an encrypted wallet from the future");
+		 */
+		/* END CUSTOM CHANGE */
 	}
 
 	private Wallet restoreWalletFromBackup()
@@ -338,12 +342,16 @@ public class WalletApplication extends Application
 
 	private void ensureKey()
 	{
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		for (final ECKey key : wallet.getKeys())
 			if (!wallet.isKeyRotating(key))
 				return; // found
 
 		log.info("wallet has no usable key - creating");
 		addNewKeyToWallet();
+		*/
+		/* END CUSTOM CHANGE */
 	}
 
 	public void addNewKeyToWallet()

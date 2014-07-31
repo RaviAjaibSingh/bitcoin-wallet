@@ -28,14 +28,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.ravsing.securecoincard.ui.NFCAwareActivity;
 
 import de.schildbach.wallet.WalletApplication;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach
  */
-public abstract class AbstractWalletActivity extends SherlockFragmentActivity
+/* BEGIN CUSTOM CHANGE */
+// public abstract class AbstractWalletActivity extends SherlockFragmentActivity
+public abstract class AbstractWalletActivity extends NFCAwareActivity
+/* END CUSTOM CHANGE */
 {
 	private WalletApplication application;
 

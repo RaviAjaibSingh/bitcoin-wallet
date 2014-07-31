@@ -38,7 +38,7 @@ import com.google.bitcoin.core.ECKey;
 
 import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.ViewPagerTabs;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach

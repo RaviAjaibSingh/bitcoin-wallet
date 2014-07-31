@@ -42,7 +42,7 @@ import android.os.Looper;
 import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.Bluetooth;
 import de.schildbach.wallet.util.PaymentProtocol;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach

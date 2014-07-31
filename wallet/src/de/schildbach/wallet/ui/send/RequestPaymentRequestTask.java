@@ -44,7 +44,7 @@ import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.ui.InputParser;
 import de.schildbach.wallet.util.Bluetooth;
 import de.schildbach.wallet.util.PaymentProtocol;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach

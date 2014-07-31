@@ -99,7 +99,7 @@ import de.schildbach.wallet.util.Iso8601Format;
 import de.schildbach.wallet.util.Nfc;
 import de.schildbach.wallet.util.WalletUtils;
 import de.schildbach.wallet.util.WholeStringBuilder;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach
@@ -148,11 +148,12 @@ public final class WalletActivity extends AbstractWalletActivity
 	}
 
 	@Override
-	protected void onNewIntent(final Intent intent)
+	public void onNewIntent(Intent intent)
 	{
+		super.onNewIntent(intent);
 		handleIntent(intent);
 	}
-
+	
 	private void handleIntent(@Nonnull final Intent intent)
 	{
 		final String action = intent.getAction();
@@ -179,6 +180,7 @@ public final class WalletActivity extends AbstractWalletActivity
 			}.parse();
 		}
 	}
+
 
 	@Override
 	public void onActivityResult(final int requestCode, final int resultCode, final Intent intent)

@@ -50,7 +50,7 @@ import de.schildbach.wallet.ExchangeRatesProvider.ExchangeRate;
 import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.util.WalletUtils;
-import de.schildbach.wallet_test.R;
+import com.ravsing.securecoincard.R;
 
 /**
  * @author Andreas Schildbach
@@ -181,7 +181,10 @@ public final class WalletBalanceFragment extends Fragment
 			final boolean blockchainUptodate = blockchainLag < BLOCKCHAIN_UPTODATE_THRESHOLD_MS;
 			final boolean downloadOk = download == BlockchainService.ACTION_BLOCKCHAIN_STATE_DOWNLOAD_OK;
 
-			showProgress = !(blockchainUptodate || !replaying);
+			/* BEGIN CUSTOM CHANGE */
+			// showProgress = !(blockchainUptodate || !replaying);
+			showProgress = !blockchainUptodate;
+			/* END CUSTOM CHANGE */
 
 			final String downloading = getString(downloadOk ? R.string.blockchain_state_progress_downloading
 					: R.string.blockchain_state_progress_stalled);

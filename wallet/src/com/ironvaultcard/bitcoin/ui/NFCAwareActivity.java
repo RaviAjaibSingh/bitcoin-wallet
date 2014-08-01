@@ -165,7 +165,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 // TODO: there's a race condition here, where the wallet has the newly synchronized keys, but it could be the case we had to
                 // tell the service to stop and destroy its current block chain file.  But there's a chance the process could be terminated
                 // or the device could be rebooted before the service gets a chance to do that
-                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(IntegrationConnector.getWallet(this), _ecPublicKeyEntries);
+                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, IntegrationConnector.getWallet(this), _ecPublicKeyEntries);
                 if (serviceNeedsToClearAndRestart) {
                     // the keys between the secure element and our cached copy of public keys didn't match
                     _logger.info("onNewIntent: service needs to clear and restart");

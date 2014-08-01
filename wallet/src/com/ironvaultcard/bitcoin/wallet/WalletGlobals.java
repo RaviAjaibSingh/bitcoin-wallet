@@ -10,8 +10,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Wallet;
+import com.ironvaultcard.bitcoin.Constants;
+import com.ironvaultcard.bitcoin.IntegrationConnector;
 import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
 
 public class WalletGlobals {
@@ -66,7 +69,7 @@ public class WalletGlobals {
         return cardIdentifierWasChanged;
     }
     
-	public static boolean synchronizeKeys(Wallet wallet, List<ECKeyEntry> listFromSecureElement) {		
+	public static boolean synchronizeKeys(Context context, Wallet wallet, List<ECKeyEntry> listFromSecureElement) {		
 		boolean somethingChanged = false;
 		boolean serviceNeedsToClearAndRestart = false;
 		
@@ -128,7 +131,7 @@ public class WalletGlobals {
 					
 					// TODO: fix this to include friendly name
 					// addECKeyEntryToWallet(keyFromSecureElementToAddToCachedWallet);
-					addECKeyEntryToWallet(wallet, keyFromSecureElementToAddToCachedWallet);
+					addECKeyEntryToWallet(context, wallet, keyFromSecureElementToAddToCachedWallet);
 				}
 				
 				break;
@@ -163,8 +166,9 @@ public class WalletGlobals {
 		return serviceNeedsToClearAndRestart || somethingChanged;
 	}
 
-	public static void addECKeyEntryToWallet(Wallet wallet, ECKeyEntry keyToAdd) {
-		ECKey ecKeyToAdd = new ECKey(null, keyToAdd.getPublicKeyBytes());
+	public static void addECKeyEntryToWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {
+		byte[] publicKeyBytes = keyToAdd.getPublicKeyBytes();
+		ECKey ecKeyToAdd = new ECKey(null, publicKeyBytes);
 
 		long timeOfCreation = keyToAdd.getTimeOfKeyCreationSecondsSinceEpoch();
 		// The secure element knows what time the key was created.  Set the key in the cached wallet to also know
@@ -173,6 +177,7 @@ public class WalletGlobals {
 			ecKeyToAdd.setCreationTimeSeconds(timeOfCreation);
 		}
 		
+		IntegrationConnector.setLabelForAddress(context, new Address(Constants.NETWORK_PARAMETERS, ecKeyToAdd.getPubKeyHash()), keyToAdd.getFriendlyName());
 		wallet.addKey(ecKeyToAdd);
 
 		// TODO: do something about friendly names

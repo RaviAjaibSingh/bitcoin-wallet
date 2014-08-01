@@ -37,7 +37,9 @@ public class IntegrationConnector {
 		if (isAdd) {
 			context.getContentResolver().insert(uri, values);
 		} else {
-			context.getContentResolver().update(uri, values, null, null);
+			if (!label.equals(newLabel)) {
+				context.getContentResolver().update(uri, values, null, null);
+			}
 		}
 	}
 }

@@ -70,7 +70,6 @@ public class WalletGlobals {
     }
     
 	public static boolean synchronizeKeys(Context context, Wallet wallet, List<ECKeyEntry> listFromSecureElement) {		
-		boolean somethingChanged = false;
 		boolean serviceNeedsToClearAndRestart = false;
 		
 		// get the list from the secure element
@@ -87,13 +86,7 @@ public class WalletGlobals {
 				if (keyFound) {
 					// we found a match - break
 					// but also make sure the names are synchronized
-					// TODO: something about friendly names
-					/*
-					if (!_friendlyNameWalletExtension.getFriendlyName(i).equals(keyFromSecureElement.getFriendlyName())) {
-						somethingChanged = true;
-						_friendlyNameWalletExtension.replaceFriendlyName(i, keyFromSecureElement.getFriendlyName());
-					}
-					*/
+					IntegrationConnector.setLabelForAddress(context, new Address(Constants.NETWORK_PARAMETERS, keyFromCachedWallet.getPubKeyHash()), keyFromSecureElement.getFriendlyName());
 					_logger.info("synchronizeKeysWithSecureElement: matched key from secure element with cache");
 					break;
 				}
@@ -101,7 +94,6 @@ public class WalletGlobals {
 			
 			if (!keyFound) {
 				_logger.info("synchronizeKeysWithSecureElement: failed to match secure element key with cache - wiping service");
-				somethingChanged = true;
                 serviceNeedsToClearAndRestart = true;
 				// if we got here without finding the key, then we have to clear out the cached wallet
 				// and restart the service so that we can do a full peer resync and figure out how much money
@@ -155,15 +147,17 @@ public class WalletGlobals {
 				}
 				if (!keyFound) {
 					_logger.info("synchronizeKeysWithSecureElement: removing a cached wallet key");
-					somethingChanged = true;
+					serviceNeedsToClearAndRestart = true;
 					
-					// TODO: something about friendly names
+					// TODO: remove the friendly name?
+					// TODO: do we have to cleanup the extra transactions in the wallet?  We probably have extra ones now
+					// that we don't need
 					wallet.removeKey(keyFromCachedWallet);
 				}
 			}
 		}
 		
-		return serviceNeedsToClearAndRestart || somethingChanged;
+		return serviceNeedsToClearAndRestart;
 	}
 
 	public static void addECKeyEntryToWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {

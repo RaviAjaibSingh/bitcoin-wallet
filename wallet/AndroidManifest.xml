@@ -191,14 +191,16 @@
 			android:screenOrientation="behind"
 			android:windowSoftInputMode="adjustResize" />
 
+		<!-- BEGIN CUSTOM CHANGE -->
 		<provider
 			android:name="de.schildbach.wallet.AddressBookProvider"
-			android:authorities="de.schildbach.wallet_test.address_book"
+			android:authorities="com.ravsing.securecoincard.address_book"
 			android:exported="false" />
 		<provider
 			android:name="de.schildbach.wallet.ExchangeRatesProvider"
-			android:authorities="de.schildbach.wallet_test.exchange_rates"
+			android:authorities="com.ravsing.securecoincard.exchange_rates"
 			android:exported="false" />
+        <!-- END CUSTOM CHANGE -->
 
 		<receiver
 			android:name="de.schildbach.wallet.WalletBalanceWidgetProvider"

@@ -63,14 +63,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (WalletGlobals.getInstance(this).getCardIdentifier() == null && !(this instanceof MainActivity)) {
-        	Intent intentToStartTapToBeginActivity = new Intent(this, MainActivity.class);
-        	intentToStartTapToBeginActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        	startActivity(intentToStartTapToBeginActivity);
-        	this.finish();
-        	return;
-        }
         
         _pendingIntent = PendingIntent.getActivity(
                 this, 0, new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
@@ -94,10 +86,28 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         // TODO: stop using technology filters and use NDEF filters
         _techListsArray = new String[][] { new String[] { IsoDep.class.getName() } };
 
+         // if we're first launched by an NFC tag, we don't get an onNewIntent message, so route it through
+         // now
+         boolean startedByCardTap = processIntent(getIntent());
+        
+         if (WalletGlobals.getInstance(this).getCardIdentifier() == null && !(this instanceof MainActivity) && !(this instanceof InitializeCardActivity)) {
+        	// This app has never been used with a card before
+        	if (startedByCardTap) {
+        		// But we were started by an intent which represented a card tap - everything has been handled, nothing for us to
+        		// do here
+        		_logger.info("onCreate: started by NFC tap, bailing");
+        		return;
+        	}
+        	
+        	// Otherwise, ensure we are focused on the tap to begin screen to prompt the user to tap
+        	Intent intentToStartTapToBeginActivity = new Intent(this, MainActivity.class);
+        	intentToStartTapToBeginActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        	startActivity(intentToStartTapToBeginActivity);
+        	this.finish();
+        	return;
+        }
 
-        // if we're first launched by an NFC tag, we don't get an onNewIntent message, so route it through
-        // now
-        onNewIntent(getIntent());
+
     }
 
     @Override
@@ -116,11 +126,18 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         super.onPause();
         _nfcAdapter.disableForegroundDispatch(this);
     }
-    
+
 	@Override
     public void onNewIntent(Intent intent) {
 		_logger.info("onNewIntent: called");
-		
+		processIntent(intent);
+    }
+    
+    public boolean processIntent(Intent intent) {
+		_logger.info("onNewIntent: called");
+		if (intent == null) {
+			return false;
+		}
 		// TODO: something about preventing this screen from coming to the top of the stack
         // TODO: use NDEF instead of tech discovered
         if (intent.getAction() == NfcAdapter.ACTION_TECH_DISCOVERED) {
@@ -142,10 +159,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
                 // Get the list of public keys from the secure element
                 List<ECKeyEntry> _ecPublicKeyEntries = _cachedSecureElementApplet.getECPublicKeyEntries();
-                boolean cardIdentifierWasChanged = walletGlobals.setCardIdentifier(this, _cachedSecureElementApplet.getCardIdentifier());
-                if (cardIdentifierWasChanged) {
-                    _logger.info("onNewIntent: card identifier was changed");
-                }
 
                 // Synchronize the keys with the secure element.  E.g. make sure our local cache of public keys matches
                 // what's on this card
@@ -159,14 +172,28 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 }
 
                 boolean needsToGoToInitializationScreen = false;
+                boolean cardIdentifierWasChanged = false;
+
+
                 if (_cachedSecureElementApplet.getPINState() == PINState.NOT_SET) {
-                    // this is a brand new card.  we are going to need to send the user to the initialization screen
+                	// clear out our most recently used card
+                	walletGlobals.setCardIdentifier(this, null);
+                	
+                	// this is a brand new card.  we are going to need to send the user to the initialization screen
                     _logger.info("onNewIntent: detected uninitialized card");
+                    walletGlobals.setCardIdentifier(this, null); // clear out the cached card identifier
                     if (this instanceof InitializeCardActivity) {
                         _logger.info("onNewIntent: already in InitializeCardActivity, not doing anything");
                     } else {
                         _logger.info("onNewIntent: need to go to initialization screen");
                         needsToGoToInitializationScreen = true;
+                    }
+                } else {
+                	// check if this card is different then our most recently used card, and save
+                	// this card as our most recently used card
+                    cardIdentifierWasChanged = walletGlobals.setCardIdentifier(this, _cachedSecureElementApplet.getCardIdentifier());
+                    if (cardIdentifierWasChanged) {
+                        _logger.info("onNewIntent: card identifier was changed");
                     }
                 }
 
@@ -183,7 +210,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                     startActivity(intentToRelaunchApplication);
                     this.finish();
 
-                    return;
+                    return true;
                 }
 
 
@@ -192,7 +219,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        		// update the dialog to have the number of password attempts left
 	        		String passwordAttemptsLeftText = generatePasswordAttemptsLeftText();
 	        		_promptForPasswordDialog.setMessage(passwordAttemptsLeftText);
-	        		return;
+	        		return true;
 	        	}
 
 	        	boolean tapRequested = false;
@@ -207,18 +234,20 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			// let the loginToCard function take care of logging in and then notifying the
 	        			// subclass that there's a smart card session
 	        			loginToCard(_pendingCardPassword);
-	        			return;
+	        			return true;
 	        		}
 	        	}
 
                 // let the activity know a card has been detected
                 handleCardDetectedSuper(_cachedSecureElementApplet, tapRequested, false, null);
-
+                return true;
         	} catch(IOException e) {
         		_cachedSecureElementApplet = null;
 			    _logger.error("onNewIntent: IOException getting cached secure element: " + e.toString());
         	}
         }
+        
+        return false;
     }
 
 	protected void simulateSecureElementAppletDetected() {

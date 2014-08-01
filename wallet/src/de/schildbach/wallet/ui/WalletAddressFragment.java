@@ -127,6 +127,13 @@ public final class WalletAddressFragment extends Fragment
 	{
 		final Address selectedAddress = application.determineSelectedAddress();
 
+		/* BEGIN CUSTOM CHANGE */
+		if (selectedAddress == null) {
+			// there are no keys in the wallet - TODO: prompt the user to add a key!
+			return;
+		}
+		/* END CUSTOM CHANGE */
+		
 		if (!selectedAddress.equals(lastSelectedAddress))
 		{
 			lastSelectedAddress = selectedAddress;

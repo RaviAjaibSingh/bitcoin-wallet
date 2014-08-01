@@ -64,8 +64,12 @@
 		<!-- BEGIN CUSTOM CHANGE -->
 
 		<activity
-			android:name="com.ravsing.securecoincard.ui.MainActivity"
+			android:name=".ui.MainActivity"
 			android:launchMode="singleTask" />
+		<activity
+			android:name=".ui.InitializeCardActivity"
+			android:launchMode="singleTask" />
+		
 		<!-- END CUSTOM CHANGE -->
 		
 		<activity

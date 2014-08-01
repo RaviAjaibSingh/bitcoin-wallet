@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.ravsing.securecoincard.IntegrationConnector;
 import com.ravsing.securecoincard.R;
 import com.ravsing.securecoincard.secureelement.SecureElementApplet;
+import com.ravsing.securecoincard.wallet.WalletGlobals;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -79,13 +80,17 @@ public class InitializeCardActivity extends NFCAwareActivity {
 			}
 			try {
 				secureElementApplet.setCardPassword(null, firstPassword);
+				
+                // now that we have initialized this card, save the card identifier as our most recently used card
+				WalletGlobals.getInstance(this).setCardIdentifier(this, secureElementApplet.getCardIdentifier());
+
+	            startActivity(new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS));
+		    	this.finish();
 			} catch (IOException e) {
 				_logger.info("initializeCard: failed IOException " + e.toString());
 				showException(e);
                 return;
 			}
-            startActivity(new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS));
-	    	this.finish();
 		}
 	}
 	

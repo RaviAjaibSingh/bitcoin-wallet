@@ -11,7 +11,7 @@ import com.ironvaultcard.bitcoin.util.Util;
 public class ECKeyEntry {
 	private byte[] _publicKeyBytes;
 	private String _friendlyName;
-	private long _timeOfKeyCreationSecondsSinceEpoch = -1;
+	private long _timeOfKeyCreationMillisSinceEpoch = -1;
 	
 	public static final int ASSOCIATED_DATA_TYPE_VERSION = 1;
 	public static final int ASSOCIATED_DATA_TYPE_FRIENDLY_NAME = 2;
@@ -67,8 +67,8 @@ public class ECKeyEntry {
 						break;
 					}
 					case ASSOCIATED_DATA_TYPE_GENERATION_TIME: {
-						_timeOfKeyCreationSecondsSinceEpoch = Util.bytesToLong(fieldData);
-						_logger.info("decodeAssociatedData: read key generation time of " + _timeOfKeyCreationSecondsSinceEpoch);
+						_timeOfKeyCreationMillisSinceEpoch = Util.bytesToLong(fieldData);
+						_logger.info("decodeAssociatedData: read key generation time of " + _timeOfKeyCreationMillisSinceEpoch);
 						break;
 					}
 					case ASSOCIATED_DATA_TYPE_MISC_BIT_FIELD: {
@@ -104,6 +104,6 @@ public class ECKeyEntry {
 	}
 	
 	public long getTimeOfKeyCreationSecondsSinceEpoch() {
-		return _timeOfKeyCreationSecondsSinceEpoch;
+		return _timeOfKeyCreationMillisSinceEpoch / 1000; // convert to seconds
 	}
 }

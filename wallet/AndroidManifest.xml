@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:tools="http://schemas.android.com/tools"
-	package="com.ravsing.securecoincard"
+	package="com.ironvaultcard.bitcoin"
 	android:installLocation="internalOnly"
 	android:versionCode="175"
 	android:versionName="3.54-test" >
@@ -194,11 +194,11 @@
 		<!-- BEGIN CUSTOM CHANGE -->
 		<provider
 			android:name="de.schildbach.wallet.AddressBookProvider"
-			android:authorities="com.ravsing.securecoincard.address_book"
+			android:authorities="com.ironvaultcard.bitcoin.address_book"
 			android:exported="false" />
 		<provider
 			android:name="de.schildbach.wallet.ExchangeRatesProvider"
-			android:authorities="com.ravsing.securecoincard.exchange_rates"
+			android:authorities="com.ironvaultcard.bitcoin.exchange_rates"
 			android:exported="false" />
         <!-- END CUSTOM CHANGE -->
 

@@ -27,7 +27,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.ravsing.securecoincard.R;
+import com.ironvaultcard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

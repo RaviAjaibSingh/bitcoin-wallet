@@ -50,7 +50,7 @@ import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.util.Io;
 import de.schildbach.wallet.util.PaymentProtocol;
 import de.schildbach.wallet.util.Qr;
-import com.ravsing.securecoincard.R;
+import com.ironvaultcard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

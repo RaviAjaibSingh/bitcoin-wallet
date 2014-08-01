@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.util;
+package com.ironvaultcard.bitcoin.util;
 
 import java.nio.ByteBuffer;
 

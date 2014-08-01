@@ -58,7 +58,7 @@ import com.google.zxing.common.HybridBinarizer;
 import com.google.zxing.qrcode.QRCodeReader;
 
 import de.schildbach.wallet.camera.CameraManager;
-import com.ravsing.securecoincard.R;
+import com.ironvaultcard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

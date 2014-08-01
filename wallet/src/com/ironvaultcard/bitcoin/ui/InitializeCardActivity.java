@@ -1,14 +1,14 @@
-package com.ravsing.securecoincard.ui;
+package com.ironvaultcard.bitcoin.ui;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ravsing.securecoincard.IntegrationConnector;
-import com.ravsing.securecoincard.R;
-import com.ravsing.securecoincard.secureelement.SecureElementApplet;
-import com.ravsing.securecoincard.wallet.WalletGlobals;
+import com.ironvaultcard.bitcoin.IntegrationConnector;
+import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
+import com.ironvaultcard.bitcoin.wallet.WalletGlobals;
+import com.ironvaultcard.bitcoin.R;
 
 import android.content.Intent;
 import android.os.Bundle;

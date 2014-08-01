@@ -1,6 +1,6 @@
-package com.ravsing.securecoincard.util;
+package com.ironvaultcard.bitcoin.util;
 
-import com.ravsing.securecoincard.R;
+import com.ironvaultcard.bitcoin.R;
 
 import android.app.AlertDialog;
 import android.content.Context;

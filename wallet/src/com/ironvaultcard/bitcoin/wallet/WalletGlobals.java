@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.wallet;
+package com.ironvaultcard.bitcoin.wallet;
 
 
 import java.util.Arrays;
@@ -9,10 +9,10 @@ import android.content.SharedPreferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ravsing.securecoincard.secureelement.ECKeyEntry;
 
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Wallet;
+import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
 
 public class WalletGlobals {
 	private static WalletGlobals _walletGlobals;

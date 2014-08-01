@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard;
+package com.ironvaultcard.bitcoin;
 
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.WalletApplication;

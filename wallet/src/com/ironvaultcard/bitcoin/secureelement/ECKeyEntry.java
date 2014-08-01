@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.secureelement;
+package com.ironvaultcard.bitcoin.secureelement;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ravsing.securecoincard.util.Util;
+import com.ironvaultcard.bitcoin.util.Util;
 
 public class ECKeyEntry {
 	private byte[] _publicKeyBytes;

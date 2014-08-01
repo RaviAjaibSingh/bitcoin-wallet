@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.secureelement.real;
+package com.ironvaultcard.bitcoin.secureelement.real;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -10,13 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.Arrays;
 
-import com.ravsing.securecoincard.secureelement.ECKeyEntry;
-import com.ravsing.securecoincard.secureelement.ECUtil;
-import com.ravsing.securecoincard.secureelement.SecureElementApplet;
-import com.ravsing.securecoincard.secureelement.SmartCardReader;
-import com.ravsing.securecoincard.secureelement.exception.SmartCardFullException;
-import com.ravsing.securecoincard.secureelement.exception.WrongPasswordException;
-import com.ravsing.securecoincard.util.Util;
+import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
+import com.ironvaultcard.bitcoin.secureelement.ECUtil;
+import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
+import com.ironvaultcard.bitcoin.secureelement.SmartCardReader;
+import com.ironvaultcard.bitcoin.secureelement.exception.SmartCardFullException;
+import com.ironvaultcard.bitcoin.secureelement.exception.WrongPasswordException;
+import com.ironvaultcard.bitcoin.util.Util;
 
 public class SecureElementAppletImpl extends SecureElementApplet {
 	// internal state

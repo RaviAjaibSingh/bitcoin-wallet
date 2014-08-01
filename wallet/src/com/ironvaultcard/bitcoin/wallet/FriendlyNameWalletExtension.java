@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.wallet;
+package com.ironvaultcard.bitcoin.wallet;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

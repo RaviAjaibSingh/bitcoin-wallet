@@ -28,10 +28,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.ravsing.securecoincard.ui.NFCAwareActivity;
+import com.ironvaultcard.bitcoin.ui.NFCAwareActivity;
 
 import de.schildbach.wallet.WalletApplication;
-import com.ravsing.securecoincard.R;
+import com.ironvaultcard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

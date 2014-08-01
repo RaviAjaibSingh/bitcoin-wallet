@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard.ui;
+package com.ironvaultcard.bitcoin.ui;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,19 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ravsing.securecoincard.Constants;
-import com.ravsing.securecoincard.IntegrationConnector;
-import com.ravsing.securecoincard.R;
-import com.ravsing.securecoincard.secureelement.ECKeyEntry;
-import com.ravsing.securecoincard.secureelement.SecureElementApplet;
-import com.ravsing.securecoincard.secureelement.SecureElementApplet.PINState;
-import com.ravsing.securecoincard.secureelement.SmartCardReader;
-import com.ravsing.securecoincard.secureelement.androidadapter.SmartCardReaderImpl;
-import com.ravsing.securecoincard.secureelement.exception.SmartCardFullException;
-import com.ravsing.securecoincard.secureelement.exception.WrongPasswordException;
-import com.ravsing.securecoincard.secureelement.real.SecureElementAppletImpl;
-import com.ravsing.securecoincard.secureelement.simulated.SecureElementAppletSimulatorImpl;
-import com.ravsing.securecoincard.wallet.WalletGlobals;
+import com.ironvaultcard.bitcoin.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -42,6 +30,18 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
+import com.ironvaultcard.bitcoin.Constants;
+import com.ironvaultcard.bitcoin.IntegrationConnector;
+import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
+import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
+import com.ironvaultcard.bitcoin.secureelement.SmartCardReader;
+import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet.PINState;
+import com.ironvaultcard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
+import com.ironvaultcard.bitcoin.secureelement.exception.SmartCardFullException;
+import com.ironvaultcard.bitcoin.secureelement.exception.WrongPasswordException;
+import com.ironvaultcard.bitcoin.secureelement.real.SecureElementAppletImpl;
+import com.ironvaultcard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
+import com.ironvaultcard.bitcoin.wallet.WalletGlobals;
 
 public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	private static Logger _logger = LoggerFactory.getLogger(NFCAwareActivity.class);

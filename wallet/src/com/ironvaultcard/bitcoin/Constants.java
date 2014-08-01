@@ -1,4 +1,4 @@
-package com.ravsing.securecoincard;
+package com.ironvaultcard.bitcoin;
 
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.params.MainNetParams;

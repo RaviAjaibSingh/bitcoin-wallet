@@ -146,6 +146,8 @@ public final class WalletAddressesFragment extends SherlockListFragment
 
 	private void handleAddAddress()
 	{
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		final DialogBuilder dialog = new DialogBuilder(activity);
 		dialog.setTitle(R.string.wallet_addresses_fragment_add_dialog_title);
 		dialog.setMessage(R.string.wallet_addresses_fragment_add_dialog_message);
@@ -161,6 +163,12 @@ public final class WalletAddressesFragment extends SherlockListFragment
 		});
 		dialog.setNegativeButton(R.string.button_cancel, null);
 		dialog.show();
+		*/
+
+		com.ironvaultcard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.ironvaultcard.bitcoin.ui.NFCAwareActivity)WalletAddressesFragment.this.getActivity();
+		nfcAwareActivity.promptToAddKey();
+		
+		/* END CUSTOM CHANGE */
 	}
 
 	@Override

@@ -2,6 +2,8 @@
 <resources>
     <string name="nfc_aware_activity_prompt_for_tap_dialog_title">Card Needed</string>
     <string name="nfc_aware_activity_prompt_for_tap_dialog_message">Please hold your card against the device to continue.</string>
+    <string name="nfc_aware_activity_tap_to_continue_dialog_title">Tap Once More</string>
+    <string name="nfc_aware_activity_tap_to_continue_dialog_message">Please remove your card and tap it once more to the device to finish.</string>
     <string name="nfc_aware_activity_prompt_for_password_title">Password Needed</string>
     <string name="nfc_aware_activity_prompt_for_password_message">Please enter the card\'s password.</string>
     <string name="nfc_aware_activity_prompt_for_password_number_attempts_left_unknown">To determine how many password attempts are left, tap the card to the phone now. If this is the last attempt, entering the wrong password will erase all data on the card.</string>

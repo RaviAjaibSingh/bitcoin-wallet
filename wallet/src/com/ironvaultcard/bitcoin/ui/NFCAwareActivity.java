@@ -55,6 +55,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	
     private AlertDialog _promptForTapAlertDialog;
     private AlertDialog _promptForPasswordDialog;
+    private AlertDialog _tapToFinishDialog;
     
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
@@ -198,8 +199,14 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 }
 
                 if (serviceNeedsToClearAndRestart) {
-                	// We were tapped by a card but we weren't tracking all the keys - restart the service
-                	IntegrationConnector.deleteBlockchainAndRestartService(this);
+                	if (_tapToFinishDialog == null || cardIdentifierWasChanged ) {
+                		// We were tapped by a card but we weren't tracking all the keys - restart the service
+                		// Also, there was no tap to finish dialog showing, or there was one, but the user tapped a different card 
+                		IntegrationConnector.deleteBlockchainAndRestartService(this);
+                	} else {
+                		_logger.info("processIntent: ignoring service needs to restart due to prompt for tap dialog");
+                		serviceNeedsToClearAndRestart = false;
+                	}
                 }
 
                 if (cardIdentifierWasChanged || serviceNeedsToClearAndRestart || needsToGoToInitializationScreen) {
@@ -236,6 +243,14 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			loginToCard(_pendingCardPassword);
 	        			return true;
 	        		}
+	        	}
+	        	
+	        	if (_tapToFinishDialog != null) {
+	        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
+	        		// synchronize the keys.  That has already been done by the time we ge here, so nothing to do here.
+	        		_tapToFinishDialog.dismiss();
+	        		_tapToFinishDialog = null;
+	        		return true;
 	        	}
 
                 // let the activity know a card has been detected
@@ -483,6 +498,30 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		return _cachedSecureElementApplet;
 	}
 
+	private void showTapToFinishDialog() {
+		if (_tapToFinishDialog != null) {
+			_logger.error("showTapToFinishDialog: ignoring request to show dialog, dialog already showing");
+			return;
+		}
+		
+		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		 
+		// set title
+		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_title));
+ 
+			// set dialog message
+		alertDialogBuilder
+			.setMessage(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_message))
+			.setCancelable(false);
+ 
+		// create alert dialog
+		_tapToFinishDialog = alertDialogBuilder.create();
+ 
+		// show it
+		_tapToFinishDialog.show();
+	}
+
+	
 	private void showPromptForTapDialog() {
 		if (_promptForTapAlertDialog != null) {
 			_logger.error("showPromptForTapDialog: ignoring request to show dialog, dialog already showing");
@@ -517,7 +556,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_promptForTapAlertDialog.show();
 	}
 	
-	protected void promptForLabel() {
+	public void promptToAddKey() {
 		if (!checkIfNFCRadioOnPromptUser(true)) {
 			// the NFC radio isn't on, prompt the user to turn it on and abort
 			return;
@@ -587,26 +626,55 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	
 	private void promptForLabelOKClicked(EditText editText) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
-	    _pendingLabel = editText.getText().toString();
+		String labelForKey = editText.getText().toString();
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
 		if (secureElementApplet == null) {
 			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
 		    _logger.info("promptForLabelOKClicked: waiting for authenticated session");
+		    _pendingLabel = labelForKey;
 		    return;
 		}
 		
 		// otherwise we can just keep going and create the key
 	    _logger.info("promptForLabelOKClicked: have authenticated session, creating key");
-	    handleCardDetectedSuper(secureElementApplet, true, true, null);
+	    generateKeyOnSecureElement(secureElementApplet, labelForKey);
+	}
+	
+	private void generateKeyOnSecureElement(SecureElementApplet secureElementApplet, String labelForKey) {
+		_logger.info("generateKeyOnSecureElement: called");
+		try {
+			ECKeyEntry keyFromSecureElementToAddToCachedWallet = secureElementApplet.createOrInjectKey(labelForKey, null, null);
+			// we just generated a key on the card and got back the public key bytes
+			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
+			// to the key
+			WalletGlobals.addECKeyEntryToWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
+		} catch (IOException e) {
+			if (e instanceof TagLostException) {
+				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
+				// power for the card. However, the card actually generated the key - so prompt the user to retap so we get
+				// at the key
+				_logger.info("generateKeyOnSecureElement: TagLostException while generating key - prompting for re-tap");
+				showTapToFinishDialog();
+				
+			} else {
+				showException(e);
+			}
+		}
 	}
 	
 	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
-		String pendingLabel = _pendingLabel;
-		_pendingLabel = null;
-		handleCardDetected(secureElementApplet, tapRequested, authenticated, pendingLabel, password);
+		if (_pendingLabel != null && authenticated) {
+			// we had a request to add a key to the card, do that instead
+			_logger.info("handleCardDetectedSuper: generating key with label");
+			String pendingLabel = _pendingLabel;
+			_pendingLabel = null;
+			generateKeyOnSecureElement(secureElementApplet, pendingLabel);
+			return;
+		}
+		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
 	}
 	
-	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String label, String password) {
+	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
 		// default implementation does nothing, override to hear about card detection events
 	}
 

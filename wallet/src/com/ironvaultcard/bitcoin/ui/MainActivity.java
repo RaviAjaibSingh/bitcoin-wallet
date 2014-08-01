@@ -34,7 +34,7 @@ public class MainActivity extends NFCAwareActivity {
     */
 
     @Override
-    protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String label, String password) {
+    protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
         _logger.info("handleCardDetected: card was tapped");
         // launch the ManageWalletActivity class and clear us off the stack
         Intent intent = new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS);

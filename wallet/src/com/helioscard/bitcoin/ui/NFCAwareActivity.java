@@ -61,7 +61,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private IntentFilter[] _intentFiltersArray;
     private String[][] _techListsArray;
 	
-    private AlertDialog _tapToFinishDialog;
     private AlertDialog _getStartedDialog;
     
     private static final String INSTANCE_STATE_PENDING_CARD_PASSWORD = "INSTANCE_STATE_PENDING_CARD_PASSWORD";
@@ -241,8 +240,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                     }
                 }
 
+	        	FragmentManager fragmentManager = getSupportFragmentManager();
+	        	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
+                
                 if (serviceNeedsToClearAndRestart) {
-                	if (_tapToFinishDialog == null || cardIdentifierWasChanged ) {
+                	if (promptForTapOnceMoreDialogFragment == null || cardIdentifierWasChanged ) {
                 		// We were tapped by a card but we weren't tracking all the keys - restart the service
                 		// Also, there was no tap to finish dialog showing, or there was one, but the user tapped a different card 
                 		IntegrationConnector.deleteBlockchainAndRestartService(this);
@@ -271,7 +273,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 	_getStartedDialog = null;
                 }
 
-	        	FragmentManager fragmentManager = getSupportFragmentManager();
 	        	PromptForPasswordDialogFragment promptForPasswordDialogFragment = (PromptForPasswordDialogFragment)fragmentManager.findFragmentByTag(PromptForPasswordDialogFragment.TAG);
 	        	if (promptForPasswordDialogFragment != null) {
 	        		// we're currently prompting the user to enter the password
@@ -295,11 +296,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        		}
 	        	}
 
-	        	if (_tapToFinishDialog != null) {
+	        	if (promptForTapOnceMoreDialogFragment != null) {
 	        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
 	        		// synchronize the keys.  That has already been done by the time we ge here, so nothing to do here.
-	        		_tapToFinishDialog.dismiss();
-	        		_tapToFinishDialog = null;
+	        		promptForTapOnceMoreDialogFragment.dismiss();
 	        		return true;
 	        	}
 
@@ -510,27 +510,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		return _cachedSecureElementApplet;
 	}
 
-	private void showTapToFinishDialog() {
-		if (_tapToFinishDialog != null) {
-			_logger.error("showTapToFinishDialog: ignoring request to show dialog, dialog already showing");
-			return;
-		}
-		
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-		 
-		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_title));
- 
-			// set dialog message
-		alertDialogBuilder
-			.setMessage(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_message))
-			.setCancelable(false);
- 
-		// create alert dialog
-		_tapToFinishDialog = alertDialogBuilder.create();
- 
-		// show it
-		_tapToFinishDialog.show();
+	private void showPromptForTapOnceMoreDialog() {		
+		PromptForTapOnceMoreDialogFragment.prompt(getSupportFragmentManager());
 	}
 
 	
@@ -583,7 +564,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				// power for the card. However, the card actually generated the key - so prompt the user to retap so we get
 				// at the key
 				_logger.info("generateKeyOnSecureElement: TagLostException while generating key - prompting for re-tap");
-				showTapToFinishDialog();
+				showPromptForTapOnceMoreDialog();
 				
 			} else {
 				showException(e);

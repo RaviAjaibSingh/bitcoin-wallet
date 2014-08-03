@@ -54,6 +54,7 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 			.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
 					// now try to login to the card
+					dialog.dismiss();
 				    nfcAwareActivity.userProceededOnPasswordDialog(input.getText().toString());
 				  }
 				})
@@ -73,6 +74,7 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 		input.setOnKeyListener(new OnKeyListener() {
 		    public boolean onKey(View v, int keyCode, KeyEvent event) {
 		        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
+		        	_alertDialog.dismiss();
 		        	nfcAwareActivity.userProceededOnPasswordDialog(input.getText().toString());
 		        	return true;
 		        }

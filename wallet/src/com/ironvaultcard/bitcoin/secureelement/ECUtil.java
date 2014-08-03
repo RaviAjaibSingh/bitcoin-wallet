@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.secureelement;
+package com.helioscard.bitcoin.secureelement;
 
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;

@@ -115,7 +115,7 @@ import de.schildbach.wallet.util.GenericUtils;
 import de.schildbach.wallet.util.Nfc;
 import de.schildbach.wallet.util.PaymentProtocol;
 import de.schildbach.wallet.util.WalletUtils;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

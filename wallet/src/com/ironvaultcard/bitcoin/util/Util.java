@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.util;
+package com.helioscard.bitcoin.util;
 
 import java.nio.ByteBuffer;
 

@@ -49,7 +49,7 @@ import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.util.Crypto;
 import de.schildbach.wallet.util.Io;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

@@ -30,7 +30,7 @@ import com.google.bitcoin.core.VersionMessage;
 
 import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.WalletApplication;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

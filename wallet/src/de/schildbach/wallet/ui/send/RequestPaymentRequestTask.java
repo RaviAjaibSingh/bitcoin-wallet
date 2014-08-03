@@ -44,7 +44,7 @@ import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.ui.InputParser;
 import de.schildbach.wallet.util.Bluetooth;
 import de.schildbach.wallet.util.PaymentProtocol;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

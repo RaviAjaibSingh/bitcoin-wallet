@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.wallet;
+package com.helioscard.bitcoin.wallet;
 
 import static com.google.bitcoin.core.Utils.uint32ToByteStreamLE;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -27,8 +27,8 @@ import com.google.bitcoin.crypto.TransactionSignature;
 import com.google.bitcoin.script.Script;
 import com.google.bitcoin.script.ScriptBuilder;
 import com.google.bitcoin.script.ScriptOpCodes;
-import com.fortunacard.bitcoin.secureelement.ECUtil;
-import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
+import com.helioscard.bitcoin.secureelement.ECUtil;
+import com.helioscard.bitcoin.secureelement.SecureElementApplet;
 
 public class BitcoinJUtils {
 	private static Logger _logger = LoggerFactory.getLogger(BitcoinJUtils.class);

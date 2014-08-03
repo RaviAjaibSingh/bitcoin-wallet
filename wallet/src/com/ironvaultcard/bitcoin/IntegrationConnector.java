@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin;
+package com.helioscard.bitcoin;
 
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.AddressBookProvider;

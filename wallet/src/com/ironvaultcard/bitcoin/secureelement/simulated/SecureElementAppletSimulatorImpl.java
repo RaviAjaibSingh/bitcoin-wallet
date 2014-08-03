@@ -1,12 +1,12 @@
-package com.fortunacard.bitcoin.secureelement.simulated;
+package com.helioscard.bitcoin.secureelement.simulated;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
-import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
-import com.fortunacard.bitcoin.util.Util;
+import com.helioscard.bitcoin.secureelement.ECKeyEntry;
+import com.helioscard.bitcoin.secureelement.SecureElementApplet;
+import com.helioscard.bitcoin.util.Util;
 
 public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 

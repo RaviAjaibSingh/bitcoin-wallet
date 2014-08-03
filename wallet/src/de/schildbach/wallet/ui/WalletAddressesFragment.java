@@ -58,7 +58,7 @@ import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.util.BitmapFragment;
 import de.schildbach.wallet.util.Qr;
 import de.schildbach.wallet.util.WalletUtils;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach
@@ -165,7 +165,7 @@ public final class WalletAddressesFragment extends SherlockListFragment
 		dialog.show();
 		*/
 
-		com.fortunacard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.fortunacard.bitcoin.ui.NFCAwareActivity)WalletAddressesFragment.this.getActivity();
+		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)WalletAddressesFragment.this.getActivity();
 		nfcAwareActivity.promptToAddKey();
 		
 		/* END CUSTOM CHANGE */

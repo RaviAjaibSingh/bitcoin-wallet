@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.secureelement;
+package com.helioscard.bitcoin.secureelement;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -6,7 +6,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortunacard.bitcoin.util.Util;
+import com.helioscard.bitcoin.util.Util;
 
 public class ECKeyEntry {
 	private byte[] _publicKeyBytes;

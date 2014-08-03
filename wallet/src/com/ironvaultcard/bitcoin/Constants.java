@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin;
+package com.helioscard.bitcoin;
 
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.params.MainNetParams;

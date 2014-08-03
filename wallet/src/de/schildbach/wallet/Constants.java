@@ -27,7 +27,7 @@ import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.params.MainNetParams;
 import com.google.bitcoin.params.TestNet3Params;
 
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach
@@ -36,7 +36,7 @@ public final class Constants
 {
 	/* BEGIN CUSTOM CHANGE */
 	// public static final boolean TEST = R.class.getPackage().getName().contains("_test");
-	public static final boolean TEST = !com.fortunacard.bitcoin.Constants.PRODUCTION_BUILD;
+	public static final boolean TEST = !com.helioscard.bitcoin.Constants.PRODUCTION_BUILD;
 	/* END CUSTOM CHANGE */
 
 	/** Network this wallet is on (e.g. testnet or mainnet). */

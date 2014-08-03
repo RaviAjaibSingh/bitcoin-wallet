@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.wallet;
+package com.helioscard.bitcoin.wallet;
 
 
 import java.util.Arrays;
@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Wallet;
-import com.fortunacard.bitcoin.Constants;
-import com.fortunacard.bitcoin.IntegrationConnector;
-import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
+import com.helioscard.bitcoin.Constants;
+import com.helioscard.bitcoin.IntegrationConnector;
+import com.helioscard.bitcoin.secureelement.ECKeyEntry;
 
 public class WalletGlobals {
 	private static WalletGlobals _walletGlobals;

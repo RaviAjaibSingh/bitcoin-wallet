@@ -30,7 +30,7 @@ import com.actionbarsherlock.view.MenuItem;
 import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.ui.AbstractBindServiceActivity;
 import de.schildbach.wallet.ui.HelpDialogFragment;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

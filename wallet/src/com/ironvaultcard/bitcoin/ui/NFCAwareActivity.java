@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.ui;
+package com.helioscard.bitcoin.ui;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -30,18 +30,18 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.fortunacard.bitcoin.Constants;
-import com.fortunacard.bitcoin.IntegrationConnector;
-import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
-import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
-import com.fortunacard.bitcoin.secureelement.SmartCardReader;
-import com.fortunacard.bitcoin.secureelement.SecureElementApplet.PINState;
-import com.fortunacard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
-import com.fortunacard.bitcoin.secureelement.exception.SmartCardFullException;
-import com.fortunacard.bitcoin.secureelement.exception.WrongPasswordException;
-import com.fortunacard.bitcoin.secureelement.real.SecureElementAppletImpl;
-import com.fortunacard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
-import com.fortunacard.bitcoin.wallet.WalletGlobals;
+import com.helioscard.bitcoin.Constants;
+import com.helioscard.bitcoin.IntegrationConnector;
+import com.helioscard.bitcoin.secureelement.ECKeyEntry;
+import com.helioscard.bitcoin.secureelement.SecureElementApplet;
+import com.helioscard.bitcoin.secureelement.SmartCardReader;
+import com.helioscard.bitcoin.secureelement.SecureElementApplet.PINState;
+import com.helioscard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
+import com.helioscard.bitcoin.secureelement.exception.SmartCardFullException;
+import com.helioscard.bitcoin.secureelement.exception.WrongPasswordException;
+import com.helioscard.bitcoin.secureelement.real.SecureElementAppletImpl;
+import com.helioscard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
+import com.helioscard.bitcoin.wallet.WalletGlobals;
 
 import com.google.bitcoin.core.Wallet;
 

@@ -35,7 +35,7 @@ import android.view.View;
 
 import com.google.zxing.ResultPoint;
 
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

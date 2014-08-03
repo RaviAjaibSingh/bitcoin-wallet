@@ -1,6 +1,6 @@
-package com.fortunacard.bitcoin.util;
+package com.helioscard.bitcoin.util;
 
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 import android.app.AlertDialog;
 import android.content.Context;

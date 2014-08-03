@@ -1,14 +1,14 @@
-package com.fortunacard.bitcoin.ui;
+package com.helioscard.bitcoin.ui;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fortunacard.bitcoin.IntegrationConnector;
-import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
-import com.fortunacard.bitcoin.wallet.WalletGlobals;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.IntegrationConnector;
+import com.helioscard.bitcoin.secureelement.SecureElementApplet;
+import com.helioscard.bitcoin.wallet.WalletGlobals;
+import com.helioscard.bitcoin.R;
 
 import android.content.Intent;
 import android.os.Bundle;

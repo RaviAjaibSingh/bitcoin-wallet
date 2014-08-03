@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.secureelement;
+package com.helioscard.bitcoin.secureelement;
 
 import java.io.IOException;
 

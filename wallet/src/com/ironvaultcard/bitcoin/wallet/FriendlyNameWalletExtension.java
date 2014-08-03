@@ -1,4 +1,4 @@
-package com.fortunacard.bitcoin.wallet;
+package com.helioscard.bitcoin.wallet;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

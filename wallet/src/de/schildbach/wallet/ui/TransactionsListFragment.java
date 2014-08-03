@@ -79,7 +79,7 @@ import de.schildbach.wallet.util.Nfc;
 import de.schildbach.wallet.util.Qr;
 import de.schildbach.wallet.util.ThrottlingWalletChangeListener;
 import de.schildbach.wallet.util.WalletUtils;
-import com.fortunacard.bitcoin.R;
+import com.helioscard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

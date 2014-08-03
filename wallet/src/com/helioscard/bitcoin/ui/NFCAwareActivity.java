@@ -61,7 +61,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private IntentFilter[] _intentFiltersArray;
     private String[][] _techListsArray;
 	
-    private AlertDialog _promptForPasswordDialog;
     private AlertDialog _tapToFinishDialog;
     private AlertDialog _getStartedDialog;
     
@@ -272,17 +271,16 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 	_getStartedDialog = null;
                 }
 
-
-	        	if (_promptForPasswordDialog != null) {
+	        	FragmentManager fragmentManager = getSupportFragmentManager();
+	        	PromptForPasswordDialogFragment promptForPasswordDialogFragment = (PromptForPasswordDialogFragment)fragmentManager.findFragmentByTag(PromptForPasswordDialogFragment.TAG);
+	        	if (promptForPasswordDialogFragment != null) {
 	        		// we're currently prompting the user to enter the password
 	        		// update the dialog to have the number of password attempts left
-	        		String passwordAttemptsLeftText = generatePasswordAttemptsLeftText();
-	        		_promptForPasswordDialog.setMessage(passwordAttemptsLeftText);
+	        		promptForPasswordDialogFragment.generatePasswordAttemptsLeftText();
 	        		return true;
 	        	}
 
 	        	boolean tapRequested = false;
-	        	FragmentManager fragmentManager = getSupportFragmentManager();
 	        	PromptForTapDialogFragment promptForTapDialogFragment = (PromptForTapDialogFragment)fragmentManager.findFragmentByTag(PromptForTapDialogFragment.TAG);
 	        	if (promptForTapDialogFragment != null) {
 	        		promptForTapDialogFragment.dismiss();
@@ -441,93 +439,14 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 	
-	private String generatePasswordAttemptsLeftText() {
-		int passwordAttemptsLeft = -1;
-		SecureElementApplet secureElementApplet = getCachedSecureElementApplet();
-		if (secureElementApplet != null) {
-			// see if we know how many connection attempts are left because we're connected to the secure element
-			try {
-				passwordAttemptsLeft = secureElementApplet.getNumberPasswordAttemptsLeft();
-			} catch (IOException e) {
-			    _logger.info("generatePasswordAttemptsLeftText: IOException trying to read password attempts left");
-				_cachedSecureElementApplet = null;
-			}
-		}
-		
-		String alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_message) + " ";
-		if (passwordAttemptsLeft == -1) {
-			// we don't know how many password attempts left
-			alertDialogMessage += getResources().getString(R.string.nfc_aware_activity_prompt_for_password_number_attempts_left_unknown); 
-		} else if (passwordAttemptsLeft == 1) {
-			alertDialogMessage += getResources().getString(R.string.nfc_aware_activity_prompt_for_password_number_attempts_warning_only_1_left);
-		} else {
-			String appendToAlertDialogMessage = String.format(getResources().getString(R.string.nfc_aware_activity_prompt_for_password_number_attempts_left), passwordAttemptsLeft);
-			alertDialogMessage += appendToAlertDialogMessage;
-		}
-		return alertDialogMessage;
-	}
-	
 	private void showPromptForPasswordDialog() {
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-
-		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_password_title));
-
-		// Set an EditText view to get user input
-		final EditText input = new EditText(this);
-		input.setSingleLine(true);
-		InputFilter[] filterArray = new InputFilter[1];
-		// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
-		// use a different system to prevent more than 8 characters
-		filterArray[0] = new InputFilter.LengthFilter(8); // 8 characters at most
-		input.setFilters(filterArray);
-		alertDialogBuilder.setView(input);
-
-		String alertDialogMessage = generatePasswordAttemptsLeftText();
-	    // set dialog message
-		alertDialogBuilder
-			.setMessage(alertDialogMessage)
-			.setCancelable(false)
-			.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					// now try to login to the card
-				    _logger.info("showPromptForPasswordDialog: proceeding");
-				    userProceededOnPasswordDialog(input);
-				  }
-				})
-			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					// if this button is clicked, just close
-					// the dialog box and do nothing
-					dialog.cancel();
-					userCanceledSecureElementPrompt();
-				  }
-				});
- 
-		_promptForPasswordDialog = alertDialogBuilder.create();
-
-		// Make it pressing enter on the confirm new password field will try to initialize the card
-		input.setOnKeyListener(new OnKeyListener() {
-		    public boolean onKey(View v, int keyCode, KeyEvent event) {
-		        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
-		        	userProceededOnPasswordDialog(input);
-		        	return true;
-		        }
-		        return false;
-		    }
-		});
-
-		
-		// create alert dialog and show it
-		_promptForPasswordDialog.show();
+		PromptForPasswordDialogFragment.prompt(getSupportFragmentManager());
 	}
 
 	
-	private void userProceededOnPasswordDialog(EditText input) {
+	public void userProceededOnPasswordDialog(String password) {
 	    _logger.info("userProceededOnPasswordDialog: called");
-	    _promptForPasswordDialog.dismiss();
-	    _promptForPasswordDialog = null;
-	    loginToCard(input.getText().toString());
+	    loginToCard(password);
 	}
 	
 	private void loginToCard(String password) {
@@ -579,7 +498,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 
-	protected SecureElementApplet getCachedSecureElementApplet() {
+	public SecureElementApplet getCachedSecureElementApplet() {
 		// assume that if someone is explicitly asking us for the cached secure element, they
 		// want to have a connection to it.  If we're not actually able to connect, clear the cache.
 		if (_cachedSecureElementApplet != null) {

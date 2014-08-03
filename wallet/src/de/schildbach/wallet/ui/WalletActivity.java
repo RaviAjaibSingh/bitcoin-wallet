@@ -139,7 +139,7 @@ public final class WalletActivity extends AbstractWalletActivity
 		/* BEGIN CUSTOM CHANGE */
 		if (wallet.getKeys().size() == 0) {
 			// there's no keys in the wallet - prompt the user to get started
-			showGetStartedDialog();
+			showGetStartedDialogIfNeeded();
 		}
 		/* END CUSTOM CHANGE */
 	}

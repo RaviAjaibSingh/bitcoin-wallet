@@ -61,8 +61,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private IntentFilter[] _intentFiltersArray;
     private String[][] _techListsArray;
 	
-    private AlertDialog _getStartedDialog;
-    
     private static final String INSTANCE_STATE_PENDING_CARD_PASSWORD = "INSTANCE_STATE_PENDING_CARD_PASSWORD";
     private static final String INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE = "INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE";
     private static final String INSTANCE_STATE_PENDING_ADD_KEY_LABEL = "INSTANCE_STATE_PENDING_ADD_KEY_LABEL";
@@ -264,14 +262,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
                     return true;
                 }
-                
-                if (wallet.getKeys().size() > 0 && _getStartedDialog != null) {
-                	_logger.info("processIntent: dismissing get started dialog");
-                	// the user has at least one key in the wallet - if we were showing the get started dialog, get
-                	// rid of it now
-                	_getStartedDialog.dismiss();
-                	_getStartedDialog = null;
-                }
 
 	        	PromptForPasswordDialogFragment promptForPasswordDialogFragment = (PromptForPasswordDialogFragment)fragmentManager.findFragmentByTag(PromptForPasswordDialogFragment.TAG);
 	        	if (promptForPasswordDialogFragment != null) {
@@ -298,8 +288,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 	        	if (promptForTapOnceMoreDialogFragment != null) {
 	        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
-	        		// synchronize the keys.  That has already been done by the time we ge here, so nothing to do here.
+	        		// synchronize the keys.  That has already been done by the time we get here, so nothing to do here.
 	        		promptForTapOnceMoreDialogFragment.dismiss();
+	        		showGetStartedDialogIfNeeded();
 	        		return true;
 	        	}
 
@@ -315,48 +306,25 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         return false;
     }
     
-    protected void showGetStartedDialog() {
-    	if (_getStartedDialog != null) {
+    protected void showGetStartedDialogIfNeeded() {
+    	FragmentManager fragmentManager = getSupportFragmentManager();
+    	PromptForGetStartedDialogFragment promptForGetStartedDialogFragment = (PromptForGetStartedDialogFragment)fragmentManager.findFragmentByTag(PromptForGetStartedDialogFragment.TAG);
+    	if (promptForGetStartedDialogFragment != null) {
     		// dialog is already showing, ignore this
-		    _logger.error("showGetStartedDialog: already showing get started dialog");
+		    _logger.info("showGetStartedDialog: already showing get started dialog");
     		return;
     	}
+    	
+		// check to see if we have any wallet keys - if not, prompt the user to add one
+        Wallet wallet = IntegrationConnector.getWallet(this);
+        if (wallet.getKeys().size() > 0) {
+		    _logger.info("showGetStartedDialog: have a key, no ned for dialog");
+		    return;
+        }
 
-    	AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-		alertDialogBuilder.setMessage(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_message));
-        alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_title)).setCancelable(false);
-        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.dismiss();
-				showGetStartedDialogPart2();							
-			}
-		});
-
-		_getStartedDialog = alertDialogBuilder.create();
-		_getStartedDialog.show();
-
+    	PromptForGetStartedDialogFragment.prompt(fragmentManager);
     }
     
-    protected void showGetStartedDialogPart2() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_title)).setCancelable(false);
-        builder.setItems(new CharSequence[]
-                {getResources().getString(R.string.nfc_aware_activity_get_started_dialog_create_new_key)},
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int which) {
-                        // The 'which' argument contains the index position
-                        // of the selected item
-                        switch (which) {
-                            case 0:
-                            	NFCAwareActivity.this.promptToAddKey();
-                                break;
-                        }
-                        dialog.dismiss();
-                    }
-                });
-        builder.show();
-    }
-
 	protected void simulateSecureElementAppletDetected() {
 		_logger.info("simulateSecureElementAppletDetected: called");
 		_cachedSecureElementApplet = new SecureElementAppletSimulatorImpl();
@@ -553,11 +521,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
 			// to the key
 			WalletGlobals.addECKeyEntryToWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
-			if (_getStartedDialog != null) {
-				// the user was adding a key as a result of the get started dialog, close it
-				_getStartedDialog.dismiss();
-				_getStartedDialog = null;
-			}
+
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
@@ -568,6 +532,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				
 			} else {
 				showException(e);
+				showGetStartedDialogIfNeeded();
 			}
 		}
 	}
@@ -642,9 +607,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_pendingEditAddress = null;
 		_pendingEditLabel = null;
 		
-		if (_getStartedDialog != null) {
-			_getStartedDialog.show();
-		}
+       	// we have no keys in the wallet - prompt the user to add one
+        showGetStartedDialogIfNeeded();
 	}
 
 	// utility method for subclasses to show errors

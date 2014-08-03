@@ -30,8 +30,9 @@ public class PromptForTapOnceMoreDialogFragment extends DialogFragment {
  
 			// set dialog message
 		alertDialogBuilder
-			.setMessage(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_message))
-			.setCancelable(false);
+			.setMessage(getResources().getString(R.string.nfc_aware_activity_tap_to_continue_dialog_message));
+		
+		this.setCancelable(false); // prevent the user from using the back button to dismiss this dialog
  
 		// create alert dialog
 		return alertDialogBuilder.create();

@@ -56,7 +56,7 @@ import com.google.bitcoin.core.VersionMessage;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.service.BlockchainServiceImpl;
 import de.schildbach.wallet.util.WholeStringBuilder;
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

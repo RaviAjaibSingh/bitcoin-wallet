@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.secureelement.real;
+package com.fortunacard.bitcoin.secureelement.real;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -10,13 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.util.Arrays;
 
-import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
-import com.ironvaultcard.bitcoin.secureelement.ECUtil;
-import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
-import com.ironvaultcard.bitcoin.secureelement.SmartCardReader;
-import com.ironvaultcard.bitcoin.secureelement.exception.SmartCardFullException;
-import com.ironvaultcard.bitcoin.secureelement.exception.WrongPasswordException;
-import com.ironvaultcard.bitcoin.util.Util;
+import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
+import com.fortunacard.bitcoin.secureelement.ECUtil;
+import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
+import com.fortunacard.bitcoin.secureelement.SmartCardReader;
+import com.fortunacard.bitcoin.secureelement.exception.SmartCardFullException;
+import com.fortunacard.bitcoin.secureelement.exception.WrongPasswordException;
+import com.fortunacard.bitcoin.util.Util;
 
 public class SecureElementAppletImpl extends SecureElementApplet {
 	// internal state

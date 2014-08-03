@@ -28,10 +28,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.ironvaultcard.bitcoin.ui.NFCAwareActivity;
+import com.fortunacard.bitcoin.ui.NFCAwareActivity;
 
 import de.schildbach.wallet.WalletApplication;
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

@@ -23,7 +23,7 @@ import com.actionbarsherlock.app.ActionBar;
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
 
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

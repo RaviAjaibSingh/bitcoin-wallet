@@ -1,14 +1,14 @@
-package com.ironvaultcard.bitcoin.ui;
+package com.fortunacard.bitcoin.ui;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ironvaultcard.bitcoin.IntegrationConnector;
-import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
-import com.ironvaultcard.bitcoin.wallet.WalletGlobals;
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.IntegrationConnector;
+import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
+import com.fortunacard.bitcoin.wallet.WalletGlobals;
+import com.fortunacard.bitcoin.R;
 
 import android.content.Intent;
 import android.os.Bundle;

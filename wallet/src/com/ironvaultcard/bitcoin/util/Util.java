@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.util;
+package com.fortunacard.bitcoin.util;
 
 import java.nio.ByteBuffer;
 

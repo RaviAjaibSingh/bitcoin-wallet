@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin;
+package com.fortunacard.bitcoin;
 
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.AddressBookProvider;

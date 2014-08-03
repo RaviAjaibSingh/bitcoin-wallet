@@ -1,6 +1,6 @@
-package com.ironvaultcard.bitcoin.util;
+package com.fortunacard.bitcoin.util;
 
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 import android.app.AlertDialog;
 import android.content.Context;

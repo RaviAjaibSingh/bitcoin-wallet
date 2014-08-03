@@ -1,12 +1,12 @@
-package com.ironvaultcard.bitcoin.secureelement.simulated;
+package com.fortunacard.bitcoin.secureelement.simulated;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
-import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
-import com.ironvaultcard.bitcoin.util.Util;
+import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
+import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
+import com.fortunacard.bitcoin.util.Util;
 
 public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 

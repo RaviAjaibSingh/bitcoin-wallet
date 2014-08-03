@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin;
+package com.fortunacard.bitcoin;
 
 import com.google.bitcoin.core.NetworkParameters;
 import com.google.bitcoin.params.MainNetParams;

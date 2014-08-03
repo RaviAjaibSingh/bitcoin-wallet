@@ -27,7 +27,7 @@ import com.actionbarsherlock.app.ActionBar;
 import com.google.bitcoin.core.ECKey;
 
 import de.schildbach.wallet.ui.AbstractBindServiceActivity;
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

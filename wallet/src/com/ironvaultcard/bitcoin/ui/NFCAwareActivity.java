@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.ui;
+package com.fortunacard.bitcoin.ui;
 
 import java.io.IOException;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ironvaultcard.bitcoin.R;
+import com.fortunacard.bitcoin.R;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -30,18 +30,18 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
-import com.ironvaultcard.bitcoin.Constants;
-import com.ironvaultcard.bitcoin.IntegrationConnector;
-import com.ironvaultcard.bitcoin.secureelement.ECKeyEntry;
-import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet;
-import com.ironvaultcard.bitcoin.secureelement.SmartCardReader;
-import com.ironvaultcard.bitcoin.secureelement.SecureElementApplet.PINState;
-import com.ironvaultcard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
-import com.ironvaultcard.bitcoin.secureelement.exception.SmartCardFullException;
-import com.ironvaultcard.bitcoin.secureelement.exception.WrongPasswordException;
-import com.ironvaultcard.bitcoin.secureelement.real.SecureElementAppletImpl;
-import com.ironvaultcard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
-import com.ironvaultcard.bitcoin.wallet.WalletGlobals;
+import com.fortunacard.bitcoin.Constants;
+import com.fortunacard.bitcoin.IntegrationConnector;
+import com.fortunacard.bitcoin.secureelement.ECKeyEntry;
+import com.fortunacard.bitcoin.secureelement.SecureElementApplet;
+import com.fortunacard.bitcoin.secureelement.SmartCardReader;
+import com.fortunacard.bitcoin.secureelement.SecureElementApplet.PINState;
+import com.fortunacard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
+import com.fortunacard.bitcoin.secureelement.exception.SmartCardFullException;
+import com.fortunacard.bitcoin.secureelement.exception.WrongPasswordException;
+import com.fortunacard.bitcoin.secureelement.real.SecureElementAppletImpl;
+import com.fortunacard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
+import com.fortunacard.bitcoin.wallet.WalletGlobals;
 
 public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	private static Logger _logger = LoggerFactory.getLogger(NFCAwareActivity.class);

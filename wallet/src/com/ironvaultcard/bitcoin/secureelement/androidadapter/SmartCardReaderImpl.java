@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.secureelement.androidadapter;
+package com.fortunacard.bitcoin.secureelement.androidadapter;
 
 import java.io.IOException;
 
@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 import android.nfc.Tag;
 import android.nfc.tech.IsoDep;
 
-import com.ironvaultcard.bitcoin.secureelement.SmartCardReader;
+import com.fortunacard.bitcoin.secureelement.SmartCardReader;
 
 public class SmartCardReaderImpl implements SmartCardReader {
 	private boolean _connectionAttempted = false;

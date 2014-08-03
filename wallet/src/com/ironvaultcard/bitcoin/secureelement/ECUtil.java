@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.secureelement;
+package com.fortunacard.bitcoin.secureelement;
 
 import org.spongycastle.asn1.sec.SECNamedCurves;
 import org.spongycastle.asn1.x9.X9ECParameters;

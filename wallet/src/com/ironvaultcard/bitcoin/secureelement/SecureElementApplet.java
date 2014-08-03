@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.secureelement;
+package com.fortunacard.bitcoin.secureelement;
 
 import java.io.IOException;
 import java.util.List;

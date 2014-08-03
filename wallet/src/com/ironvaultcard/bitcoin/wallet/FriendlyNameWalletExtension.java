@@ -1,4 +1,4 @@
-package com.ironvaultcard.bitcoin.wallet;
+package com.fortunacard.bitcoin.wallet;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

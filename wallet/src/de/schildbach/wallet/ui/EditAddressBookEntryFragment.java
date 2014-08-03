@@ -140,7 +140,7 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 					// a Key on the secure element, and we have to update it there too.
 					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
 					if (publicKeyBytes != null) {
-						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKey(publicKeyBytes, address, newLabel);
+						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKeyPreTap(publicKeyBytes, address, newLabel);
 						dismiss();
 						return;
 					}
@@ -167,7 +167,7 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 					// a Key on the secure element, and we have to update it there too.
 					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
 					if (publicKeyBytes != null) {
-						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKey(publicKeyBytes, address, null);
+						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKeyPreTap(publicKeyBytes, address, null);
 						dismiss();
 						return;
 					}

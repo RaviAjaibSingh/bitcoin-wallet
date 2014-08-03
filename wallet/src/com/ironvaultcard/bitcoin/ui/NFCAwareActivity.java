@@ -11,6 +11,7 @@ import com.helioscard.bitcoin.R;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -28,6 +29,8 @@ import android.view.View;
 import android.view.View.OnKeyListener;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import android.support.v4.app.DialogFragment;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.helioscard.bitcoin.Constants;
@@ -65,7 +68,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
     private String _pendingLabel;
-
     private byte[] _pendingEditPublicKey;
     private String _pendingEditAddress;
     private String _pendingEditLabel;
@@ -489,6 +491,81 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_promptForPasswordDialog.show();
 	}
 	
+	public static class PromptForLabelDialogFragment extends DialogFragment {
+	    private static final String TAG = "PromptForLabelDialogFragment";
+			    
+		public static PromptForLabelDialogFragment newInstance() {
+	    	PromptForLabelDialogFragment frag = new PromptForLabelDialogFragment();
+	        return frag;
+	    }
+
+	    @Override
+	    public Dialog onCreateDialog(Bundle savedInstanceState) {
+	    	final NFCAwareActivity nfcAwareActivity = (NFCAwareActivity)getActivity();
+	    	
+			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
+			 
+			// set title
+			alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_title));
+	 
+			// Set an EditText view to get user input
+			final EditText input = new EditText(nfcAwareActivity);
+			input.setSingleLine(true);
+			InputFilter[] filterArray = new InputFilter[1];
+			// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
+			// use a different system to prevent more than 8 characters
+			filterArray[0] = new InputFilter.LengthFilter(16); // 8 characters at most
+			input.setFilters(filterArray);
+			alertDialogBuilder.setView(input);
+			
+		    // set dialog message
+			alertDialogBuilder
+				.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_message))
+				.setCancelable(false)
+				.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						if (input.getText().length() == 0) {
+							// ask the user to enter a label
+					    	Toast.makeText(nfcAwareActivity, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
+							return;
+						}
+						dialog.dismiss();
+						nfcAwareActivity.createKeyPreTap(input.getText().toString());
+					}
+					})
+				.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						// if this button is clicked, just close
+						// the dialog box and do nothing
+						dialog.cancel();
+						nfcAwareActivity.userCanceledSecureElementPrompt();
+					  }
+					});
+			
+			final AlertDialog alertDialog = alertDialogBuilder.create();
+			
+			// Make it pressing enter on the label field will have the same effect as clicking ok
+			input.setOnKeyListener(new OnKeyListener() {
+			    public boolean onKey(View v, int keyCode, KeyEvent event) {
+			        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
+						if (input.getText().length() == 0) {
+							// ask the user to enter a label
+					    	Toast.makeText(nfcAwareActivity, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
+							return true;
+						}
+			        	alertDialog.dismiss();
+			        	nfcAwareActivity.createKeyPreTap(input.getText().toString());
+			        	return true;
+			        }
+			        return false;
+			    }
+			});
+
+			// create alert dialog and show it
+			return alertDialog;
+	    }
+	}
+	
 	private void userProceededOnPasswordDialog(EditText input) {
 	    _logger.info("userProceededOnPasswordDialog: called");
 	    _promptForPasswordDialog.dismiss();
@@ -619,69 +696,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 		
 		_pendingLabel = null;
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
-		 
-		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_title));
- 
-		// Set an EditText view to get user input
-		final EditText input = new EditText(this);
-		input.setSingleLine(true);
-		InputFilter[] filterArray = new InputFilter[1];
-		// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
-		// use a different system to prevent more than 8 characters
-		filterArray[0] = new InputFilter.LengthFilter(16); // 8 characters at most
-		input.setFilters(filterArray);
-		alertDialogBuilder.setView(input);
-		
-	    // set dialog message
-		alertDialogBuilder
-			.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_message))
-			.setCancelable(false)
-			.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					if (input.getText().length() == 0) {
-						// ask the user to enter a label
-				    	Toast.makeText(NFCAwareActivity.this, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
-						return;
-					}
-					dialog.dismiss();
-					promptForLabelOKClicked(input.getText().toString());
-				}
-				})
-			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					// if this button is clicked, just close
-					// the dialog box and do nothing
-					dialog.cancel();
-					userCanceledSecureElementPrompt();
-				  }
-				});
-		
-		final AlertDialog alertDialog = alertDialogBuilder.create();
-		
-		// Make it pressing enter on the label field will have the same effect as clicking ok
-		input.setOnKeyListener(new OnKeyListener() {
-		    public boolean onKey(View v, int keyCode, KeyEvent event) {
-		        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
-					if (input.getText().length() == 0) {
-						// ask the user to enter a label
-				    	Toast.makeText(NFCAwareActivity.this, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
-						return true;
-					}
-		        	alertDialog.dismiss();
-		        	promptForLabelOKClicked(input.getText().toString());
-		        	return true;
-		        }
-		        return false;
-		    }
-		});
 
-		// create alert dialog and show it
-		alertDialog.show();
+		PromptForLabelDialogFragment.newInstance().show(getSupportFragmentManager(), PromptForLabelDialogFragment.TAG);
 	}
 	
-	private void promptForLabelOKClicked(String labelForKey) {
+	private void createKeyPreTap(String labelForKey) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
 		if (secureElementApplet == null) {
@@ -693,10 +712,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		
 		// otherwise we can just keep going and create the key
 	    _logger.info("promptForLabelOKClicked: have authenticated session, creating key");
-	    generateKeyOnSecureElement(secureElementApplet, labelForKey);
+	    createKeyPostTap(secureElementApplet, labelForKey);
 	}
 	
-	private void generateKeyOnSecureElement(SecureElementApplet secureElementApplet, String labelForKey) {
+	private void createKeyPostTap(SecureElementApplet secureElementApplet, String labelForKey) {
 		_logger.info("generateKeyOnSecureElement: called");
 		try {
 			ECKeyEntry keyFromSecureElementToAddToCachedWallet = secureElementApplet.createOrInjectKey(labelForKey, null, null);
@@ -723,14 +742,14 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 
-	public void editKey(byte[] editPublicKey, String editAddress, String editLabel) {
-		_logger.info("editKey: called");
+	public void editKeyPreTap(byte[] editPublicKey, String editAddress, String editLabel) {
+		_logger.info("editKeyPreTap: called");
 		
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
 		if (secureElementApplet == null) {
 			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
-		    _logger.info("promptForLabelOKClicked: waiting for authenticated session");
+		    _logger.info("editKeyPreTap: waiting for authenticated session");
 		    _pendingEditPublicKey = editPublicKey;
 		    _pendingEditAddress = editAddress;
 		    _pendingEditLabel = editLabel;
@@ -738,13 +757,13 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 		
 		// otherwise we can just keep going and create the key
-	    _logger.info("editKey: have authenticated session, editing key");
-	    editKeyOnSecureElement(secureElementApplet, editPublicKey, editAddress, editLabel);
+	    _logger.info("editKeyPreTap: have authenticated session, editing key");
+	    editKeyPostTap(secureElementApplet, editPublicKey, editAddress, editLabel);
 	}
 
 	
-	private void editKeyOnSecureElement(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editAddress, String editLabel) {
-		_logger.info("editKeyOnSecureElement: called");
+	private void editKeyPostTap(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editAddress, String editLabel) {
+		_logger.info("editKeyPostTap: called");
 		try {
 			// update the label on the secure element
 			secureElementApplet.changeLabel(editPublicKey, editLabel);
@@ -756,7 +775,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} catch (IOException e) {
 			showException(e);
 		} catch (AddressFormatException e) {
-			_logger.error("editKeyOnSecureElement: AddressFormatException: " + e.toString());
+			_logger.error("editKeyPostTap: AddressFormatException: " + e.toString());
 		}
 	}
 
@@ -767,7 +786,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_logger.info("handleCardDetectedSuper: generating key with label");
 			String pendingLabel = _pendingLabel;
 			_pendingLabel = null;
-			generateKeyOnSecureElement(secureElementApplet, pendingLabel);
+			createKeyPostTap(secureElementApplet, pendingLabel);
 			return;
 		} else if (_pendingEditPublicKey != null && authenticated) {
 			byte[] pendingEditPublicKey = _pendingEditPublicKey;
@@ -776,7 +795,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_pendingEditLabel = null;
 			String pendingEditAddress = _pendingEditAddress;
 			_pendingEditAddress = null;
-			editKeyOnSecureElement(secureElementApplet, pendingEditPublicKey, pendingEditAddress, pendingEditLabel);
+			editKeyPostTap(secureElementApplet, pendingEditPublicKey, pendingEditAddress, pendingEditLabel);
 			return;
 		}
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);

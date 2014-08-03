@@ -490,81 +490,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		// create alert dialog and show it
 		_promptForPasswordDialog.show();
 	}
-	
-	public static class PromptForLabelDialogFragment extends DialogFragment {
-	    private static final String TAG = "PromptForLabelDialogFragment";
-			    
-		public static PromptForLabelDialogFragment newInstance() {
-	    	PromptForLabelDialogFragment frag = new PromptForLabelDialogFragment();
-	        return frag;
-	    }
 
-	    @Override
-	    public Dialog onCreateDialog(Bundle savedInstanceState) {
-	    	final NFCAwareActivity nfcAwareActivity = (NFCAwareActivity)getActivity();
-	    	
-			AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
-			 
-			// set title
-			alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_title));
-	 
-			// Set an EditText view to get user input
-			final EditText input = new EditText(nfcAwareActivity);
-			input.setSingleLine(true);
-			InputFilter[] filterArray = new InputFilter[1];
-			// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
-			// use a different system to prevent more than 8 characters
-			filterArray[0] = new InputFilter.LengthFilter(16); // 8 characters at most
-			input.setFilters(filterArray);
-			alertDialogBuilder.setView(input);
-			
-		    // set dialog message
-			alertDialogBuilder
-				.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_message))
-				.setCancelable(false)
-				.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						if (input.getText().length() == 0) {
-							// ask the user to enter a label
-					    	Toast.makeText(nfcAwareActivity, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
-							return;
-						}
-						dialog.dismiss();
-						nfcAwareActivity.createKeyPreTap(input.getText().toString());
-					}
-					})
-				.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						// if this button is clicked, just close
-						// the dialog box and do nothing
-						dialog.cancel();
-						nfcAwareActivity.userCanceledSecureElementPrompt();
-					  }
-					});
-			
-			final AlertDialog alertDialog = alertDialogBuilder.create();
-			
-			// Make it pressing enter on the label field will have the same effect as clicking ok
-			input.setOnKeyListener(new OnKeyListener() {
-			    public boolean onKey(View v, int keyCode, KeyEvent event) {
-			        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
-						if (input.getText().length() == 0) {
-							// ask the user to enter a label
-					    	Toast.makeText(nfcAwareActivity, getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_error), Toast.LENGTH_SHORT).show();
-							return true;
-						}
-			        	alertDialog.dismiss();
-			        	nfcAwareActivity.createKeyPreTap(input.getText().toString());
-			        	return true;
-			        }
-			        return false;
-			    }
-			});
-
-			// create alert dialog and show it
-			return alertDialog;
-	    }
-	}
 	
 	private void userProceededOnPasswordDialog(EditText input) {
 	    _logger.info("userProceededOnPasswordDialog: called");
@@ -697,10 +623,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		
 		_pendingLabel = null;
 
-		PromptForLabelDialogFragment.newInstance().show(getSupportFragmentManager(), PromptForLabelDialogFragment.TAG);
+		PromptForLabelDialogFragment.prompt(getSupportFragmentManager());
 	}
 	
-	private void createKeyPreTap(String labelForKey) {
+	public void createKeyPreTap(String labelForKey) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
 		if (secureElementApplet == null) {

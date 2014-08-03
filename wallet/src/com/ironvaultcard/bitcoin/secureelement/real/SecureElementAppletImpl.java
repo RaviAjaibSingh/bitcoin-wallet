@@ -522,6 +522,9 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			}
 			// now write the friendly name
 			updatedAssociatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_FRIENDLY_NAME);
+			if (label == null) {
+				label = "";
+			}
 			byte[] labelBytes = label.getBytes();
 			updatedAssociatedDataByteArrayOutputStream.write(labelBytes.length);
 			updatedAssociatedDataByteArrayOutputStream.write(labelBytes);

@@ -34,7 +34,11 @@ public class IntegrationConnector {
 		final ContentValues values = new ContentValues();
 		values.put(AddressBookProvider.KEY_LABEL, newLabel);
 
-		if (isAdd) {
+		if (newLabel == null || newLabel.isEmpty()) {
+			if (!isAdd) {
+				context.getContentResolver().delete(uri,  null, null);
+			}
+		} else if (isAdd) {
 			context.getContentResolver().insert(uri, values);
 		} else {
 			if (!label.equals(newLabel)) {

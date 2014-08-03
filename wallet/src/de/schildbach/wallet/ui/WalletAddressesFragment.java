@@ -203,7 +203,10 @@ public final class WalletAddressesFragment extends SherlockListFragment
 				switch (item.getItemId())
 				{
 					case R.id.wallet_addresses_context_edit:
-						handleEdit(getAddress(position));
+						/* BEGIN CUSTOM CHANGE */
+						// handleEdit(getAddress(position));
+						handleEdit(getAddress(position), getKey(position));
+						/* END CUSTOM CHANGE */
 
 						mode.finish();
 						return true;
@@ -252,10 +255,18 @@ public final class WalletAddressesFragment extends SherlockListFragment
 				return getKey(position).toAddress(Constants.NETWORK_PARAMETERS);
 			}
 
+			/* BEGIN CUSTOM EDIT */
+			/*
 			private void handleEdit(@Nonnull final Address address)
 			{
 				EditAddressBookEntryFragment.edit(getFragmentManager(), address.toString());
 			}
+			*/
+			private void handleEdit(@Nonnull final Address address, @Nonnull final com.google.bitcoin.core.ECKey key)
+			{
+				EditAddressBookEntryFragment.editWalletKey(getFragmentManager(), address.toString(), key.getPubKey());
+			}
+			/* END CUSTOM EDIT */
 
 			private void handleShowQr(@Nonnull final Address address)
 			{

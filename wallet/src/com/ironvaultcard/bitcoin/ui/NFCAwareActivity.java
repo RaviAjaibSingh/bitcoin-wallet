@@ -43,6 +43,8 @@ import com.helioscard.bitcoin.secureelement.real.SecureElementAppletImpl;
 import com.helioscard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
 import com.helioscard.bitcoin.wallet.WalletGlobals;
 
+import com.google.bitcoin.core.Address;
+import com.google.bitcoin.core.AddressFormatException;
 import com.google.bitcoin.core.Wallet;
 
 public abstract class NFCAwareActivity extends SherlockFragmentActivity {
@@ -64,6 +66,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private boolean _pendingUseExistingSessionIfPossible;
     private String _pendingLabel;
 
+    private byte[] _pendingEditPublicKey;
+    private String _pendingEditAddress;
+    private String _pendingEditLabel;
+    
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -459,8 +466,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				public void onClick(DialogInterface dialog, int id) {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
-					_promptForPasswordDialog = null;
-					_pendingLabel = null;
 					dialog.cancel();
 					userCanceledSecureElementPrompt();
 				  }
@@ -596,9 +601,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					_pendingCardPassword = null;
-					_promptForTapAlertDialog = null;
-					_pendingLabel = null;
 					userCanceledSecureElementPrompt();
 				  }
 				});
@@ -644,7 +646,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 						return;
 					}
 					dialog.dismiss();
-					promptForLabelOKClicked(input);
+					promptForLabelOKClicked(input.getText().toString());
 				}
 				})
 			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
@@ -668,7 +670,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 						return true;
 					}
 		        	alertDialog.dismiss();
-		        	promptForLabelOKClicked(input);
+		        	promptForLabelOKClicked(input.getText().toString());
 		        	return true;
 		        }
 		        return false;
@@ -679,9 +681,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		alertDialog.show();
 	}
 	
-	private void promptForLabelOKClicked(EditText editText) {
+	private void promptForLabelOKClicked(String labelForKey) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
-		String labelForKey = editText.getText().toString();
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
 		if (secureElementApplet == null) {
 			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
@@ -721,6 +722,44 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			}
 		}
 	}
+
+	public void editKey(byte[] editPublicKey, String editAddress, String editLabel) {
+		_logger.info("editKey: called");
+		
+		// get a secure element session that is authenticated (authenticated session needed to add a key)
+		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
+		if (secureElementApplet == null) {
+			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
+		    _logger.info("promptForLabelOKClicked: waiting for authenticated session");
+		    _pendingEditPublicKey = editPublicKey;
+		    _pendingEditAddress = editAddress;
+		    _pendingEditLabel = editLabel;
+		    return;
+		}
+		
+		// otherwise we can just keep going and create the key
+	    _logger.info("editKey: have authenticated session, editing key");
+	    editKeyOnSecureElement(secureElementApplet, editPublicKey, editAddress, editLabel);
+	}
+
+	
+	private void editKeyOnSecureElement(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editAddress, String editLabel) {
+		_logger.info("editKeyOnSecureElement: called");
+		try {
+			// update the label on the secure element
+			secureElementApplet.changeLabel(editPublicKey, editLabel);
+			
+			// update the label in the local content provider
+			IntegrationConnector.setLabelForAddress(this, new Address(Constants.NETWORK_PARAMETERS, editAddress), editLabel);
+			
+			// update the key label in the content provider as well
+		} catch (IOException e) {
+			showException(e);
+		} catch (AddressFormatException e) {
+			_logger.error("editKeyOnSecureElement: AddressFormatException: " + e.toString());
+		}
+	}
+
 	
 	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
 		if (_pendingLabel != null && authenticated) {
@@ -729,6 +768,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			String pendingLabel = _pendingLabel;
 			_pendingLabel = null;
 			generateKeyOnSecureElement(secureElementApplet, pendingLabel);
+			return;
+		} else if (_pendingEditPublicKey != null && authenticated) {
+			byte[] pendingEditPublicKey = _pendingEditPublicKey;
+			_pendingEditPublicKey = null;
+			String pendingEditLabel = _pendingEditLabel;
+			_pendingEditLabel = null;
+			String pendingEditAddress = _pendingEditAddress;
+			_pendingEditAddress = null;
+			editKeyOnSecureElement(secureElementApplet, pendingEditPublicKey, pendingEditAddress, pendingEditLabel);
 			return;
 		}
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
@@ -739,6 +787,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 
 	protected void userCanceledSecureElementPrompt() {
+		_pendingCardPassword = null;
+		_promptForTapAlertDialog = null;
+		_pendingLabel = null;
+		_pendingEditPublicKey = null;
+		_pendingEditLabel = null;
+		
 		if (_getStartedDialog != null) {
 			_getStartedDialog.show();
 		}

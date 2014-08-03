@@ -51,6 +51,21 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 	{
 		edit(fm, address, null);
 	}
+	
+	/* BEGIN CUSTOM CHANGE */
+	private static final String KEY_PUBLIC_KEY_BYTES = "PublicKeyBytes";
+	public static void editWalletKey(final FragmentManager fm, @Nonnull final String address, @Nonnull final byte[] publicKeyBytes)
+	{
+		final EditAddressBookEntryFragment fragment = new EditAddressBookEntryFragment();
+
+		final Bundle args = new Bundle();
+		args.putString(KEY_ADDRESS, address);
+		args.putByteArray(KEY_PUBLIC_KEY_BYTES, publicKeyBytes);
+		
+		fragment.setArguments(args);
+		fragment.show(fm, FRAGMENT_TAG);
+	}
+	/* END CUSTOM CHANGE */
 
 	public static void edit(final FragmentManager fm, @Nonnull final String address, @Nullable final String suggestedAddressLabel)
 	{
@@ -120,6 +135,16 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 				{
 					final String newLabel = viewLabel.getText().toString().trim();
 
+					/* BEGIN CUSTOM CHANGE */
+					// Check to see if we have a public key as an argument.  If so, then we are editing
+					// a Key on the secure element, and we have to update it there too.
+					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
+					if (publicKeyBytes != null) {
+						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKey(publicKeyBytes, address, newLabel);
+						dismiss();
+						return;
+					}
+					/* END CUSTOM CHANGE */
 					if (!newLabel.isEmpty())
 					{
 						final ContentValues values = new ContentValues();
@@ -137,6 +162,17 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 				}
 				else if (which == DialogInterface.BUTTON_NEUTRAL)
 				{
+					/* BEGIN CUSTOM CHANGE */
+					// Check to see if we have a public key as an argument.  If so, then we are editing
+					// a Key on the secure element, and we have to update it there too.
+					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
+					if (publicKeyBytes != null) {
+						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKey(publicKeyBytes, address, null);
+						dismiss();
+						return;
+					}
+					/* END CUSTOM CHANGE */
+
 					contentResolver.delete(uri, null, null);
 				}
 

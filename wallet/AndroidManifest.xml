@@ -194,11 +194,11 @@
 		<!-- BEGIN CUSTOM CHANGE -->
 		<provider
 			android:name="de.schildbach.wallet.AddressBookProvider"
-			android:authorities="com.fortuna.bitcoin.address_book"
+			android:authorities="com.fortunacard.bitcoin.address_book"
 			android:exported="false" />
 		<provider
 			android:name="de.schildbach.wallet.ExchangeRatesProvider"
-			android:authorities="com.fortuna.bitcoin.exchange_rates"
+			android:authorities="com.fortunacard.bitcoin.exchange_rates"
 			android:exported="false" />
         <!-- END CUSTOM CHANGE -->
 

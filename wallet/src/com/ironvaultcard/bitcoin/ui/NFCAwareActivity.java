@@ -43,6 +43,8 @@ import com.fortunacard.bitcoin.secureelement.real.SecureElementAppletImpl;
 import com.fortunacard.bitcoin.secureelement.simulated.SecureElementAppletSimulatorImpl;
 import com.fortunacard.bitcoin.wallet.WalletGlobals;
 
+import com.google.bitcoin.core.Wallet;
+
 public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	private static Logger _logger = LoggerFactory.getLogger(NFCAwareActivity.class);
 	
@@ -56,6 +58,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private AlertDialog _promptForTapAlertDialog;
     private AlertDialog _promptForPasswordDialog;
     private AlertDialog _tapToFinishDialog;
+    private AlertDialog _getStartedDialog;
     
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
@@ -166,7 +169,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 // TODO: there's a race condition here, where the wallet has the newly synchronized keys, but it could be the case we had to
                 // tell the service to stop and destroy its current block chain file.  But there's a chance the process could be terminated
                 // or the device could be rebooted before the service gets a chance to do that
-                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, IntegrationConnector.getWallet(this), _ecPublicKeyEntries);
+                Wallet wallet = IntegrationConnector.getWallet(this);
+                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries);
                 if (serviceNeedsToClearAndRestart) {
                     // the keys between the secure element and our cached copy of public keys didn't match
                     _logger.info("onNewIntent: service needs to clear and restart");
@@ -219,6 +223,14 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
                     return true;
                 }
+                
+                if (wallet.getKeys().size() > 0 && _getStartedDialog != null) {
+                	_logger.info("processIntent: dismissing get started dialog");
+                	// the user has at least one key in the wallet - if we were showing the get started dialog, get
+                	// rid of it now
+                	_getStartedDialog.dismiss();
+                	_getStartedDialog = null;
+                }
 
 
 	        	if (_promptForPasswordDialog != null) {
@@ -263,6 +275,48 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         }
         
         return false;
+    }
+    
+    protected void showGetStartedDialog() {
+    	if (_getStartedDialog != null) {
+    		// dialog is already showing, ignore this
+		    _logger.error("showGetStartedDialog: already showing get started dialog");
+    		return;
+    	}
+
+    	AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+		alertDialogBuilder.setMessage(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_message));
+        alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_title)).setCancelable(false);
+        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				dialog.dismiss();
+				showGetStartedDialogPart2();							
+			}
+		});
+
+		_getStartedDialog = alertDialogBuilder.create();
+		_getStartedDialog.show();
+
+    }
+    
+    protected void showGetStartedDialogPart2() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_title)).setCancelable(false);
+        builder.setItems(new CharSequence[]
+                {getResources().getString(R.string.nfc_aware_activity_get_started_dialog_create_new_key)},
+                new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // The 'which' argument contains the index position
+                        // of the selected item
+                        switch (which) {
+                            case 0:
+                            	NFCAwareActivity.this.promptToAddKey();
+                                break;
+                        }
+                        dialog.dismiss();
+                    }
+                });
+        builder.show();
     }
 
 	protected void simulateSecureElementAppletDetected() {
@@ -598,6 +652,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
+					userCanceledSecureElementPrompt();
 				  }
 				});
 		
@@ -648,6 +703,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
 			// to the key
 			WalletGlobals.addECKeyEntryToWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
+			if (_getStartedDialog != null) {
+				// the user was adding a key as a result of the get started dialog, close it
+				_getStartedDialog.dismiss();
+				_getStartedDialog = null;
+			}
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
@@ -679,7 +739,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 
 	protected void userCanceledSecureElementPrompt() {
-		// default implementation does nothing, override to hear about dialog cancellation events
+		if (_getStartedDialog != null) {
+			_getStartedDialog.show();
+		}
 	}
 
 	// utility method for subclasses to show errors

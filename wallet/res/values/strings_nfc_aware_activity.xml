@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="nfc_aware_activity_get_started_dialog_title">Get Started</string>
+    <string name="nfc_aware_activity_get_started_dialog_message">To send and receive coins, you need an address (or \"key\") in your wallet.  You can create a new key, or import an existing one.</string>
+    <string name="nfc_aware_activity_get_started_dialog_create_new_key">Create New Key</string>    
     <string name="nfc_aware_activity_prompt_for_tap_dialog_title">Card Needed</string>
     <string name="nfc_aware_activity_prompt_for_tap_dialog_message">Please hold your card against the device to continue.</string>
     <string name="nfc_aware_activity_tap_to_continue_dialog_title">Tap Once More</string>

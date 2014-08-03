@@ -31,6 +31,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import android.support.v4.app.DialogFragment;
+import android.support.v4.app.FragmentManager;
 
 import com.actionbarsherlock.app.SherlockFragmentActivity;
 import com.helioscard.bitcoin.Constants;
@@ -60,14 +61,20 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private IntentFilter[] _intentFiltersArray;
     private String[][] _techListsArray;
 	
-    private AlertDialog _promptForTapAlertDialog;
     private AlertDialog _promptForPasswordDialog;
     private AlertDialog _tapToFinishDialog;
     private AlertDialog _getStartedDialog;
     
+    private static final String INSTANCE_STATE_PENDING_CARD_PASSWORD = "INSTANCE_STATE_PENDING_CARD_PASSWORD";
+    private static final String INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE = "INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE";
+    private static final String INSTANCE_STATE_PENDING_ADD_KEY_LABEL = "INSTANCE_STATE_PENDING_ADD_KEY_LABEL";
+    private static final String INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY = "INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY";
+    private static final String INSTANCE_STATE_PENDING_EDIT_ADDRESS = "INSTANCE_STATE_PENDING_EDIT_ADDRESS";
+    private static final String INSTANCE_STATE_PENDING_EDIT_LABEL = "INSTANCE_STATE_PENDING_EDIT_LABEL";
+    
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
-    private String _pendingLabel;
+    private String _pendingAddKeyLabel;
     private byte[] _pendingEditPublicKey;
     private String _pendingEditAddress;
     private String _pendingEditLabel;
@@ -119,8 +126,32 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	this.finish();
         	return;
         }
+    }
+    
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+    	_logger.info("onSaveInstanceState: called");
+    	super.onSaveInstanceState(outState);
 
-
+    	outState.putString(INSTANCE_STATE_PENDING_CARD_PASSWORD, _pendingCardPassword);
+    	outState.putBoolean(INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE, _pendingUseExistingSessionIfPossible);
+    	outState.putString(INSTANCE_STATE_PENDING_ADD_KEY_LABEL, _pendingAddKeyLabel);
+    	outState.putByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY, _pendingEditPublicKey);
+    	outState.putString(INSTANCE_STATE_PENDING_EDIT_ADDRESS, _pendingEditAddress);
+    	outState.putString(INSTANCE_STATE_PENDING_EDIT_LABEL, _pendingEditLabel);
+    }
+    
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    	_logger.info("onRestoreInstanceState: called");
+    	super.onRestoreInstanceState(savedInstanceState);
+    	
+    	_pendingCardPassword = savedInstanceState.getString(INSTANCE_STATE_PENDING_CARD_PASSWORD);
+    	_pendingUseExistingSessionIfPossible = savedInstanceState.getBoolean(INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE, false);
+    	_pendingAddKeyLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_ADD_KEY_LABEL);
+    	_pendingEditPublicKey = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY);
+    	_pendingEditAddress = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_ADDRESS);
+    	_pendingEditLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_LABEL);
     }
 
     @Override
@@ -251,10 +282,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        	}
 
 	        	boolean tapRequested = false;
-	        	if (_promptForTapAlertDialog != null) {
-	        		// if we were prompting the user to tap the card, dismiss the dialog
-	        		_promptForTapAlertDialog.dismiss();
-	        		_promptForTapAlertDialog = null;
+	        	FragmentManager fragmentManager = getSupportFragmentManager();
+	        	PromptForTapDialogFragment promptForTapDialogFragment = (PromptForTapDialogFragment)fragmentManager.findFragmentByTag(PromptForTapDialogFragment.TAG);
+	        	if (promptForTapDialogFragment != null) {
+	        		promptForTapDialogFragment.dismiss();
 	        		tapRequested = true;
 	        		
 	        		if (_pendingCardPassword != null) {
@@ -265,7 +296,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			return true;
 	        		}
 	        	}
-	        	
+
 	        	if (_tapToFinishDialog != null) {
 	        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
 	        		// synchronize the keys.  That has already been done by the time we ge here, so nothing to do here.
@@ -585,34 +616,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 	
 	private void showPromptForTapDialog() {
-		if (_promptForTapAlertDialog != null) {
-			_logger.error("showPromptForTapDialog: ignoring request to show dialog, dialog already showing");
-			return;
-		}
-		
-		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
- 
-		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title));
- 
-			// set dialog message
-		alertDialogBuilder
-			.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message))
-			.setCancelable(false)
-			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
-				public void onClick(DialogInterface dialog, int id) {
-					// if this button is clicked, just close
-					// the dialog box and do nothing
-					dialog.cancel();
-					userCanceledSecureElementPrompt();
-				  }
-				});
- 
-		// create alert dialog
-		_promptForTapAlertDialog = alertDialogBuilder.create();
- 
-		// show it
-		_promptForTapAlertDialog.show();
+		PromptForTapDialogFragment.prompt(getSupportFragmentManager());
 	}
 	
 	public void promptToAddKey() {
@@ -621,7 +625,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			return;
 		}
 		
-		_pendingLabel = null;
+		_pendingAddKeyLabel = null;
 
 		PromptForLabelDialogFragment.prompt(getSupportFragmentManager());
 	}
@@ -632,7 +636,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		if (secureElementApplet == null) {
 			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
 		    _logger.info("promptForLabelOKClicked: waiting for authenticated session");
-		    _pendingLabel = labelForKey;
+		    _pendingAddKeyLabel = labelForKey;
 		    return;
 		}
 		
@@ -707,11 +711,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 	
 	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
-		if (_pendingLabel != null && authenticated) {
+		if (_pendingAddKeyLabel != null && authenticated) {
 			// we had a request to add a key to the card, do that instead
 			_logger.info("handleCardDetectedSuper: generating key with label");
-			String pendingLabel = _pendingLabel;
-			_pendingLabel = null;
+			String pendingLabel = _pendingAddKeyLabel;
+			_pendingAddKeyLabel = null;
 			createKeyPostTap(secureElementApplet, pendingLabel);
 			return;
 		} else if (_pendingEditPublicKey != null && authenticated) {
@@ -733,9 +737,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 	protected void userCanceledSecureElementPrompt() {
 		_pendingCardPassword = null;
-		_promptForTapAlertDialog = null;
-		_pendingLabel = null;
+		_pendingAddKeyLabel = null;
 		_pendingEditPublicKey = null;
+		_pendingEditAddress = null;
 		_pendingEditLabel = null;
 		
 		if (_getStartedDialog != null) {

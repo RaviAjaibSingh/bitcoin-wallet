@@ -104,4 +104,12 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
     public String getCardIdentifier() throws IOException {
         return "CardIdentifier";
     }
+
+    public byte[] enableCachedSigning() throws IOException {
+    	return null;
+    }
+    
+    public byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifer) throws IOException {
+    	return null;
+    }
 }

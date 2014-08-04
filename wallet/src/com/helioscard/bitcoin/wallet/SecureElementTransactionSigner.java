@@ -14,6 +14,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.ECKey.ECDSASignature;
 import com.google.bitcoin.core.ScriptException;
@@ -30,20 +31,81 @@ import com.google.bitcoin.script.ScriptOpCodes;
 import com.helioscard.bitcoin.secureelement.ECUtil;
 import com.helioscard.bitcoin.secureelement.SecureElementApplet;
 
-public class BitcoinJUtils {
-	private static Logger _logger = LoggerFactory.getLogger(BitcoinJUtils.class);
+public class SecureElementTransactionSigner {
+	private static Logger _logger = LoggerFactory.getLogger(SecureElementTransactionSigner.class);
 	
+	private Transaction _transaction;
+	private Address _returnAddress;
+	private BigInteger _finalAmount;
+	private Wallet _wallet;
+	private String _password;
+	private TransactionSignature[] _transactionSignatures;
+	private byte[][] _cachedTransactionIdentifiers;
+	private boolean _useSignatureCaching;
+	
+	private static SecureElementTransactionSigner _secureElementTransactionSigner;
+	public static SecureElementTransactionSigner getInstance() {
+		if (_secureElementTransactionSigner == null) {
+			_secureElementTransactionSigner = new SecureElementTransactionSigner();
+		}
+		return _secureElementTransactionSigner;
+	}
+	
+	private SecureElementTransactionSigner() {
+		
+	}
+	
+	public void setConfiguration(Transaction transaction, Address returnAddress, BigInteger finalAmount, Wallet wallet, boolean useSignatureCaching) {
+		clear();
+		_transaction = transaction;
+		_returnAddress = returnAddress;
+		_finalAmount = finalAmount;
+		_wallet = wallet;
+		_useSignatureCaching = useSignatureCaching;
+	}
+	
+	public void setPassword(String password) {
+		_password = password;
+	}
+	
+	public boolean isTransactionInProgress() {
+		return _transaction != null;
+	}
+	
+	public Transaction getTransaction() {
+		return _transaction;
+	}
+	
+	public Address getReturnAddress() {
+		return _returnAddress;
+	}
+	
+	public BigInteger getFinalAmount() {
+		return _finalAmount;
+	}
+	
+	public void clear() {
+		_transaction = null;
+		_returnAddress = null;
+		_finalAmount = null;
+		_wallet = null;
+		_password = null;
+		_transactionSignatures = null;
+		_cachedTransactionIdentifiers = null;
+		_useSignatureCaching = false;
+	}
+
 	/*
      * This function is a combination of the core bitcoinj functions Transaction.signInputs,
      * Transaction.calculateSignature and Transaction.hashForSignature.  We alter the functions to assume that we only operate
      * in SigHash.ALL mode (e.g. we are signing the transaction in a standard way, mandating both the inputs and the outputs are covered
      * by our signature), and anyonecanpay mode is off.
      */
-    public static void signTransaction(SecureElementApplet secureElementApplet, Transaction transaction, Wallet wallet, String password) throws IOException {
+    public void signTransaction(SecureElementApplet secureElementApplet) throws IOException {
         _logger.info("signTransaction: attempting to sign transaction");
 
-        List<TransactionInput> inputs = transaction.getInputs();
-        List<TransactionOutput> outputs = transaction.getOutputs();
+        List<TransactionInput> inputs = _transaction.getInputs();
+        List<TransactionOutput> outputs = _transaction.getOutputs();
         checkState(inputs.size() > 0);
         checkState(outputs.size() > 0);
         
@@ -77,7 +139,7 @@ public class BitcoinJUtils {
                 // We assume if its already signed, its hopefully got a SIGHASH type that will not invalidate when
                 // we sign missing pieces (to check this would require either assuming any signatures are signing
                 // standard output types or a way to get processed signatures out of script execution)
-                input.getScriptSig().correctlySpends(transaction, i, input.getOutpoint().getConnectedOutput().getScriptPubKey(), true);
+                input.getScriptSig().correctlySpends(_transaction, i, input.getOutpoint().getConnectedOutput().getScriptPubKey(), true);
                 _logger.warn("signTransaction: Input {} already correctly spends output, assuming SIGHASH type used will be safe and skipping signing.", i);
                 continue;
             } catch (ScriptException e) {
@@ -88,7 +150,7 @@ public class BitcoinJUtils {
             // Find the signing key we'll need to use.
 
             // find the key in the local cached wallet that matches this (note the local cached wallet only has the public key)
-            ECKey key = input.getOutpoint().getConnectedKey(wallet);
+            ECKey key = input.getOutpoint().getConnectedKey(_wallet);
 
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             checkNotNull(key, "signTransaction: Transaction exists in wallet that we cannot redeem: %s", input.getOutpoint().getHash());
@@ -118,7 +180,7 @@ public class BitcoinJUtils {
             input.setScriptSig(new Script(connectedPubKeyScript));
             
             ByteArrayOutputStream bos = new UnsafeByteArrayOutputStream(256);
-            transaction.bitcoinSerialize(bos);
+            _transaction.bitcoinSerialize(bos);
             // We also have to write a hash type (sigHashType is actually an unsigned char)
             byte sigHashType = (byte)TransactionSignature.calcSigHashValue(SigHash.ALL, false);
             uint32ToByteStreamLE(0x000000ff & sigHashType, bos);
@@ -145,7 +207,7 @@ public class BitcoinJUtils {
             
             // now sign with the smart card - it will hash the bytes a second time
             // before actually signing, which is what we want because that's what bitcoin does- double hashed signature
-            byte[] signatureFromSecureElement = secureElementApplet.doSimpleSign(password, ECUtil.getPublicKeyBytesFromEncoding(key.getPubKey(), false), bytesToSignHashedOnce);
+            byte[] signatureFromSecureElement = secureElementApplet.doSimpleSign(_password, ECUtil.getPublicKeyBytesFromEncoding(key.getPubKey(), false), bytesToSignHashedOnce);
             ECDSASignature ecdsaSignature = ECDSASignature.decodeFromDER(signatureFromSecureElement);
             
             // inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
@@ -180,26 +242,5 @@ public class BitcoinJUtils {
         
         _logger.info("signTransaction: successfully signed transaction");
     }
-    
-    public static long calculateFee(Transaction transaction) {
-        _logger.info("calculateFee: called");
-
-        List<TransactionInput> inputs = transaction.getInputs();
-        List<TransactionOutput> outputs = transaction.getOutputs();
-        checkState(inputs.size() > 0);
-        checkState(outputs.size() > 0);
-
-        // we have all the inputs and outputs.  The difference between the inputs
-        // and the outputs is the transaction fee
-        BigInteger fee = BigInteger.valueOf(0);
-        for (TransactionInput input : inputs) {
-        	fee = fee.add(input.getConnectedOutput().getValue());
-        }
-        
-        for (TransactionOutput output : outputs) {
-        	fee = fee.subtract(output.getValue());
-        }
-        
-    	return fee.longValue();
-    }
+	
 }

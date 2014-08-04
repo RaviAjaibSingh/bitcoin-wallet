@@ -42,6 +42,7 @@ import com.helioscard.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.bitcoin.secureelement.SmartCardReader;
 import com.helioscard.bitcoin.secureelement.SecureElementApplet.PINState;
 import com.helioscard.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
+import com.helioscard.bitcoin.secureelement.exception.KeyAlreadyExistsException;
 import com.helioscard.bitcoin.secureelement.exception.SmartCardFullException;
 import com.helioscard.bitcoin.secureelement.exception.WrongPasswordException;
 import com.helioscard.bitcoin.secureelement.real.SecureElementAppletImpl;
@@ -650,6 +651,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_wrong_password);
     	} else if (e instanceof SmartCardFullException) {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_smartcard_full);
+    	} else if (e instanceof KeyAlreadyExistsException) {
+    		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_key_already_exists);
     	} else if (e instanceof TagLostException) {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_tag_lost);
     	} else {

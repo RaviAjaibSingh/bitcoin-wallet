@@ -403,6 +403,13 @@ public final class SendCoinsFragment extends SherlockFragment
 	{
 		super.onCreate(savedInstanceState);
 
+		/* BEGIN CUSTOM CHANGE */
+		// Clear any signing operation we have ongoing
+		// TODO: only clear if this fragment didn't start the signing operation
+		com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
+		secureElementTransactionSigner.clear();
+		/* END CUSTOM CHANGE */
+		
 		setRetainInstance(true);
 		setHasOptionsMenu(true);
 
@@ -842,11 +849,6 @@ public final class SendCoinsFragment extends SherlockFragment
 		}
 	}
 
-	/* BEGIN CUSTOM CHANGE */
-	private Transaction _pendingTransaction;
-	private Address _pendingReturnAddress;
-	private BigInteger _pendingFinalAmount;
-	/* END CUSTOM CHANGE */
 	private void handleGo()
 	{
 		state = State.PREPARATION;
@@ -867,9 +869,9 @@ public final class SendCoinsFragment extends SherlockFragment
 		// Prompt the user to tap the card so we can sign the transaction
 		try {
 			wallet.completeTx(sendRequest);
-			_pendingTransaction = sendRequest.tx;
-			_pendingReturnAddress = returnAddress;
-			_pendingFinalAmount = finalAmount;
+			com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
+			// TODO: only enable signing caching for devices that need it
+			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, true);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
@@ -884,15 +886,22 @@ public final class SendCoinsFragment extends SherlockFragment
 		// The SendCoinsActivity parent of this fragment will listen for card detection events and route the calls here
 		log.info("handleCardDetected called");
 		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
-		if (_pendingTransaction != null && authenticated) {
+		com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
+		if (secureElementTransactionSigner.isTransactionInProgress() && authenticated) {
 			try {
-				// sign the transaction using the smart card
-				com.helioscard.bitcoin.wallet.BitcoinJUtils.signTransaction(secureElementApplet, _pendingTransaction, wallet, password);
+				if (password != null) {
+					secureElementTransactionSigner.setPassword(password);
+				}
+				// it's possible this is an ongoing transaction - this will continue the signing process or start it from scratch
+				secureElementTransactionSigner.signTransaction(secureElementApplet);
 				
 				// commit the transaction to the wallet (don't send it yet though)
-				wallet.commitTx(_pendingTransaction);
-				
-				sendTransaction(_pendingTransaction);
+				Transaction transaction = secureElementTransactionSigner.getTransaction();
+				wallet.commitTx(transaction);
+				sendTransaction(transaction, secureElementTransactionSigner.getReturnAddress(), secureElementTransactionSigner.getFinalAmount());
+				secureElementTransactionSigner.clear();
+			} catch (android.nfc.TagLostException e) {
+				nfcAwareActivity.showException(e);				
 			} catch (IOException e) {
 				// TODO set a bad result here
 				nfcAwareActivity.showException(e);
@@ -902,7 +911,7 @@ public final class SendCoinsFragment extends SherlockFragment
 	/* END CUSTOM CHANGE */
 	
 	/* BEGIN CUSTOM CHANGE */
-	private void sendTransaction(final Transaction incomingTransaction) {
+	private void sendTransaction(final Transaction incomingTransaction, final Address returnAddress, final BigInteger finalAmount) {
 	/* END CUSTOM CHANGE */
 		new SendCoinsOfflineTask(wallet, backgroundHandler)
 		{
@@ -916,12 +925,8 @@ public final class SendCoinsFragment extends SherlockFragment
 
 				sentTransaction.getConfidence().addEventListener(sentTransactionConfidenceListener);
 
-				/* BEGIN CUSTOM CHANGE */
-				// final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, returnAddress, finalAmount, null,
-				//		paymentIntent.payeeData);
-				final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, _pendingReturnAddress, _pendingFinalAmount, null,
-						paymentIntent.payeeData);
-				/* END CUSTOM CHANGE */
+				final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, returnAddress, finalAmount, null,
+					paymentIntent.payeeData);
 				
 				directPay(payment);
 

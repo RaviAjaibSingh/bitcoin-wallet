@@ -14,6 +14,7 @@ import com.helioscard.bitcoin.secureelement.ECKeyEntry;
 import com.helioscard.bitcoin.secureelement.ECUtil;
 import com.helioscard.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.bitcoin.secureelement.SmartCardReader;
+import com.helioscard.bitcoin.secureelement.exception.KeyAlreadyExistsException;
 import com.helioscard.bitcoin.secureelement.exception.SmartCardFullException;
 import com.helioscard.bitcoin.secureelement.exception.WrongPasswordException;
 import com.helioscard.bitcoin.util.Util;
@@ -120,6 +121,9 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		} else if (sw1 == (byte)0x6a && sw2 == (byte)0x84) {
 			// SW_FILE_FULL
 			throw new SmartCardFullException();
+		} else if (sw1 == (byte)0x69 && sw2 == (byte)0x84) {
+			// SW_INVALID_DATA
+			throw new KeyAlreadyExistsException();
 		}
 		
 		throw new IOException("Received unknown response from card");
@@ -223,9 +227,13 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	public byte[] doSimpleSign(String password, byte[] publicKeyToUse, byte[] bytesToSign) throws IOException {
 		ensureInitialStateRead(false);
 
-		byte[] passwordBytes = password.getBytes();
-		int lengthOfPasswordBytes = passwordBytes.length;
-		
+		byte[] passwordBytes = null;
+		int lengthOfPasswordBytes = 0;
+		if (password != null && password.length() > 0) {
+			passwordBytes = password.getBytes();
+			lengthOfPasswordBytes = passwordBytes.length;
+		}
+
 		byte[] publicKey = ECUtil.getPublicKeyBytesFromEncoding(publicKeyToUse, false); // make sure we have the uncompressed form of the public key
 		
 		int lengthOfBytesToSign = bytesToSign.length;
@@ -236,7 +244,9 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		
 		commandAPDUByteArrayOutputStream.write(commandAPDUHeader);
 		commandAPDUByteArrayOutputStream.write(publicKey);
-		commandAPDUByteArrayOutputStream.write(passwordBytes);
+		if (passwordBytes != null) {
+			commandAPDUByteArrayOutputStream.write(passwordBytes);
+		}
 		commandAPDUByteArrayOutputStream.write(bytesToSign);
 		
 		byte[] commandAPDU = commandAPDUByteArrayOutputStream.toByteArray();
@@ -565,5 +575,30 @@ public class SecureElementAppletImpl extends SecureElementApplet {
     public String getCardIdentifier() throws IOException {
         ensureInitialStateRead(false);
         return _cardIdentifier;
+    }
+
+    public byte[] enableCachedSigning() throws IOException {
+		_logger.info("enableCachedSigning: called");
+		ensureInitialStateRead(false);
+				
+		// No arguments needed for the command APDU
+		byte[] commandAPDU = new byte[] {(byte)0x80, 0x08, 0x00, 0x00, 0x00};
+		
+		_logger.info("enableCachedSigning: Sending command APDU to enable cached signing");
+		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
+		_logger.info("enableCachedSigning: Got response: " + Util.bytesToHex(responseAPDU));
+		ensureResponseEndsWith9000(responseAPDU);	
+		
+		// the response will be the cached signature identifier which we can later use to retrieve a cached signature
+		byte[] cachedSigningIdentifier = new byte[responseAPDU.length - 2];
+		System.arraycopy(responseAPDU, 0, cachedSigningIdentifier, 0, cachedSigningIdentifier.length);
+		
+		_logger.info("enableCachedSigning: cached signing identifer is: " + Util.bytesToHex(cachedSigningIdentifier));
+		
+		return cachedSigningIdentifier;
+    }
+    
+    public byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifer) throws IOException {
+    	return null;
     }
 }

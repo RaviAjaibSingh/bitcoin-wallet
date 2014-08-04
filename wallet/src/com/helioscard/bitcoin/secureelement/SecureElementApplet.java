@@ -39,4 +39,8 @@ public abstract class SecureElementApplet {
 	public abstract void changeLabel(byte[] publicKey, String label) throws IOException;
 
     public abstract String getCardIdentifier() throws IOException;
+    
+    public abstract byte[] enableCachedSigning() throws IOException;
+    
+    public abstract byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifer) throws IOException;
 }

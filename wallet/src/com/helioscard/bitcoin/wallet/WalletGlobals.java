@@ -145,6 +145,8 @@ public class WalletGlobals {
 					_logger.info("synchronizeKeysWithSecureElement: removing a cached wallet key");
 					serviceNeedsToClearAndRestart = true;
 					
+					wallet.clearTransactions(0);
+					
 					removeECKeyFromCachedWallet(activityContext, wallet, keyFromCachedWallet);
 				}
 			}

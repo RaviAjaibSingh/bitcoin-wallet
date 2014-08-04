@@ -111,7 +111,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte sw1 = responseAPDU[responseAPDU.length - 2];
 		byte sw2 = responseAPDU[responseAPDU.length - 1];
 		
-		if (sw1 == (byte)0x90 || sw2 == 0x00) {
+		if (sw1 == (byte)0x90 && sw2 == (byte)0x00) {
 			_logger.info("ensureResponseEndsWith9000: received good response from card");
 			return;
 		} else if (sw1 == (byte)0x69 && sw2 == (byte)0x82) {
@@ -610,6 +610,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 
 		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x09, 0x00, 0x00, (byte)lengthOfPasswordBytes};
 		ByteArrayOutputStream commandAPDUByteArrayOutputStream = new ByteArrayOutputStream(commandAPDUHeader.length + lengthOfPasswordBytes);
+		commandAPDUByteArrayOutputStream.write(commandAPDUHeader);
 		if (passwordBytes != null) {
 			commandAPDUByteArrayOutputStream.write(passwordBytes);
 		}

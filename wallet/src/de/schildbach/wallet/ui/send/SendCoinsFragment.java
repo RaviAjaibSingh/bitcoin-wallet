@@ -871,7 +871,7 @@ public final class SendCoinsFragment extends SherlockFragment
 			wallet.completeTx(sendRequest);
 			com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
 			// TODO: only enable signing caching for devices that need it
-			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, false);
+			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, true);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
@@ -887,7 +887,7 @@ public final class SendCoinsFragment extends SherlockFragment
 		log.info("handleCardDetected called");
 		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 		com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
-		if (secureElementTransactionSigner.isTransactionInProgress() && authenticated) {
+		if (secureElementTransactionSigner.isTransactionInProgress()) {
 			try {
 				if (password != null) {
 					secureElementTransactionSigner.setPassword(password);
@@ -901,10 +901,15 @@ public final class SendCoinsFragment extends SherlockFragment
 				sendTransaction(transaction, secureElementTransactionSigner.getReturnAddress(), secureElementTransactionSigner.getFinalAmount());
 				secureElementTransactionSigner.clear();
 			} catch (android.nfc.TagLostException e) {
-				nfcAwareActivity.showException(e);				
+				// The secure element might have taken too long to do the signing and we dropped the connection during the
+		        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap
+				// in which case this function will be called and we'll try again
+				log.info("handleCardDetected: TagLostException");
+				nfcAwareActivity.showPromptForTapDialog();				
 			} catch (IOException e) {
 				// TODO set a bad result here
 				nfcAwareActivity.showException(e);
+				secureElementTransactionSigner.clear();
 			}
 		}
 	}

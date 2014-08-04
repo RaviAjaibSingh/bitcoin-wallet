@@ -514,7 +514,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 
 	
-	private void showPromptForTapDialog() {
+	public void showPromptForTapDialog() {
 		PromptForTapDialogFragment.prompt(getSupportFragmentManager());
 	}
 	

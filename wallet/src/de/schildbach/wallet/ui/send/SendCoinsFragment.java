@@ -871,7 +871,7 @@ public final class SendCoinsFragment extends SherlockFragment
 			wallet.completeTx(sendRequest);
 			com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
 			// TODO: only enable signing caching for devices that need it
-			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, true);
+			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, false);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {

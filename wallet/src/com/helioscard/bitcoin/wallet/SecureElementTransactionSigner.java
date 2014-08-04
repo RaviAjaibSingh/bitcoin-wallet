@@ -39,9 +39,12 @@ public class SecureElementTransactionSigner {
 	private BigInteger _finalAmount;
 	private Wallet _wallet;
 	private String _password;
-	private TransactionSignature[] _transactionSignatures;
+	private TransactionSignature[] _signatures;
+    private ECKey[] _signingKeys;
 	private byte[][] _cachedTransactionIdentifiers;
+	private byte[][] _dataToSign;
 	private boolean _useSignatureCaching;
+	private int _currentInputIndex;
 	
 	private static SecureElementTransactionSigner _secureElementTransactionSigner;
 	public static SecureElementTransactionSigner getInstance() {
@@ -62,6 +65,16 @@ public class SecureElementTransactionSigner {
 		_finalAmount = finalAmount;
 		_wallet = wallet;
 		_useSignatureCaching = useSignatureCaching;
+
+		int numInputs = _transaction.getInputs().size();
+        _signatures = new TransactionSignature[numInputs];
+        _signingKeys = new ECKey[numInputs];
+        
+        _dataToSign = new byte[numInputs][];
+        
+        if (_useSignatureCaching) {
+        	_cachedTransactionIdentifiers = new byte[numInputs][];
+        }
 	}
 	
 	public void setPassword(String password) {
@@ -90,9 +103,12 @@ public class SecureElementTransactionSigner {
 		_finalAmount = null;
 		_wallet = null;
 		_password = null;
-		_transactionSignatures = null;
+		_signatures = null;
+        _signingKeys = null;
 		_cachedTransactionIdentifiers = null;
+		_dataToSign = null;
 		_useSignatureCaching = false;
+		_currentInputIndex = 0;
 	}
 
 	/*
@@ -116,8 +132,6 @@ public class SecureElementTransactionSigner {
         // Note that each input may be claiming an output sent to a different key. So we have to look at the outputs
         // to figure out which key to sign with.
 
-        TransactionSignature[] signatures = new TransactionSignature[inputs.size()];
-        ECKey[] signingKeys = new ECKey[inputs.size()];
 
         // clear all the input scripts, if there were any.
         // in SigAll hash mode, you sign such that all inputs are cleared (it would be impossible to sign otherwise
@@ -127,7 +141,7 @@ public class SecureElementTransactionSigner {
             TransactionInput input = inputs.get(i);
             input.setScriptSig(new Script(TransactionInput.EMPTY_ARRAY));
         }
-        
+
         for (int i = 0; i < inputs.size(); i++) {
             TransactionInput input = inputs.get(i);
             // We don't have the connected output, we assume it was signed already and move on
@@ -155,7 +169,7 @@ public class SecureElementTransactionSigner {
             // This assert should never fire. If it does, it means the wallet is inconsistent.
             checkNotNull(key, "signTransaction: Transaction exists in wallet that we cannot redeem: %s", input.getOutpoint().getHash());
             // Keep the key around for the script creation step below.
-            signingKeys[i] = key;
+            _signingKeys[i] = key;
             // The anyoneCanPay feature isn't used at the moment.
             byte[] connectedPubKeyScript = input.getOutpoint().getConnectedOutput().getScriptBytes();
             
@@ -203,36 +217,67 @@ public class SecureElementTransactionSigner {
 				throw new RuntimeException("No SHA-256 hashing on this device");
 			}
             digest.update(bytesToSignNonHashed);
-            byte[] bytesToSignHashedOnce = digest.digest();
-            
-            // now sign with the smart card - it will hash the bytes a second time
-            // before actually signing, which is what we want because that's what bitcoin does- double hashed signature
-            byte[] signatureFromSecureElement = secureElementApplet.doSimpleSign(_password, ECUtil.getPublicKeyBytesFromEncoding(key.getPubKey(), false), bytesToSignHashedOnce);
-            ECDSASignature ecdsaSignature = ECDSASignature.decodeFromDER(signatureFromSecureElement);
+
+            // collect the data we need to sign for this input - we'll sign it after this loop
+            _dataToSign[i] = digest.digest();
             
             // inputs.get(i).setScriptBytes(TransactionInput.EMPTY_ARRAY);
             input.setScriptSig(new Script(TransactionInput.EMPTY_ARRAY));
-            
-            // signatures[i] = new TransactionSignature(key.sign(hash), SigHash.ALL, false);
-            signatures[i] = new TransactionSignature(ecdsaSignature, SigHash.ALL, false);
         }
-
+        
+        _logger.info("signTransaction: beginning secure element signing loop");
+        for (int i = _currentInputIndex; i < _dataToSign.length; i++) {
+	        // Now get the secure element to sign all the data
+	        byte[] signatureFromSecureElement = null;
+	        if (_useSignatureCaching) {
+	        	// the caller is worried that this device may lose the connection with the secure element in the middle of signing
+	        	// see if the secure element already has a cached signature for us
+	        	if (_cachedTransactionIdentifiers[i] != null) {
+	        		_logger.info("signTransaction: attempting to fetch cached signature for input index " + i);
+	        		byte[] cachedTransactionIdentifier = _cachedTransactionIdentifiers[i];
+	        		_cachedTransactionIdentifiers[i] = null;
+	        		signatureFromSecureElement = secureElementApplet.getCachedSigningDataForIdentifier(_password, cachedTransactionIdentifier);
+	
+	        	} else {
+	        		// ask the secure element to cache the signature so we can retrieve it later in case we lose the connection
+	        		_cachedTransactionIdentifiers[i] = secureElementApplet.enableCachedSigning();
+	        	}
+	        }
+	        
+	        if (signatureFromSecureElement == null) {
+	        	// we didn't get a cached signature
+	        	// now sign with the smart card - it will hash the bytes a second time
+	        	// before actually signing, which is what we want because that's what bitcoin does- double hashed signature
+	    		_logger.info("signTransaction: signing with secure element for input index " + i);
+	        	signatureFromSecureElement = secureElementApplet.doSimpleSign(_password, ECUtil.getPublicKeyBytesFromEncoding(_signingKeys[i].getPubKey(), false), _dataToSign[i]);
+	        } else {
+	    		_logger.info("signTransaction: successfully using cached signature");
+	        }
+	
+	        ECDSASignature ecdsaSignature = ECDSASignature.decodeFromDER(signatureFromSecureElement);
+	        
+	        _signatures[i] = new TransactionSignature(ecdsaSignature, SigHash.ALL, false);
+	        
+	        _currentInputIndex++; // mark that we've signed for one of the inputs - in case the connection gets broken
+        }        
+        
+        
         // Now we have calculated each signature, go through and create the scripts. Reminder: the script consists:
         // 1) For pay-to-address outputs: a signature (over a hash of the simplified transaction) and the complete
         //    public key needed to sign for the connected output. The output script checks the provided pubkey hashes
         //    to the address and then checks the signature.
         // 2) For pay-to-key outputs: just a signature.
         for (int i = 0; i < inputs.size(); i++) {
-            if (signatures[i] == null)
+            if (_signatures[i] == null)
                 continue;
             TransactionInput input = inputs.get(i);
             final TransactionOutput connectedOutput = input.getOutpoint().getConnectedOutput();
             checkNotNull(connectedOutput);  // Quiet static analysis: is never null here but cannot be statically proven
             Script scriptPubKey = connectedOutput.getScriptPubKey();
             if (scriptPubKey.isSentToAddress()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i], signingKeys[i]));
+                input.setScriptSig(ScriptBuilder.createInputScript(_signatures[i], _signingKeys[i]));
             } else if (scriptPubKey.isSentToRawPubKey()) {
-                input.setScriptSig(ScriptBuilder.createInputScript(signatures[i]));
+                input.setScriptSig(ScriptBuilder.createInputScript(_signatures[i]));
             } else {
                 // Should be unreachable - if we don't recognize the type of script we're trying to sign for, we should
                 // have failed above when fetching the key to sign with.

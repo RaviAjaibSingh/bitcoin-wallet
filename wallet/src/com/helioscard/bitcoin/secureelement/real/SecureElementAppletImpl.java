@@ -251,8 +251,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		
 		byte[] commandAPDU = commandAPDUByteArrayOutputStream.toByteArray();
 
-		// TODO: don't log the below to logcat
-		_logger.info("doSimpleSign: Sending command APDU to start signing"  + Util.bytesToHex(commandAPDU));
+		_logger.info("doSimpleSign: Sending command APDU to start signing");
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
 		_logger.info("doSimpleSign: Got response: " + Util.bytesToHex(responseAPDU));
 		ensureResponseEndsWith9000(responseAPDU);
@@ -598,7 +597,48 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		return cachedSigningIdentifier;
     }
     
-    public byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifer) throws IOException {
-    	return null;
+    public byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifier) throws IOException {
+    	_logger.info("getCachedSigningDataForIdentifier: called");
+    	ensureInitialStateRead(false);
+
+		byte[] passwordBytes = null;
+		int lengthOfPasswordBytes = 0;
+		if (password != null && password.length() > 0) {
+			passwordBytes = password.getBytes();
+			lengthOfPasswordBytes = passwordBytes.length;
+		}
+
+		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x09, 0x00, 0x00, (byte)lengthOfPasswordBytes};
+		ByteArrayOutputStream commandAPDUByteArrayOutputStream = new ByteArrayOutputStream(commandAPDUHeader.length + lengthOfPasswordBytes);
+		if (passwordBytes != null) {
+			commandAPDUByteArrayOutputStream.write(passwordBytes);
+		}
+		byte[] commandAPDU = commandAPDUByteArrayOutputStream.toByteArray();
+
+		_logger.info("getCachedSigningDataForIdentifier: Sending command APDU to get cached signing identifier");
+		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
+		_logger.info("getCachedSigningDataForIdentifier: Got response: " + Util.bytesToHex(responseAPDU));
+		ensureResponseEndsWith9000(responseAPDU);
+		
+	    int CACHE_IDENTIFIER_LENGTH = 4;
+		if (responseAPDU.length < CACHE_IDENTIFIER_LENGTH + 1 + 2) {
+			// no data came back - no 4 byte identifier + at least one byte signed data + SW1 + SW2
+			_logger.info("getCachedSigningDataForIdentifier: no cached signature data");
+			return null;
+		}
+		
+		// the first 4 bytes are the cache identifier, the remaining bytes are the signature data
+		for (int i = 0; i < CACHE_IDENTIFIER_LENGTH; i++) {
+			if (cacheIdentifier[i] != responseAPDU[i]) {
+				_logger.info("getCachedSigningDataForIdentifier: cache identifiers not equal, returning nothing");
+				return null;
+			}
+		}
+		
+		// return the signature data
+		byte[] signatureData = new byte[responseAPDU.length - CACHE_IDENTIFIER_LENGTH - 2]; // enough space subtract the cache identifier and the SW1/SW2 bytes
+		System.arraycopy(responseAPDU, CACHE_IDENTIFIER_LENGTH, signatureData, 0, signatureData.length);
+		_logger.info("getCachedSigningDataForIdentifier: returning signature data of " + Util.bytesToHex(signatureData));
+		return signatureData;
     }
 }

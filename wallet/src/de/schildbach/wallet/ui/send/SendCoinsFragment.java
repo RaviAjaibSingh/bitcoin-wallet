@@ -18,6 +18,7 @@
 package de.schildbach.wallet.ui.send;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 
@@ -116,6 +117,7 @@ import de.schildbach.wallet.util.Nfc;
 import de.schildbach.wallet.util.PaymentProtocol;
 import de.schildbach.wallet.util.WalletUtils;
 import com.helioscard.bitcoin.R;
+
 
 /**
  * @author Andreas Schildbach
@@ -840,6 +842,11 @@ public final class SendCoinsFragment extends SherlockFragment
 		}
 	}
 
+	/* BEGIN CUSTOM CHANGE */
+	private Transaction _pendingTransaction;
+	private Address _pendingReturnAddress;
+	private BigInteger _pendingFinalAmount;
+	/* END CUSTOM CHANGE */
 	private void handleGo()
 	{
 		state = State.PREPARATION;
@@ -856,6 +863,47 @@ public final class SendCoinsFragment extends SherlockFragment
 		sendRequest.changeAddress = returnAddress;
 		sendRequest.emptyWallet = paymentIntent.mayEditAmount() && finalAmount.equals(wallet.getBalance(BalanceType.AVAILABLE));
 
+		/* BEGIN CUSTOM CHANGE */
+		// Prompt the user to tap the card so we can sign the transaction
+		try {
+			wallet.completeTx(sendRequest);
+			_pendingTransaction = sendRequest.tx;
+			_pendingReturnAddress = returnAddress;
+			_pendingFinalAmount = finalAmount;
+			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
+			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
+		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
+			// TODO set a bad result here
+			log.error("handleCardDetected: InsufficientMoneyException e: " + e.toString());				
+		}
+		/* END CUSTOM CHANGE */
+	}
+
+	/* BEGIN CUSTOM CHANGE */
+	public void handleCardDetected(com.helioscard.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+		// The SendCoinsActivity parent of this fragment will listen for card detection events and route the calls here
+		log.info("handleCardDetected called");
+		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
+		if (_pendingTransaction != null && authenticated) {
+			try {
+				// sign the transaction using the smart card
+				com.helioscard.bitcoin.wallet.BitcoinJUtils.signTransaction(secureElementApplet, _pendingTransaction, wallet, password);
+				
+				// commit the transaction to the wallet (don't send it yet though)
+				wallet.commitTx(_pendingTransaction);
+				
+				sendTransaction(_pendingTransaction);
+			} catch (IOException e) {
+				// TODO set a bad result here
+				nfcAwareActivity.showException(e);
+			}
+		}
+	}
+	/* END CUSTOM CHANGE */
+	
+	/* BEGIN CUSTOM CHANGE */
+	private void sendTransaction(final Transaction incomingTransaction) {
+	/* END CUSTOM CHANGE */
 		new SendCoinsOfflineTask(wallet, backgroundHandler)
 		{
 			@Override
@@ -868,9 +916,13 @@ public final class SendCoinsFragment extends SherlockFragment
 
 				sentTransaction.getConfidence().addEventListener(sentTransactionConfidenceListener);
 
-				final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, returnAddress, finalAmount, null,
+				/* BEGIN CUSTOM CHANGE */
+				// final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, returnAddress, finalAmount, null,
+				//		paymentIntent.payeeData);
+				final Payment payment = PaymentProtocol.createPaymentMessage(sentTransaction, _pendingReturnAddress, _pendingFinalAmount, null,
 						paymentIntent.payeeData);
-
+				/* END CUSTOM CHANGE */
+				
 				directPay(payment);
 
 				application.broadcastTransaction(sentTransaction);
@@ -986,7 +1038,10 @@ public final class SendCoinsFragment extends SherlockFragment
 				dialog.setNeutralButton(R.string.button_dismiss, null);
 				dialog.show();
 			}
-		}.sendCoinsOffline(sendRequest); // send asynchronously
+		/* BEGIN CUSTOM CHANGE */
+		// }.sendCoinsOffline(sendRequest); // send asynchronously
+		}.sendCoinsOffline(null, incomingTransaction); // send asynchronously
+		/* END CUSTOM CHANGE */
 	}
 
 	private void handleScan()

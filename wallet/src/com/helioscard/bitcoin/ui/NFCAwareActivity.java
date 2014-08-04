@@ -404,7 +404,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		return true;
 	}
 	
-	protected SecureElementApplet getSecureElementAppletPromptIfNeeded(boolean requirePassword, boolean useExistingSessionIfPossible) {
+	public SecureElementApplet getSecureElementAppletPromptIfNeeded(boolean requirePassword, boolean useExistingSessionIfPossible) {
 		if (!checkIfNFCRadioOnPromptUser(true)) {
 			// the NFC radio isn't on, the user is being prompted to turn it on
 			return null;

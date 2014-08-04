@@ -4,6 +4,7 @@ package com.helioscard.bitcoin.wallet;
 import java.util.Arrays;
 import java.util.List;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import org.slf4j.Logger;
@@ -69,7 +70,7 @@ public class WalletGlobals {
         return cardIdentifierWasChanged;
     }
     
-	public static boolean synchronizeKeys(Context context, Wallet wallet, List<ECKeyEntry> listFromSecureElement) {		
+	public static boolean synchronizeKeys(Activity activityContext, Wallet wallet, List<ECKeyEntry> listFromSecureElement, boolean wipeWalletIfNeeded) {		
 		boolean serviceNeedsToClearAndRestart = false;
 		
 		// get the list from the secure element
@@ -86,7 +87,7 @@ public class WalletGlobals {
 				if (keyFound) {
 					// we found a match - break
 					// but also make sure the names are synchronized
-					IntegrationConnector.setLabelForAddress(context, new Address(Constants.NETWORK_PARAMETERS, keyFromCachedWallet.getPubKeyHash()), keyFromSecureElement.getFriendlyName());
+					IntegrationConnector.setLabelForAddress(activityContext, new Address(Constants.NETWORK_PARAMETERS, keyFromCachedWallet.getPubKeyHash()), keyFromSecureElement.getFriendlyName());
 					_logger.info("synchronizeKeysWithSecureElement: matched key from secure element with cache");
 					break;
 				}
@@ -103,18 +104,13 @@ public class WalletGlobals {
 
 				// delete all the keys in the cached wallet
 				for (ECKey keyToDeleteInCachedWallet : listFromCachedWallet) {
-
-					// TODO: fix this to remove friendly name
-					// removeKey(keyToDeleteInCachedWallet);
-					
-					wallet.removeKey(keyToDeleteInCachedWallet);
-					
+					removeECKeyFromCachedWallet(activityContext, wallet, keyToDeleteInCachedWallet);
 				}
-				
-				wallet.clearTransactions(0);
 
-				// _friendlyNameWalletExtension.clearFriendlyNames();
-				
+				if (wipeWalletIfNeeded) {
+					wallet.clearTransactions(0);
+				}
+
 				cachedWalletWasCleared = true;
 
 				// now make the keys in the cached wallet equal to the keys in the secure element
@@ -123,7 +119,7 @@ public class WalletGlobals {
 					
 					// TODO: fix this to include friendly name
 					// addECKeyEntryToWallet(keyFromSecureElementToAddToCachedWallet);
-					addECKeyEntryToWallet(context, wallet, keyFromSecureElementToAddToCachedWallet);
+					addECKeyEntryToCachedWallet(activityContext, wallet, keyFromSecureElementToAddToCachedWallet);
 				}
 				
 				break;
@@ -149,10 +145,7 @@ public class WalletGlobals {
 					_logger.info("synchronizeKeysWithSecureElement: removing a cached wallet key");
 					serviceNeedsToClearAndRestart = true;
 					
-					// TODO: remove the friendly name?
-					// TODO: do we have to cleanup the extra transactions in the wallet?  We probably have extra ones now
-					// that we don't need
-					wallet.removeKey(keyFromCachedWallet);
+					removeECKeyFromCachedWallet(activityContext, wallet, keyFromCachedWallet);
 				}
 			}
 		}
@@ -160,7 +153,7 @@ public class WalletGlobals {
 		return serviceNeedsToClearAndRestart;
 	}
 
-	public static void addECKeyEntryToWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {
+	public static void addECKeyEntryToCachedWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {
 		byte[] publicKeyBytes = keyToAdd.getPublicKeyBytes();
 		ECKey ecKeyToAdd = new ECKey(null, publicKeyBytes);
 
@@ -171,11 +164,35 @@ public class WalletGlobals {
 			ecKeyToAdd.setCreationTimeSeconds(timeOfCreation);
 		}
 		
-		IntegrationConnector.setLabelForAddress(context, new Address(Constants.NETWORK_PARAMETERS, ecKeyToAdd.getPubKeyHash()), keyToAdd.getFriendlyName());
+		IntegrationConnector.setLabelForAddress(context, ecKeyToAdd.toAddress(Constants.NETWORK_PARAMETERS), keyToAdd.getFriendlyName());
 		wallet.addKey(ecKeyToAdd);
 
 		// TODO: do something about friendly names
 		// addKey(ecKeyToAdd, keyToAdd.getFriendlyName());
 	}
 	
+	public static void removeECKeyFromCachedWallet(Activity activityContext, byte[] publicKeyBytes) {
+		// remove the key from the local cached wallet
+		ECKey ecKey = new ECKey(null, publicKeyBytes);
+		Wallet wallet = IntegrationConnector.getWallet(activityContext);
+		
+		// TODO: fix the race condition below where we are deleting a key from the wallet and restarting the block chain
+		// but the device could reset in between
+		
+		// remove it from the cached wallet
+		removeECKeyFromCachedWallet(activityContext, wallet, ecKey);
+		
+		// remove all transactions - we have to restart the blockchain
+		wallet.clearTransactions(0);
+		
+		// race condition - restart the service
+		IntegrationConnector.deleteBlockchainAndRestartService(activityContext);
+	}
+	
+	public static void removeECKeyFromCachedWallet(Context context, Wallet wallet, ECKey ecKeyToRemove) {
+		wallet.removeKey(ecKeyToRemove);
+		
+		// now remove the address from the address book
+		IntegrationConnector.setLabelForAddress(context, ecKeyToRemove.toAddress(Constants.NETWORK_PARAMETERS), null);		
+	}
 }

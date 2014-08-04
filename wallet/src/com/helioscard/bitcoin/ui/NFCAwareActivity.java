@@ -13,6 +13,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -48,7 +49,7 @@ import com.helioscard.bitcoin.secureelement.simulated.SecureElementAppletSimulat
 import com.helioscard.bitcoin.wallet.WalletGlobals;
 
 import com.google.bitcoin.core.Address;
-import com.google.bitcoin.core.AddressFormatException;
+import com.google.bitcoin.core.ECKey;
 import com.google.bitcoin.core.Wallet;
 
 public abstract class NFCAwareActivity extends SherlockFragmentActivity {
@@ -65,16 +66,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private static final String INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE = "INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE";
     private static final String INSTANCE_STATE_PENDING_ADD_KEY_LABEL = "INSTANCE_STATE_PENDING_ADD_KEY_LABEL";
     private static final String INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY = "INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY";
-    private static final String INSTANCE_STATE_PENDING_EDIT_ADDRESS = "INSTANCE_STATE_PENDING_EDIT_ADDRESS";
     private static final String INSTANCE_STATE_PENDING_EDIT_LABEL = "INSTANCE_STATE_PENDING_EDIT_LABEL";
+    private static final String INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES = "INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES";
     
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
     private String _pendingAddKeyLabel;
     private byte[] _pendingEditPublicKey;
-    private String _pendingEditAddress;
     private String _pendingEditLabel;
-    
+    private byte[] _pendingDeleteKeyPublicKeyBytes;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -133,8 +133,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	outState.putBoolean(INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE, _pendingUseExistingSessionIfPossible);
     	outState.putString(INSTANCE_STATE_PENDING_ADD_KEY_LABEL, _pendingAddKeyLabel);
     	outState.putByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY, _pendingEditPublicKey);
-    	outState.putString(INSTANCE_STATE_PENDING_EDIT_ADDRESS, _pendingEditAddress);
     	outState.putString(INSTANCE_STATE_PENDING_EDIT_LABEL, _pendingEditLabel);
+    	outState.putByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES, _pendingDeleteKeyPublicKeyBytes);
     }
     
     @Override
@@ -146,8 +146,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	_pendingUseExistingSessionIfPossible = savedInstanceState.getBoolean(INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE, false);
     	_pendingAddKeyLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_ADD_KEY_LABEL);
     	_pendingEditPublicKey = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY);
-    	_pendingEditAddress = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_ADDRESS);
     	_pendingEditLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_LABEL);
+    	_pendingDeleteKeyPublicKeyBytes = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES);
     }
 
     @Override
@@ -205,8 +205,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 // TODO: there's a race condition here, where the wallet has the newly synchronized keys, but it could be the case we had to
                 // tell the service to stop and destroy its current block chain file.  But there's a chance the process could be terminated
                 // or the device could be rebooted before the service gets a chance to do that
+	        	FragmentManager fragmentManager = getSupportFragmentManager();
+	        	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
+
                 Wallet wallet = IntegrationConnector.getWallet(this);
-                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries);
+                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries, promptForTapOnceMoreDialogFragment == null);
                 if (serviceNeedsToClearAndRestart) {
                     // the keys between the secure element and our cached copy of public keys didn't match
                     _logger.info("onNewIntent: service needs to clear and restart");
@@ -238,8 +241,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                     }
                 }
 
-	        	FragmentManager fragmentManager = getSupportFragmentManager();
-	        	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
                 
                 if (serviceNeedsToClearAndRestart) {
                 	if (promptForTapOnceMoreDialogFragment == null || cardIdentifierWasChanged ) {
@@ -305,6 +306,35 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         
         return false;
     }
+    
+    public void deleteKeyPreTap(byte[] deleteKeyPublicKeyBytes) {
+		// get a secure element session that is authenticated (authenticated session needed to add a key)
+		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
+		if (secureElementApplet == null) {
+			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
+		    _logger.info("deleteKeyPreTap: waiting for authenticated session");
+		    _pendingDeleteKeyPublicKeyBytes = deleteKeyPublicKeyBytes;
+		    return;
+		}
+		
+		// otherwise we can just keep going and create the key
+	    _logger.info("deleteKeyPreTap: have authenticated session, creating key");
+	    deleteKeyPostTap(secureElementApplet, deleteKeyPublicKeyBytes);
+	}
+	
+	private void deleteKeyPostTap(SecureElementApplet secureElementApplet, byte[] deleteKeyPublicKeyBytes) {
+		_logger.info("deleteKeyPostTap: called");
+		try {
+			secureElementApplet.deleteKey(deleteKeyPublicKeyBytes);
+			// we just deleted a key, delete it from the cached wallet and address book too
+			WalletGlobals.removeECKeyFromCachedWallet(this, deleteKeyPublicKeyBytes);
+		} catch (IOException e) {
+			showException(e);
+			// we might be down to 0 keys, in which case we need to show a dialog prompting the user to add one
+			showGetStartedDialogIfNeeded();
+		}
+	}
+
     
     protected void showGetStartedDialogIfNeeded() {
     	FragmentManager fragmentManager = getSupportFragmentManager();
@@ -520,7 +550,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// we just generated a key on the card and got back the public key bytes
 			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
 			// to the key
-			WalletGlobals.addECKeyEntryToWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
+			WalletGlobals.addECKeyEntryToCachedWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
 
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
@@ -537,7 +567,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 
-	public void editKeyPreTap(byte[] editPublicKey, String editAddress, String editLabel) {
+	public void editKeyPreTap(byte[] editPublicKey, String editLabel) {
 		_logger.info("editKeyPreTap: called");
 		
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
@@ -546,31 +576,28 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// there was no authenticated session established - the user is now being prompted to provide one, so just bail out for now
 		    _logger.info("editKeyPreTap: waiting for authenticated session");
 		    _pendingEditPublicKey = editPublicKey;
-		    _pendingEditAddress = editAddress;
 		    _pendingEditLabel = editLabel;
 		    return;
 		}
 		
 		// otherwise we can just keep going and create the key
 	    _logger.info("editKeyPreTap: have authenticated session, editing key");
-	    editKeyPostTap(secureElementApplet, editPublicKey, editAddress, editLabel);
+	    editKeyPostTap(secureElementApplet, editPublicKey, editLabel);
 	}
 
 	
-	private void editKeyPostTap(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editAddress, String editLabel) {
+	private void editKeyPostTap(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editLabel) {
 		_logger.info("editKeyPostTap: called");
 		try {
 			// update the label on the secure element
 			secureElementApplet.changeLabel(editPublicKey, editLabel);
 			
 			// update the label in the local content provider
-			IntegrationConnector.setLabelForAddress(this, new Address(Constants.NETWORK_PARAMETERS, editAddress), editLabel);
+			IntegrationConnector.setLabelForAddress(this, new ECKey(null, editPublicKey).toAddress(Constants.NETWORK_PARAMETERS), editLabel);
 			
 			// update the key label in the content provider as well
 		} catch (IOException e) {
 			showException(e);
-		} catch (AddressFormatException e) {
-			_logger.error("editKeyPostTap: AddressFormatException: " + e.toString());
 		}
 	}
 
@@ -588,9 +615,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_pendingEditPublicKey = null;
 			String pendingEditLabel = _pendingEditLabel;
 			_pendingEditLabel = null;
-			String pendingEditAddress = _pendingEditAddress;
-			_pendingEditAddress = null;
-			editKeyPostTap(secureElementApplet, pendingEditPublicKey, pendingEditAddress, pendingEditLabel);
+			editKeyPostTap(secureElementApplet, pendingEditPublicKey, pendingEditLabel);
+			return;
+		} else if (_pendingDeleteKeyPublicKeyBytes != null && authenticated) {
+			byte[] pendingDeleteKeyPublicKeyBytes = _pendingDeleteKeyPublicKeyBytes;
+			_pendingDeleteKeyPublicKeyBytes = null;
+			deleteKeyPreTap(pendingDeleteKeyPublicKeyBytes);
 			return;
 		}
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
@@ -604,8 +634,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_pendingCardPassword = null;
 		_pendingAddKeyLabel = null;
 		_pendingEditPublicKey = null;
-		_pendingEditAddress = null;
 		_pendingEditLabel = null;
+	    _pendingDeleteKeyPublicKeyBytes = null;
 		
        	// we have no keys in the wallet - prompt the user to add one
         showGetStartedDialogIfNeeded();

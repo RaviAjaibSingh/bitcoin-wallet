@@ -563,6 +563,19 @@ public final class SendCoinsFragment extends SherlockFragment
 				if (state == State.INPUT)
 					activity.setResult(Activity.RESULT_CANCELED);
 
+				/* BEGIN CUSTOM CHANGE */
+				if (state == State.PREPARATION) {
+					// end the signing operation and go back to the input state
+					if (_secureElementTransactionSigner != null) {
+						_secureElementTransactionSigner.cancel(true);
+						_secureElementTransactionSigner = null;
+					}
+					state = State.INPUT;
+					updateView();
+					return;
+				}
+				/* END CUSTOM CHANGE */
+				
 				activity.finish();
 			}
 		});
@@ -585,6 +598,9 @@ public final class SendCoinsFragment extends SherlockFragment
 			_signingProgressBar.setProgress(_secureElementTransactionSigner.getProgress());
 			_signingProgressTextView.setVisibility(View.VISIBLE);
 			_signingProgressBar.setVisibility(View.VISIBLE);
+		} else {
+			_signingProgressTextView.setVisibility(View.GONE);			
+			_signingProgressBar.setVisibility(View.GONE);
 		}
 	}
 	/* END CUSTOM CHANGE */
@@ -638,6 +654,12 @@ public final class SendCoinsFragment extends SherlockFragment
 
 		if (sentTransaction != null)
 			sentTransaction.getConfidence().removeEventListener(sentTransactionConfidenceListener);
+
+		/* BEGIN CUSTOM CHANGE */
+		if (_secureElementTransactionSigner != null) {
+			_secureElementTransactionSigner.cancel(true);
+			_secureElementTransactionSigner = null;
+		}
 
 		super.onDestroy();
 	}
@@ -887,7 +909,6 @@ public final class SendCoinsFragment extends SherlockFragment
 		// Prompt the user to tap the card so we can sign the transaction
 		try {
 			wallet.completeTx(sendRequest);
-			// TODO: only enable signing caching for devices that need it
 			_secureElementTransactionSigner = new com.helioscard.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet, false);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
@@ -912,21 +933,29 @@ public final class SendCoinsFragment extends SherlockFragment
 	public void secureElementTransactionListenerSignerFinished(int result) {
 		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 		if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.FINISHED) {
-			_signingProgressTextView.setVisibility(View.INVISIBLE);
-			_signingProgressBar.setVisibility(View.INVISIBLE);
+			setProgressViewsInitialState();
 			// commit the transaction to the wallet and then send the transaction
 			Transaction transaction = _secureElementTransactionSigner.getTransaction();
-			// wallet.commitTx(transaction);
-			// sendTransaction(transaction, _secureElementTransactionSigner.getReturnAddress(), _secureElementTransactionSigner.getFinalAmount());
+			Address returnAddress = _secureElementTransactionSigner.getReturnAddress();
+			BigInteger finalAmount = _secureElementTransactionSigner.getFinalAmount();
+			_secureElementTransactionSigner = null;
+			wallet.commitTx(transaction);
+			sendTransaction(transaction, returnAddress, finalAmount);
 		} else if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.TAG_LOST) {
 			// The secure element might have taken too long to do the signing and we dropped the connection during the
 	        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap
 			// in which case this function will be called and we'll try again
 			log.info("handleCardDetected: TagLostException");
-			nfcAwareActivity.showPromptForTapDialog();				
-		} else {
-			// TODO: Some other error occurred, log and show an error
+			nfcAwareActivity.showPromptForTapDialog(false);				
+		} else if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.ERROR) {
 			log.error("secureElementTransactionListenerSignerFinished: error!");
+			// this shouldn't ever happen, no need to localize
+			_secureElementTransactionSigner = null;
+			state = State.FAILED;
+			updateView();
+			android.widget.Toast.makeText(getActivity(), "Unknown error while signing", android.widget.Toast.LENGTH_LONG).show();			
+		} else if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.CANCELED) {
+			log.info("secureElementTransactionListenerSignerFinished: canceled!");
 			_secureElementTransactionSigner = null;
 		}
 	}
@@ -951,6 +980,20 @@ public final class SendCoinsFragment extends SherlockFragment
 			_secureElementTransactionSigner.execute(secureElementApplet);
 		}
 	}
+	
+	public void userCanceledSecureElementPrompt() {
+		log.info("userCanceledSecureElementPrompt: called");
+		// The user was being prompted to tap a secure element or enter a secure element password, and the user canceled
+		// if we were in the middle of signing, we should cancel that now and let the user do more input
+		if (_secureElementTransactionSigner != null) {
+			_secureElementTransactionSigner.cancel(true);
+			_secureElementTransactionSigner = null;
+		}
+		
+		state = State.INPUT;
+		updateView();
+	}
+	
 	/* END CUSTOM CHANGE */
 	
 	/* BEGIN CUSTOM CHANGE */
@@ -1268,7 +1311,10 @@ public final class SendCoinsFragment extends SherlockFragment
 				directPaymentMessageView.setVisibility(View.GONE);
 			}
 
-			viewCancel.setEnabled(state != State.PREPARATION);
+			/* BEGIN CUSTOM CHANGE */
+			// let the view cancel button be enabled all the time so the user can cancel during signing
+			// viewCancel.setEnabled(state != State.PREPARATION);
+			/* END CUSTOM CHANGE */
 			viewGo.setEnabled(everythingValid());
 
 			if (state == State.INPUT)
@@ -1314,6 +1360,10 @@ public final class SendCoinsFragment extends SherlockFragment
 		{
 			getView().setVisibility(View.GONE);
 		}
+		
+		/* BEGIN CUSTOM CHANGE */
+		setProgressViewsInitialState();
+		/* END CUSTOM CHANGE */
 	}
 
 	private void initStateFromIntentExtras(@Nonnull final Bundle extras)

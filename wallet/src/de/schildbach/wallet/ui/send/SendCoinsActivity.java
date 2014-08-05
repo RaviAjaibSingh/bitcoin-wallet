@@ -92,5 +92,12 @@ public final class SendCoinsActivity extends AbstractBindServiceActivity
 		SendCoinsFragment sendCoinsFragment = (SendCoinsFragment)getSupportFragmentManager().findFragmentById(R.id.send_coins_fragment);
 		sendCoinsFragment.handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
 	}
+
+	@Override
+	protected void userCanceledSecureElementPrompt() {
+		// Route this call to the sendCoinsFragment, if it's interested
+		SendCoinsFragment sendCoinsFragment = (SendCoinsFragment)getSupportFragmentManager().findFragmentById(R.id.send_coins_fragment);
+		sendCoinsFragment.userCanceledSecureElementPrompt();
+	}
 	/* END CUSTOM CHANGE */
 }

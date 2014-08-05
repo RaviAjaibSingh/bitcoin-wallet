@@ -63,7 +63,7 @@ public class PromptForLabelDialogFragment extends DialogFragment {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					nfcAwareActivity.userCanceledSecureElementPrompt();
+					nfcAwareActivity.userCanceledSecureElementPromptSuper();
 				  }
 				});
 		

@@ -5,6 +5,7 @@
     <string name="nfc_aware_activity_get_started_dialog_create_new_key">Create New Key</string>    
     <string name="nfc_aware_activity_prompt_for_tap_dialog_title">Card Needed</string>
     <string name="nfc_aware_activity_prompt_for_tap_dialog_message">Please hold your card against the device to continue.</string>
+    <string name="nfc_aware_activity_prompt_for_tap_reposition">The connection to your card was lost.  Please move it away from your handheld device and tap it again.  If you see this message frequently, you may have to reposition where you hold the card relative to the handheld device.</string>    
     <string name="nfc_aware_activity_tap_to_continue_dialog_title">Tap Once More</string>
     <string name="nfc_aware_activity_tap_to_continue_dialog_message">Please remove your card and tap it once more to the device to finish.</string>
     <string name="nfc_aware_activity_prompt_for_password_title">Password Needed</string>

@@ -40,6 +40,7 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	public static final int FINISHED = 0;
 	public static final int TAG_LOST = 1;
 	public static final int ERROR = 2;
+	public static final int CANCELED = 3;
 	
 	private volatile Listener _listener;
 	private volatile Transaction _transaction;
@@ -124,7 +125,7 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	@Override
 	protected Integer doInBackground(SecureElementApplet... params) {
         _logger.info("signTransaction: attempting to sign transaction");
-
+        int resultCode = SecureElementTransactionSigner.FINISHED;
         try {
 	        SecureElementApplet secureElementApplet = params[0];
 	        List<TransactionInput> inputs = _transaction.getInputs();
@@ -150,7 +151,11 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	        }
 	
 	        for (int i = 0; i < inputs.size(); i++) {
-	            TransactionInput input = inputs.get(i);
+	        	if (this.isCancelled()) {
+	        		resultCode = SecureElementTransactionSigner.CANCELED;
+	        		break;
+	        	}
+	        	TransactionInput input = inputs.get(i);
 	            // We don't have the connected output, we assume it was signed already and move on
 	            if (input.getOutpoint().getConnectedOutput() == null) {
 	                _logger.warn("signTransaction: Missing connected output, assuming input {} is already signed.", i);
@@ -234,7 +239,11 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	        
 	        _logger.info("signTransaction: beginning secure element signing loop");
 	        for (int i = _currentInputIndex; i < _dataToSign.length; i++) {
-		        // Now get the secure element to sign all the data
+	        	if (this.isCancelled()) {
+	        		resultCode = SecureElementTransactionSigner.CANCELED;
+	        		break;
+	        	}
+	        	// Now get the secure element to sign all the data
 		        byte[] signatureFromSecureElement = null;
 		        if (_useSignatureCaching) {
 		        	// the caller is worried that this device may lose the connection with the secure element in the middle of signing
@@ -277,7 +286,12 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	        //    to the address and then checks the signature.
 	        // 2) For pay-to-key outputs: just a signature.
 	        for (int i = 0; i < inputs.size(); i++) {
-	            if (_signatures[i] == null)
+	        	if (this.isCancelled()) {
+	        		resultCode = SecureElementTransactionSigner.CANCELED;
+	        		break;
+	        	}
+
+	        	if (_signatures[i] == null)
 	                continue;
 	            TransactionInput input = inputs.get(i);
 	            final TransactionOutput connectedOutput = input.getOutpoint().getConnectedOutput();
@@ -297,13 +311,13 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	        _logger.info("signTransaction: successfully signed transaction");
         } catch (TagLostException e) {
         	_logger.info("signTransaction: got TagLostException");
-        	return SecureElementTransactionSigner.TAG_LOST;
+        	resultCode = SecureElementTransactionSigner.TAG_LOST;
         } catch (IOException e) {
         	_logger.error("signTransaction: got IOException: " + e.toString());
-        	return SecureElementTransactionSigner.ERROR;
+        	resultCode = SecureElementTransactionSigner.ERROR;
         }
 
-		return SecureElementTransactionSigner.FINISHED;
+		return resultCode;
 	}
 	
 	@Override

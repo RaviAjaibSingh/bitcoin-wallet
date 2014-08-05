@@ -14,8 +14,14 @@ import com.helioscard.bitcoin.R;
 public class PromptForTapDialogFragment extends DialogFragment {
     public static final String TAG = "PromptForTapDialogFragment";
 
-	public static void prompt(FragmentManager fragmentManager) {
+    public static final String FIELD_TYPE = "type";
+	public static void prompt(FragmentManager fragmentManager, boolean type) {
 		PromptForTapDialogFragment frag = new PromptForTapDialogFragment();
+		
+		Bundle arguments = new Bundle();
+		arguments.putBoolean(FIELD_TYPE, type);
+		frag.setArguments(arguments);
+		
     	frag.show(fragmentManager, TAG);
 	}
 
@@ -28,16 +34,24 @@ public class PromptForTapDialogFragment extends DialogFragment {
 		// set title
 		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title));
  
+		String alertDialogMessage;
+		boolean type = getArguments().getBoolean(FIELD_TYPE);
+		if (type == true) {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message);
+		} else {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_reposition);
+		}
+		
 			// set dialog message
 		alertDialogBuilder
-			.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message))
+			.setMessage(alertDialogMessage)
 			.setCancelable(false)
 			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					nfcAwareActivity.userCanceledSecureElementPrompt();
+					nfcAwareActivity.userCanceledSecureElementPromptSuper();
 				  }
 				});
  

@@ -428,7 +428,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				if (requirePassword) {
 					showPromptForPasswordDialog();
 				} else {
-					showPromptForTapDialog();
+					showPromptForTapDialog(true);
 				}
 				return _cachedSecureElementApplet;
 			}
@@ -514,8 +514,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 
 	
-	public void showPromptForTapDialog() {
-		PromptForTapDialogFragment.prompt(getSupportFragmentManager());
+	// if type = true - just prompts the user to tap
+	// if type = false - prompts the user to tap to finish signing, connection was lost
+	public void showPromptForTapDialog(boolean type) {
+		PromptForTapDialogFragment.prompt(getSupportFragmentManager(), type);
 	}
 	
 	public void promptToAddKey() {
@@ -631,7 +633,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		// default implementation does nothing, override to hear about card detection events
 	}
 
-	protected void userCanceledSecureElementPrompt() {
+	protected void userCanceledSecureElementPromptSuper() {
 		_pendingCardPassword = null;
 		_pendingAddKeyLabel = null;
 		_pendingEditPublicKey = null;
@@ -640,6 +642,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		
        	// we have no keys in the wallet - prompt the user to add one
         showGetStartedDialogIfNeeded();
+        
+        userCanceledSecureElementPrompt();
+	}
+	
+	protected void userCanceledSecureElementPrompt() {
+		// subclasses can override this if they want to hear about this event
 	}
 
 	// utility method for subclasses to show errors

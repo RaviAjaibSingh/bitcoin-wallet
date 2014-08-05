@@ -572,9 +572,22 @@ public final class SendCoinsFragment extends SherlockFragment
 		/* BEGIN CUSTOM CHANGE */
 		_signingProgressTextView = (TextView)view.findViewById(R.id.send_coins_progress_indicator_text_view);
 		_signingProgressBar = (android.widget.ProgressBar)view.findViewById(R.id.send_coins_progress_indicator_progress_bar);
+		setProgressViewsInitialState();
 		/* END CUSTOM CHANGE */
 		return view;
 	}
+	
+	/* BEGIN CUSTOM CHANGE */
+	private void setProgressViewsInitialState() {
+		// We're currently in the middle of signing a transaction
+		if (_secureElementTransactionSigner != null) {
+			_signingProgressTextView.setText( String.format(getResources().getString(R.string.integration_progress_text), _secureElementTransactionSigner.getNumInputs())  );
+			_signingProgressBar.setProgress(_secureElementTransactionSigner.getProgress());
+			_signingProgressTextView.setVisibility(View.VISIBLE);
+			_signingProgressBar.setVisibility(View.VISIBLE);
+		}
+	}
+	/* END CUSTOM CHANGE */
 
 	@Override
 	public void onDestroyView()
@@ -880,11 +893,7 @@ public final class SendCoinsFragment extends SherlockFragment
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 			
 			// update the UI to show progress about how the signing is going
-			_signingProgressTextView.setText( String.format(getResources().getString(R.string.integration_progress_text), _secureElementTransactionSigner.getNumInputs())  );
-			_signingProgressTextView.setVisibility(View.VISIBLE);
-			_signingProgressBar.setProgress(0);
-			_signingProgressBar.setVisibility(View.VISIBLE);
-			
+			setProgressViewsInitialState();			
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
 			// TODO set a bad result here
 			log.error("handleCardDetected: InsufficientMoneyException e: " + e.toString());				
@@ -918,6 +927,7 @@ public final class SendCoinsFragment extends SherlockFragment
 		} else {
 			// TODO: Some other error occurred, log and show an error
 			log.error("secureElementTransactionListenerSignerFinished: error!");
+			_secureElementTransactionSigner = null;
 		}
 	}
 	/* END CUSTOM CHANGE */

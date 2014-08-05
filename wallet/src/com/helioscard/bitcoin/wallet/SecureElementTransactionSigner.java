@@ -312,6 +312,10 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
     	_listener.secureElementTransactionSignerProgress(progress[0]);
     }
 	
+	public int getProgress() {
+		return (int)((_currentInputIndex / (float)getNumInputs()) * 100);
+	}
+	
     @Override
     protected void onPostExecute(Integer result) {
         _logger.info("onPostExecute: " + result);

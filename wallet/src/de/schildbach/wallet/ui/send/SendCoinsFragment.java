@@ -179,7 +179,9 @@ public final class SendCoinsFragment extends SherlockFragment
 	private static final int REQUEST_CODE_ENABLE_BLUETOOTH_FOR_DIRECT_PAYMENT = 2;
 
 	/* BEGIN CUSTOM CHANGE */
-	private com.helioscard.bitcoin.wallet.SecureElementTransactionSigner _secureElementTransactionSigner; 	
+	private com.helioscard.bitcoin.wallet.SecureElementTransactionSigner _secureElementTransactionSigner;
+	private TextView _signingProgressTextView;
+	private android.widget.ProgressBar _signingProgressBar;
 	/* END CUSTOM CHANGE */
 	
 	private static final Logger log = LoggerFactory.getLogger(SendCoinsFragment.class);
@@ -567,6 +569,10 @@ public final class SendCoinsFragment extends SherlockFragment
 
 		popupMessageView = (TextView) inflater.inflate(R.layout.send_coins_popup_message, container);
 
+		/* BEGIN CUSTOM CHANGE */
+		_signingProgressTextView = (TextView)view.findViewById(R.id.send_coins_progress_indicator_text_view);
+		_signingProgressBar = (android.widget.ProgressBar)view.findViewById(R.id.send_coins_progress_indicator_progress_bar);
+		/* END CUSTOM CHANGE */
 		return view;
 	}
 
@@ -869,9 +875,16 @@ public final class SendCoinsFragment extends SherlockFragment
 		try {
 			wallet.completeTx(sendRequest);
 			// TODO: only enable signing caching for devices that need it
-			_secureElementTransactionSigner = new com.helioscard.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet, true);
+			_secureElementTransactionSigner = new com.helioscard.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet, false);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
+			
+			// update the UI to show progress about how the signing is going
+			_signingProgressTextView.setText( String.format(getResources().getString(R.string.integration_progress_text), _secureElementTransactionSigner.getNumInputs())  );
+			_signingProgressTextView.setVisibility(View.VISIBLE);
+			_signingProgressBar.setProgress(0);
+			_signingProgressBar.setVisibility(View.VISIBLE);
+			
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
 			// TODO set a bad result here
 			log.error("handleCardDetected: InsufficientMoneyException e: " + e.toString());				
@@ -882,17 +895,20 @@ public final class SendCoinsFragment extends SherlockFragment
 	/* BEGIN CUSTOM CHANGE */
 	@Override
 	public void secureElementTransactionSignerProgress(int progress) {
-		// TODO Auto-generated method stub
+		// Update UI with % progress
+		_signingProgressBar.setProgress(progress);
 	}
 
 	@Override
 	public void secureElementTransactionListenerSignerFinished(int result) {
 		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 		if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.FINISHED) {
+			_signingProgressTextView.setVisibility(View.INVISIBLE);
+			_signingProgressBar.setVisibility(View.INVISIBLE);
 			// commit the transaction to the wallet and then send the transaction
 			Transaction transaction = _secureElementTransactionSigner.getTransaction();
-			wallet.commitTx(transaction);
-			sendTransaction(transaction, _secureElementTransactionSigner.getReturnAddress(), _secureElementTransactionSigner.getFinalAmount());
+			// wallet.commitTx(transaction);
+			// sendTransaction(transaction, _secureElementTransactionSigner.getReturnAddress(), _secureElementTransactionSigner.getFinalAmount());
 		} else if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.TAG_LOST) {
 			// The secure element might have taken too long to do the signing and we dropped the connection during the
 	        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap

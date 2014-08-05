@@ -2,4 +2,6 @@
 <resources>
     <string name="general_ok">OK</string>
     <string name="general_cancel">Cancel</string>
+    
+    <string name="integration_progress_text">Signing Data With Card (%1$d Inputs)</string>
 </resources>

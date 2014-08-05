@@ -103,6 +103,10 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 		return _transaction;
 	}
 	
+	public int getNumInputs() {
+		return _transaction.getInputs().size();
+	}
+	
 	public Address getReturnAddress() {
 		return _returnAddress;
 	}
@@ -263,7 +267,7 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 		        
 		        _currentInputIndex++; // mark that we've signed for one of the inputs - in case the connection gets broken
 		        
-		        publishProgress(_currentInputIndex / _dataToSign.length * 100);
+		        publishProgress((int)((_currentInputIndex / (float)_dataToSign.length) * 100));
 	        }        
 	        
 	        

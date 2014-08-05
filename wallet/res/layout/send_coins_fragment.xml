@@ -166,6 +166,33 @@
 		android:textSize="@dimen/font_size_normal"
 		android:visibility="gone" />
 
+    <!-- BEGIN CUSTOM CHANGE -->
+	<TextView
+	    android:id="@+id/send_coins_progress_indicator_text_view"
+		android:visibility="gone"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginLeft="@dimen/list_entry_padding_horizontal_lax"
+		android:layout_marginRight="@dimen/list_entry_padding_horizontal_lax"
+		android:layout_marginTop="8dp"
+		android:textColor="#000"
+		android:textSize="@dimen/font_size_normal"
+		android:textStyle="bold"
+		android:gravity="center"
+		 />
+	
+	<ProgressBar
+	    android:id="@+id/send_coins_progress_indicator_progress_bar"
+	    android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_marginRight="5dp"
+        android:gravity="center"
+        />
+    <!-- END CUSTOM CHANGE -->
+
+	
 	<ListView
 		android:id="@+id/send_coins_sent_transaction"
 		android:layout_width="match_parent"

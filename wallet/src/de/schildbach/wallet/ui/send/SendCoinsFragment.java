@@ -123,7 +123,9 @@ import com.helioscard.bitcoin.R;
  * @author Andreas Schildbach
  */
 public final class SendCoinsFragment extends SherlockFragment
-{
+/* BEGIN CUSTOM CHANGE */
+		implements com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.Listener {
+/* END CUSTOM CHANGE */
 	private AbstractBindServiceActivity activity;
 	private WalletApplication application;
 	private Configuration config;
@@ -176,6 +178,10 @@ public final class SendCoinsFragment extends SherlockFragment
 	private static final int REQUEST_CODE_ENABLE_BLUETOOTH_FOR_PAYMENT_REQUEST = 1;
 	private static final int REQUEST_CODE_ENABLE_BLUETOOTH_FOR_DIRECT_PAYMENT = 2;
 
+	/* BEGIN CUSTOM CHANGE */
+	private com.helioscard.bitcoin.wallet.SecureElementTransactionSigner _secureElementTransactionSigner; 	
+	/* END CUSTOM CHANGE */
+	
 	private static final Logger log = LoggerFactory.getLogger(SendCoinsFragment.class);
 
 	private enum State
@@ -402,13 +408,6 @@ public final class SendCoinsFragment extends SherlockFragment
 	public void onCreate(final Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-
-		/* BEGIN CUSTOM CHANGE */
-		// Clear any signing operation we have ongoing
-		// TODO: only clear if this fragment didn't start the signing operation
-		com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
-		secureElementTransactionSigner.clear();
-		/* END CUSTOM CHANGE */
 		
 		setRetainInstance(true);
 		setHasOptionsMenu(true);
@@ -869,9 +868,8 @@ public final class SendCoinsFragment extends SherlockFragment
 		// Prompt the user to tap the card so we can sign the transaction
 		try {
 			wallet.completeTx(sendRequest);
-			com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
 			// TODO: only enable signing caching for devices that need it
-			secureElementTransactionSigner.setConfiguration(sendRequest.tx, returnAddress, finalAmount, wallet, true);
+			_secureElementTransactionSigner = new com.helioscard.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet, true);
 			com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
 			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
@@ -880,37 +878,51 @@ public final class SendCoinsFragment extends SherlockFragment
 		}
 		/* END CUSTOM CHANGE */
 	}
+	
+	/* BEGIN CUSTOM CHANGE */
+	@Override
+	public void secureElementTransactionSignerProgress(int progress) {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void secureElementTransactionListenerSignerFinished(int result) {
+		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
+		if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.FINISHED) {
+			// commit the transaction to the wallet and then send the transaction
+			Transaction transaction = _secureElementTransactionSigner.getTransaction();
+			wallet.commitTx(transaction);
+			sendTransaction(transaction, _secureElementTransactionSigner.getReturnAddress(), _secureElementTransactionSigner.getFinalAmount());
+		} else if (result == com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.TAG_LOST) {
+			// The secure element might have taken too long to do the signing and we dropped the connection during the
+	        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap
+			// in which case this function will be called and we'll try again
+			log.info("handleCardDetected: TagLostException");
+			nfcAwareActivity.showPromptForTapDialog();				
+		} else {
+			// TODO: Some other error occurred, log and show an error
+			log.error("secureElementTransactionListenerSignerFinished: error!");
+		}
+	}
+	/* END CUSTOM CHANGE */
 
 	/* BEGIN CUSTOM CHANGE */
 	public void handleCardDetected(com.helioscard.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
 		// The SendCoinsActivity parent of this fragment will listen for card detection events and route the calls here
 		log.info("handleCardDetected called");
 		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity();
-		com.helioscard.bitcoin.wallet.SecureElementTransactionSigner secureElementTransactionSigner = com.helioscard.bitcoin.wallet.SecureElementTransactionSigner.getInstance();
-		if (secureElementTransactionSigner.isTransactionInProgress()) {
-			try {
-				if (password != null) {
-					secureElementTransactionSigner.setPassword(password);
-				}
-				// it's possible this is an ongoing transaction - this will continue the signing process or start it from scratch
-				secureElementTransactionSigner.signTransaction(secureElementApplet);
-				
-				// commit the transaction to the wallet (don't send it yet though)
-				Transaction transaction = secureElementTransactionSigner.getTransaction();
-				wallet.commitTx(transaction);
-				sendTransaction(transaction, secureElementTransactionSigner.getReturnAddress(), secureElementTransactionSigner.getFinalAmount());
-				secureElementTransactionSigner.clear();
-			} catch (android.nfc.TagLostException e) {
-				// The secure element might have taken too long to do the signing and we dropped the connection during the
-		        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap
-				// in which case this function will be called and we'll try again
-				log.info("handleCardDetected: TagLostException");
-				nfcAwareActivity.showPromptForTapDialog();				
-			} catch (IOException e) {
-				// TODO set a bad result here
-				nfcAwareActivity.showException(e);
-				secureElementTransactionSigner.clear();
+		if (_secureElementTransactionSigner != null) {
+			if (password != null) {
+				_secureElementTransactionSigner.setPassword(password);
 			}
+
+			// It's possible we've already run once, and we disconnected from the card due to a TagLostException
+			// recreate the AsyncTask based on the old one (we can't re-use the same one in case it already ran) and then run the new one
+			_secureElementTransactionSigner = new com.helioscard.bitcoin.wallet.SecureElementTransactionSigner(_secureElementTransactionSigner);
+			
+			// it's possible this is an ongoing transaction - this will continue the signing process or start it from scratch
+			// it will also run it in the background as its an asynctask
+			_secureElementTransactionSigner.execute(secureElementApplet);
 		}
 	}
 	/* END CUSTOM CHANGE */

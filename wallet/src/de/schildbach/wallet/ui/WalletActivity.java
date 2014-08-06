@@ -158,12 +158,22 @@ public final class WalletActivity extends AbstractWalletActivity
 	@Override
 	public void onNewIntent(Intent intent)
 	{
+		/* BEGIN CUSTOM CHANGE */
+		// Make sure the super class hears about this event in case it's a card tap
 		super.onNewIntent(intent);
+		/* END CUSTOM CHANGE */
 		handleIntent(intent);
 	}
 	
 	private void handleIntent(@Nonnull final Intent intent)
 	{
+		/* BEGIN CUSTOM CHANGE */
+		if (doesIntentComeFromHeliosCard(intent)) {
+			// this tap was a result of a card being tapped - ignore it here
+			return;
+		}
+		/* END CUSTOM CHANGE */
+
 		final String action = intent.getAction();
 
 		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action))

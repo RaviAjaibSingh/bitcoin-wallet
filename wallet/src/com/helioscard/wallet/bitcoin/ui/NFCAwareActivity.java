@@ -16,12 +16,16 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TagLostException;
 import android.nfc.tech.IsoDep;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.os.PatternMatcher;
 import android.provider.Settings;
 import android.text.InputFilter;
 import android.view.KeyEvent;
@@ -61,7 +65,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private NfcAdapter _nfcAdapter;
     private PendingIntent _pendingIntent;
     private IntentFilter[] _intentFiltersArray;
-    private String[][] _techListsArray;
 	
     private static final String INSTANCE_STATE_PENDING_CARD_PASSWORD = "INSTANCE_STATE_PENDING_CARD_PASSWORD";
     private static final String INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE = "INSTANCE_STATE_PENDING_USE_EXISTING_SESSION_IF_POSSIBLE";
@@ -89,19 +92,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         //     This will never happen because we're requiring in the manifest that the device is NFC capable.
         // }
 
-        // IntentFilter ndef = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-        // try {
-        //     ndef.addDataType("*/*");    // Handles all MIME based dispatches. You should specify only the ones that you need
-        // }
-        // catch (MalformedMimeTypeException e) {
-        //     throw new RuntimeException("fail", e);
-        // }
-        // intentFiltersArray = new IntentFilter[] {ndef, };
+        // The card will have two NDEF records: a URL and an Android Application Record
+        // Enable foreground dispatch on the URL to make sure this current activity isn't replaced by the wallet activity (since
+        // that's the only activity with the URL statically declared in the manifest)
+        IntentFilter ndefFilter = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+        ndefFilter.addDataScheme("http");
+        ndefFilter.addDataAuthority("www.helioscard.com", null);
+        ndefFilter.addDataPath("/tag.html", PatternMatcher.PATTERN_LITERAL);
         
-        IntentFilter techTypeFilter = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
-        _intentFiltersArray = new IntentFilter[] {techTypeFilter, };
-        // TODO: stop using technology filters and use NDEF filters
-        _techListsArray = new String[][] { new String[] { IsoDep.class.getName() } };
+        _intentFiltersArray = new IntentFilter[] {ndefFilter};
 
          // if we're first launched by an NFC tag, we don't get an onNewIntent message, so route it through
          // now
@@ -159,7 +158,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        _nfcAdapter.enableForegroundDispatch(this, _pendingIntent, _intentFiltersArray, _techListsArray);
+        _nfcAdapter.enableForegroundDispatch(this, _pendingIntent, _intentFiltersArray, null);
     }
 
     @Override
@@ -173,15 +172,45 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_logger.info("onNewIntent: called");
 		processIntent(intent);
     }
-    
-    public boolean processIntent(Intent intent) {
-		_logger.info("onNewIntent: called");
+	
+	protected boolean doesIntentComeFromHeliosCard(Intent intent) {
 		if (intent == null) {
 			return false;
 		}
-		// TODO: something about preventing this screen from coming to the top of the stack
-        // TODO: use NDEF instead of tech discovered
-        if (intent.getAction() == NfcAdapter.ACTION_TECH_DISCOVERED) {
+		
+		// the Helios card should have an Android Application record in it corresponding to this package
+		String action = intent.getAction();
+		if (action == null || !action.equals(NfcAdapter.ACTION_NDEF_DISCOVERED)) {
+			return false;
+		}
+		
+	   Parcelable[] rawMsgs = intent.getParcelableArrayExtra(NfcAdapter.EXTRA_NDEF_MESSAGES);
+	   if (rawMsgs == null || rawMsgs.length == 0) {
+		   return false;
+	   }
+	   
+	   for (int i = 0; i < rawMsgs.length; i++) {
+	        // only one message sent during the beam
+	        NdefMessage msg = (NdefMessage) rawMsgs[i];
+	        // record 0 contains the MIME type, record 1 is the AAR, if present
+	        NdefRecord[] ndefRecords = msg.getRecords();
+	        _logger.info("doesIntentComeFromHeliosCard: found " + ndefRecords.length + " NDEF records");
+	        for (int j = 0; j < ndefRecords.length; j++) {
+		        String payload = new String(ndefRecords[j].getPayload());
+	        	_logger.info("doesIntentComeFromHeliosCard: found payload of" + payload);
+		        if (ndefRecords[j].getTnf() == NdefRecord.TNF_EXTERNAL_TYPE && payload.startsWith("com.helioscard.wallet")) {
+		        	_logger.info("doesIntentComeFromHeliosCard: found matching AAR record");
+		        	return true;
+		        }
+	        }
+	   }
+		
+		return false;
+	}
+    
+    public boolean processIntent(Intent intent) {
+		_logger.info("onNewIntent: called");
+        if (doesIntentComeFromHeliosCard(intent)) {
         	// clear out any cached secure element that we have
         	_cachedSecureElementApplet = null;
 

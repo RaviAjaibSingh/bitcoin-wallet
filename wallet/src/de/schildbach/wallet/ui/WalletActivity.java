@@ -99,7 +99,8 @@ import de.schildbach.wallet.util.Iso8601Format;
 import de.schildbach.wallet.util.Nfc;
 import de.schildbach.wallet.util.WalletUtils;
 import de.schildbach.wallet.util.WholeStringBuilder;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

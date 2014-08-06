@@ -56,7 +56,8 @@ import com.google.bitcoin.core.VersionMessage;
 import de.schildbach.wallet.service.BlockchainService;
 import de.schildbach.wallet.service.BlockchainServiceImpl;
 import de.schildbach.wallet.util.WholeStringBuilder;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

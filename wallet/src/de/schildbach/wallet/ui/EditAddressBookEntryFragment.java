@@ -35,7 +35,8 @@ import android.widget.TextView;
 import de.schildbach.wallet.AddressBookProvider;
 import de.schildbach.wallet.Constants;
 import de.schildbach.wallet.util.WalletUtils;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach
@@ -140,7 +141,7 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 					// a Key on the secure element, and we have to update it there too.
 					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
 					if (publicKeyBytes != null) {
-						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).editKeyPreTap(publicKeyBytes, newLabel);
+						((com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity()).editKeyPreTap(publicKeyBytes, newLabel);
 						dismiss();
 						return;
 					}
@@ -167,7 +168,7 @@ public final class EditAddressBookEntryFragment extends DialogFragment
 					// a Key on the secure element, and we have to update it there too.
 					byte[] publicKeyBytes = args.getByteArray(KEY_PUBLIC_KEY_BYTES);
 					if (publicKeyBytes != null) {
-						((com.helioscard.bitcoin.ui.NFCAwareActivity)getActivity()).deleteKeyPreTap(publicKeyBytes);
+						((com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity()).deleteKeyPreTap(publicKeyBytes);
 						dismiss();
 						return;
 					}

@@ -31,7 +31,8 @@ import android.os.Parcelable;
 import android.support.v4.view.ViewPager.OnPageChangeListener;
 import android.util.AttributeSet;
 import android.view.View;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

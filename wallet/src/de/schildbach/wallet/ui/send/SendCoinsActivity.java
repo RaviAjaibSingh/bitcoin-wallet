@@ -30,7 +30,8 @@ import com.actionbarsherlock.view.MenuItem;
 import de.schildbach.wallet.data.PaymentIntent;
 import de.schildbach.wallet.ui.AbstractBindServiceActivity;
 import de.schildbach.wallet.ui.HelpDialogFragment;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach
@@ -86,7 +87,7 @@ public final class SendCoinsActivity extends AbstractBindServiceActivity
 	
 	/* BEGIN CUSTOM CHANGE */
 	@Override
-	protected void handleCardDetected(com.helioscard.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	protected void handleCardDetected(com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
 		// Override this function to hear about the fact that a card was tapped, and route the call to the SendCoinsFragment, which
 		// might be interested in the message, if it's waiting for a card tap to sign the transaction
 		SendCoinsFragment sendCoinsFragment = (SendCoinsFragment)getSupportFragmentManager().findFragmentById(R.id.send_coins_fragment);

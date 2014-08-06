@@ -27,7 +27,8 @@ import com.actionbarsherlock.app.ActionBar;
 import com.google.bitcoin.core.ECKey;
 
 import de.schildbach.wallet.ui.AbstractBindServiceActivity;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach

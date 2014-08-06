@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:tools="http://schemas.android.com/tools"
-	package="com.helioscard.bitcoin"
+	package="com.helioscard.wallet.bitcoin"
 	android:installLocation="internalOnly"
 	android:versionCode="175"
 	android:versionName="3.54-test" >
@@ -92,6 +92,17 @@
 
 				<category android:name="android.intent.category.DEFAULT" />
 			</intent-filter>
+			<!-- BEGIN CUSTOM CHANGE -->
+			<!-- Helios Cards have a URL NDEF record we can filter against -->
+			<intent-filter>
+    			<action android:name="android.nfc.action.NDEF_DISCOVERED" />
+    			<category android:name="android.intent.category.DEFAULT" />
+    			<data android:scheme="http"
+        			android:host="www.helioscard.com"
+        			android:path="/tag.html" />
+			</intent-filter>
+			<!-- END CUSTOM CHANGE -->
+			
 		</activity-alias>
 
 		<activity
@@ -194,11 +205,11 @@
 		<!-- BEGIN CUSTOM CHANGE -->
 		<provider
 			android:name="de.schildbach.wallet.AddressBookProvider"
-			android:authorities="com.helioscard.bitcoin.address_book"
+			android:authorities="com.helioscard.wallet.bitcoin.address_book"
 			android:exported="false" />
 		<provider
 			android:name="de.schildbach.wallet.ExchangeRatesProvider"
-			android:authorities="com.helioscard.bitcoin.exchange_rates"
+			android:authorities="com.helioscard.wallet.bitcoin.exchange_rates"
 			android:exported="false" />
         <!-- END CUSTOM CHANGE -->
 

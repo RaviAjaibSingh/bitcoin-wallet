@@ -58,7 +58,8 @@ import de.schildbach.wallet.WalletApplication;
 import de.schildbach.wallet.util.BitmapFragment;
 import de.schildbach.wallet.util.Qr;
 import de.schildbach.wallet.util.WalletUtils;
-import com.helioscard.bitcoin.R;
+
+import com.helioscard.wallet.bitcoin.R;
 
 /**
  * @author Andreas Schildbach
@@ -165,7 +166,7 @@ public final class WalletAddressesFragment extends SherlockListFragment
 		dialog.show();
 		*/
 
-		com.helioscard.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.bitcoin.ui.NFCAwareActivity)WalletAddressesFragment.this.getActivity();
+		com.helioscard.wallet.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)WalletAddressesFragment.this.getActivity();
 		nfcAwareActivity.promptToAddKey();
 		
 		/* END CUSTOM CHANGE */

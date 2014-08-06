@@ -916,8 +916,12 @@ public final class SendCoinsFragment extends SherlockFragment
 			// update the UI to show progress about how the signing is going
 			setProgressViewsInitialState();			
 		} catch (com.google.bitcoin.core.InsufficientMoneyException e) {
-			// TODO set a bad result here
-			log.error("handleCardDetected: InsufficientMoneyException e: " + e.toString());				
+			log.info("handleCardDetected: InsufficientMoneyException e: " + e.toString());
+			if (_secureElementTransactionSigner != null) {
+				_secureElementTransactionSigner.cancel(true);
+				_secureElementTransactionSigner = null;
+			}
+			onInsufficientMoneyOuter(e.missing);
 		}
 		/* END CUSTOM CHANGE */
 	}
@@ -993,6 +997,46 @@ public final class SendCoinsFragment extends SherlockFragment
 		state = State.INPUT;
 		updateView();
 	}
+	
+	protected void onInsufficientMoneyOuter(@Nullable final BigInteger missing)
+	{
+		/* BEGIN CUSTOM CHANGE */
+		// moved the code that used to be here into the outer class, onInsufficientMoneyOuter
+		state = State.INPUT;
+		updateView();
+
+		final BigInteger estimated = wallet.getBalance(BalanceType.ESTIMATED);
+		final BigInteger available = wallet.getBalance(BalanceType.AVAILABLE);
+		final BigInteger pending = estimated.subtract(available);
+
+		final int btcShift = config.getBtcShift();
+		final int btcPrecision = config.getBtcMaxPrecision();
+		final String btcPrefix = config.getBtcPrefix();
+
+		final DialogBuilder dialog = DialogBuilder.warn(activity, R.string.send_coins_fragment_insufficient_money_title);
+		final StringBuilder msg = new StringBuilder();
+		if (missing != null)
+			msg.append(
+					getString(R.string.send_coins_fragment_insufficient_money_msg1,
+							btcPrefix + ' ' + GenericUtils.formatValue(missing, btcPrecision, btcShift))).append("\n\n");
+		if (pending.signum() > 0)
+			msg.append(
+					getString(R.string.send_coins_fragment_pending,
+							btcPrefix + ' ' + GenericUtils.formatValue(pending, btcPrecision, btcShift))).append("\n\n");
+		msg.append(getString(R.string.send_coins_fragment_insufficient_money_msg2));
+		dialog.setMessage(msg);
+		dialog.setPositiveButton(R.string.send_coins_options_empty, new DialogInterface.OnClickListener()
+		{
+			@Override
+			public void onClick(final DialogInterface dialog, final int which)
+			{
+				handleEmpty();
+			}
+		});
+		dialog.setNegativeButton(R.string.button_cancel, null);
+		dialog.show();
+	}
+
 	
 	/* END CUSTOM CHANGE */
 	
@@ -1083,39 +1127,10 @@ public final class SendCoinsFragment extends SherlockFragment
 			@Override
 			protected void onInsufficientMoney(@Nullable final BigInteger missing)
 			{
-				state = State.INPUT;
-				updateView();
-
-				final BigInteger estimated = wallet.getBalance(BalanceType.ESTIMATED);
-				final BigInteger available = wallet.getBalance(BalanceType.AVAILABLE);
-				final BigInteger pending = estimated.subtract(available);
-
-				final int btcShift = config.getBtcShift();
-				final int btcPrecision = config.getBtcMaxPrecision();
-				final String btcPrefix = config.getBtcPrefix();
-
-				final DialogBuilder dialog = DialogBuilder.warn(activity, R.string.send_coins_fragment_insufficient_money_title);
-				final StringBuilder msg = new StringBuilder();
-				if (missing != null)
-					msg.append(
-							getString(R.string.send_coins_fragment_insufficient_money_msg1,
-									btcPrefix + ' ' + GenericUtils.formatValue(missing, btcPrecision, btcShift))).append("\n\n");
-				if (pending.signum() > 0)
-					msg.append(
-							getString(R.string.send_coins_fragment_pending,
-									btcPrefix + ' ' + GenericUtils.formatValue(pending, btcPrecision, btcShift))).append("\n\n");
-				msg.append(getString(R.string.send_coins_fragment_insufficient_money_msg2));
-				dialog.setMessage(msg);
-				dialog.setPositiveButton(R.string.send_coins_options_empty, new DialogInterface.OnClickListener()
-				{
-					@Override
-					public void onClick(final DialogInterface dialog, final int which)
-					{
-						handleEmpty();
-					}
-				});
-				dialog.setNegativeButton(R.string.button_cancel, null);
-				dialog.show();
+				/* BEGIN CUSTOM CHANGE */
+				// moved the code that used to be here into the outer class, onInsufficientMoneyOuter
+				onInsufficientMoneyOuter(missing);
+				/* END CUSTOM CHANGE */
 			}
 
 			@Override

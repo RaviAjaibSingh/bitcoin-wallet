@@ -95,7 +95,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         // The card will have two NDEF records: a URL and an Android Application Record
         // Enable foreground dispatch on the URL to make sure this current activity isn't replaced by the wallet activity (since
         // that's the only activity with the URL statically declared in the manifest)
-        IntentFilter ndefFilter = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
+        IntentFilter ndefFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
         ndefFilter.addDataScheme("http");
         ndefFilter.addDataAuthority("www.helioscard.com", null);
         ndefFilter.addDataPath("/tag.html", PatternMatcher.PATTERN_LITERAL);

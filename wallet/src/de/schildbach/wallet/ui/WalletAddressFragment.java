@@ -123,7 +123,10 @@ public final class WalletAddressFragment extends Fragment
 		super.onPause();
 	}
 
-	private void updateView()
+/* BEGIN CUSTOM CHANGE */
+//	private void updateView()
+	public void updateView()
+/* END CUSTOM CHANGE */
 	{
 		final Address selectedAddress = application.determineSelectedAddress();
 

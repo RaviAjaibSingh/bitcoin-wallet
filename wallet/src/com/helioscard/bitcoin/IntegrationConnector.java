@@ -1,6 +1,7 @@
 package com.helioscard.bitcoin;
 
 import de.schildbach.wallet.ui.WalletActivity;
+import de.schildbach.wallet.ui.WalletAddressFragment;
 import de.schildbach.wallet.AddressBookProvider;
 import de.schildbach.wallet.WalletApplication;
 
@@ -12,11 +13,20 @@ import android.net.Uri;
 import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.Wallet;
 
+import android.support.v4.app.FragmentActivity;
+
 public class IntegrationConnector {
 	public static final Class<WalletActivity> WALLET_ACTIVITY_CLASS = de.schildbach.wallet.ui.WalletActivity.class;
 	
 	public static Wallet getWallet(Activity activityContext) {
 		return ((WalletApplication)activityContext.getApplication()).getWallet();
+	}
+	
+	public static void ensureWalletAddressDisplayIsUpdated(FragmentActivity fragmentActivity) {
+		WalletAddressFragment walletAddressFragment = (WalletAddressFragment)fragmentActivity.getSupportFragmentManager().findFragmentById(R.id.wallet_address_fragment);
+		if (walletAddressFragment != null) {
+			walletAddressFragment.updateView();
+		}
 	}
 	
 	public static void deleteBlockchainAndRestartService(Activity activityContext) {

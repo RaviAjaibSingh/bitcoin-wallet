@@ -568,6 +568,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// to the key
 			WalletGlobals.addECKeyEntryToCachedWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
 
+			// Ensure the wallet address display is displaying the correct address
+			IntegrationConnector.ensureWalletAddressDisplayIsUpdated(this);
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough

@@ -329,6 +329,19 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			secureElementApplet.deleteKey(deleteKeyPublicKeyBytes);
 			// we just deleted a key, delete it from the cached wallet and address book too
 			WalletGlobals.removeECKeyFromCachedWallet(this, deleteKeyPublicKeyBytes);
+			
+			// have we gone down to 0 keys?  if so, restart the app so the user will be brought to the wizard to create or import a key
+            Wallet wallet = IntegrationConnector.getWallet(this);
+            if (wallet.getKeys().size() == 0) {
+        		_logger.info("deleteKeyPostTap: no keys left in wallet - restarting");
+            	// We want to clear any activities off the task and basically restart the activity stack
+                Intent intentToRelaunchApplication = new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS);
+                intentToRelaunchApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intentToRelaunchApplication);
+                this.finish();
+                return;
+            }
+
 		} catch (IOException e) {
 			showException(e);
 			// we might be down to 0 keys, in which case we need to show a dialog prompting the user to add one

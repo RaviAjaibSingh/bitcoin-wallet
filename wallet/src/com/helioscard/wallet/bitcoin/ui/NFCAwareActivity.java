@@ -96,7 +96,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         // Enable foreground dispatch on the URL to make sure this current activity isn't replaced by the wallet activity (since
         // that's the only activity with the URL statically declared in the manifest)
         IntentFilter ndefFilter = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
-        ndefFilter.addDataScheme("http");
+        ndefFilter.addDataScheme("https");
         ndefFilter.addDataAuthority("www.helioscard.com", null);
         ndefFilter.addDataPath("/tag.html", PatternMatcher.PATTERN_LITERAL);
         
@@ -608,6 +608,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				showPromptForTapOnceMoreDialog();
 				
 			} else {
+				_logger.error("generateKeyOnSecureElement: received bad exception: " + e.toString());
 				showException(e);
 				showGetStartedDialogIfNeeded();
 			}

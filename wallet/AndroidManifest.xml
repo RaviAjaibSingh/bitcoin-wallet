@@ -97,7 +97,7 @@
 			<intent-filter>
     			<action android:name="android.nfc.action.NDEF_DISCOVERED" />
     			<category android:name="android.intent.category.DEFAULT" />
-    			<data android:scheme="http"
+    			<data android:scheme="https"
         			android:host="www.helioscard.com"
         			android:path="/tag.html" />
 			</intent-filter>

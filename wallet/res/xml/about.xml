@@ -7,7 +7,7 @@
 			android:title="@string/about_version_title" />
 		<!-- BEGIN CUSTOM CHANGE -->
 		<Preference
-			android:summary="© 2014, Helios Card"
+			android:summary="© 2014, HeliosCard"
 			android:title="@string/about_copyright_title" />
 		<!-- BEGIN CUSTOM CHANGE -->
 		<Preference

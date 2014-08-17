@@ -4,6 +4,14 @@
 	android:layout_height="match_parent"
 	android:orientation="vertical" >
 
+    <!-- BEGIN CUSTOM CHANGE -->    
+	<fragment
+		android:name="com.helioscard.wallet.bitcoin.ui.HeliosCardInfoFragment"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+    <!-- END CUSTOM CHANGE -->
+    
+    
 	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="0px"

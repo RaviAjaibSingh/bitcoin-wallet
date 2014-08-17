@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:tools="http://schemas.android.com/tools"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:background="@android:color/black"
+	android:paddingLeft="3dp" 
+	android:paddingRight="3dp"
+	android:paddingTop="3dp"
+	android:paddingBottom="3dp" >
+
+	<TextView
+	    android:id="@+id/helios_card_info_fragment_card_identifier_title"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:text="@string/helios_card_info_fragment_card_identifier"
+		android:textSize="@dimen/font_size_small"
+		android:layout_alignParentLeft="true"
+		android:textColor="@android:color/white"
+		android:textStyle="bold"
+		/>
+    
+	<TextView
+		android:id="@+id/helios_card_info_fragment_card_identifier"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="@dimen/font_size_small"
+		android:layout_toRightOf="@id/helios_card_info_fragment_card_identifier_title"
+		android:textColor="@android:color/white"
+		android:textStyle="bold"
+		/>
+
+	<TextView
+	    android:id="@+id/helios_card_info_fragment_network_status"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:textSize="@dimen/font_size_small"
+		android:layout_alignParentRight="true"
+		android:textColor="@android:color/white"
+		android:textStyle="bold"
+		/>
+
+</RelativeLayout>

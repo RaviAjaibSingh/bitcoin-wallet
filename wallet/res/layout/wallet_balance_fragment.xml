@@ -32,8 +32,14 @@
 				android:layout_height="wrap_content"
 				android:textSize="@dimen/font_size_small" />
 		</FrameLayout>
+	
+	<!-- BEGIN CUSTOM CHANGE -->
+	<!-- 
+	Let the Linear Layour include the progress fragment so that the views don't overlap, since
+	we are allowing the balance and progress indicators to both be visible.
 	</LinearLayout>
-
+ 	-->
+	<!-- END CUSTOM CHANGE -->
 	<TextView
 		android:id="@+id/wallet_balance_progress"
 		android:layout_width="wrap_content"
@@ -44,5 +50,9 @@
 		android:textColor="@color/fg_less_significant"
 		android:textSize="@dimen/font_size_small"
 		android:visibility="gone" />
+
+	<!-- BEGIN CUSTOM CHANGE -->
+	</LinearLayout>
+	<!-- END CUSTOM CHANGE -->
 
 </FrameLayout>

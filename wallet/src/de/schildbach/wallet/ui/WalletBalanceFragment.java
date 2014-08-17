@@ -169,7 +169,7 @@ public final class WalletBalanceFragment extends Fragment
 		super.onPause();
 	}
 
-	private void updateView()
+	public void updateView()
 	{
 		if (!isAdded())
 			return;
@@ -216,8 +216,10 @@ public final class WalletBalanceFragment extends Fragment
 			showProgress = false;
 		}
 
-		if (!showProgress)
-		{
+		/* BEGIN CUSTOM CHANGE */
+		// if (!showProgress)
+		// {
+		/* END CUSTOM CHANGE */
 			viewBalance.setVisibility(View.VISIBLE);
 
 			if (!showLocalBalance)
@@ -251,13 +253,17 @@ public final class WalletBalanceFragment extends Fragment
 				viewBalanceBtc.setVisibility(View.INVISIBLE);
 			}
 
-			viewProgress.setVisibility(View.GONE);
+			/* BEGIN CUSTOM CHANGE */
+			// viewProgress.setVisibility(View.GONE);
+			viewProgress.setVisibility(showProgress ? View.VISIBLE : View.GONE);
+			/*
 		}
 		else
 		{
 			viewProgress.setVisibility(View.VISIBLE);
 			viewBalance.setVisibility(View.INVISIBLE);
 		}
+		*/
 	}
 
 	private final BlockchainBroadcastReceiver broadcastReceiver = new BlockchainBroadcastReceiver();
@@ -271,6 +277,10 @@ public final class WalletBalanceFragment extends Fragment
 			bestChainDate = (Date) intent.getSerializableExtra(BlockchainService.ACTION_BLOCKCHAIN_STATE_BEST_CHAIN_DATE);
 			replaying = intent.getBooleanExtra(BlockchainService.ACTION_BLOCKCHAIN_STATE_REPLAYING, false);
 
+			/* BEGIN CUSTOM CHANGE */
+			WalletBalanceFragment.this.balance = ((WalletApplication)WalletBalanceFragment.this.getActivity().getApplication()).getWallet().getBalance();
+			/* END CUSTOM CHANGE */
+			
 			updateView();
 		}
 	}

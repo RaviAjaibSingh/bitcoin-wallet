@@ -5,15 +5,19 @@
 		<Preference
 			android:key="about_version"
 			android:title="@string/about_version_title" />
+		<!-- BEGIN CUSTOM CHANGE -->
 		<Preference
-			android:summary="© 2011-2014, Andreas Schildbach"
+			android:summary="© 2014, Helios Card"
 			android:title="@string/about_copyright_title" />
+		<!-- BEGIN CUSTOM CHANGE -->
 		<Preference
 			android:key="about_license"
 			android:title="@string/about_license_title" />
 		<Preference
 			android:key="about_source"
 			android:title="@string/about_source_title" />
+		<!-- BEGIN CUSTOM CHANGE -->
+		<!-- 
 		<Preference
 			android:key="about_market_app"
 			android:summary="@string/about_market_app_summary"
@@ -33,13 +37,18 @@
 		<Preference
 			android:key="about_market_publisher"
 			android:title="@string/about_credits_market_publisher_title" />
+		-->
+		<!-- END CUSTOM CHANGE -->
 		<Preference android:key="about_credits_bitcoinj" />
 		<Preference
 			android:key="about_credits_zxing"
 			android:title="@string/about_credits_zxing_title" />
+		<!-- BEGIN CUSTOM CHANGE -->
+		<!-- 
 		<Preference
 			android:key="about_credits_icon"
 			android:title="@string/about_credits_icon_title" />
+		-->
 	</PreferenceCategory>
 
 </PreferenceScreen>

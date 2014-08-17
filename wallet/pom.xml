@@ -6,8 +6,8 @@
 
 	<artifactId>wallet</artifactId>
 	<packaging>apk</packaging>
-	<version>3.54-test</version>
-	<name>Bitcoin Wallet</name>
+	<version>1.0.0</version>
+	<name>Helios Card Bitcoin Wallet</name>
 
 	<parent>
 		<groupId>de.schildbach.wallet</groupId>

@@ -107,10 +107,12 @@ import com.helioscard.wallet.bitcoin.R;
  */
 public final class WalletActivity extends AbstractWalletActivity
 {
-	private static final int DIALOG_IMPORT_KEYS = 0;
-	private static final int DIALOG_EXPORT_KEYS = 1;
-	private static final int DIALOG_TIMESKEW_ALERT = 2;
-	private static final int DIALOG_VERSION_ALERT = 3;
+	/* BEGIN CUSTOM CHANGE */
+	// private static final int DIALOG_IMPORT_KEYS = 0;
+	// private static final int DIALOG_EXPORT_KEYS = 1;
+	// private static final int DIALOG_TIMESKEW_ALERT = 2;
+	// private static final int DIALOG_VERSION_ALERT = 3;
+	/* END CUSTOM CHANGE */
 	private static final int DIALOG_LOW_STORAGE_ALERT = 4;
 
 	private WalletApplication application;
@@ -296,10 +298,13 @@ public final class WalletActivity extends AbstractWalletActivity
 				startActivity(new Intent(this, NetworkMonitorActivity.class));
 				return true;
 
+			/* BEGIN CUSTOM CHANGE */
+			/*
 			case R.id.wallet_options_import_keys:
 				showDialog(DIALOG_IMPORT_KEYS);
 				return true;
-
+			*/
+			/* END CUSTOM CHANGE */
 			case R.id.wallet_options_export_keys:
 				handleExportKeys();
 				return true;
@@ -345,7 +350,10 @@ public final class WalletActivity extends AbstractWalletActivity
 
 	public void handleExportKeys()
 	{
-		showDialog(DIALOG_EXPORT_KEYS);
+		/* BEGIN CUSTOM CHANGE */
+		// showDialog(DIALOG_EXPORT_KEYS);
+		// TODO: introduce custom backup/restore code for Helios cards
+		/* END CUSTOM CHANGE */
 	}
 
 	private void handleDonate()
@@ -364,6 +372,8 @@ public final class WalletActivity extends AbstractWalletActivity
 	@Override
 	protected Dialog onCreateDialog(final int id, final Bundle args)
 	{
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		if (id == DIALOG_IMPORT_KEYS)
 			return createImportKeysDialog();
 		else if (id == DIALOG_EXPORT_KEYS)
@@ -372,12 +382,16 @@ public final class WalletActivity extends AbstractWalletActivity
 			return createTimeskewAlertDialog(args.getLong("diff_minutes"));
 		else if (id == DIALOG_VERSION_ALERT)
 			return createVersionAlertDialog();
-		else if (id == DIALOG_LOW_STORAGE_ALERT)
+		*/
+		/* END CUSTOM CHANGE */
+		if (id == DIALOG_LOW_STORAGE_ALERT)
 			return createLowStorageAlertDialog();
 		else
 			throw new IllegalArgumentException();
 	}
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	@Override
 	protected void onPrepareDialog(final int id, final Dialog dialog)
 	{
@@ -386,7 +400,11 @@ public final class WalletActivity extends AbstractWalletActivity
 		else if (id == DIALOG_EXPORT_KEYS)
 			prepareExportKeysDialog(dialog);
 	}
+	*/
+	/* END CUSTOM CHANGE */
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private Dialog createImportKeysDialog()
 	{
 		final View view = getLayoutInflater().inflate(R.layout.import_keys_from_storage_dialog, null);
@@ -583,6 +601,7 @@ public final class WalletActivity extends AbstractWalletActivity
 		final CheckBox showView = (CheckBox) alertDialog.findViewById(R.id.export_keys_dialog_show);
 		showView.setOnCheckedChangeListener(new ShowPasswordCheckListener(passwordView));
 	}
+	*/
 
 	private void checkLowStorageAlert()
 	{
@@ -611,6 +630,8 @@ public final class WalletActivity extends AbstractWalletActivity
 	private void checkAlerts()
 	{
 		final PackageInfo packageInfo = getWalletApplication().packageInfo();
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		final int versionNameSplit = packageInfo.versionName.indexOf('-');
 		final String base = Constants.VERSION_URL + (versionNameSplit >= 0 ? packageInfo.versionName.substring(versionNameSplit) : "");
 		final String url = base + "?package=" + packageInfo.packageName + "&current=" + packageInfo.versionCode;
@@ -676,6 +697,8 @@ public final class WalletActivity extends AbstractWalletActivity
 				}
 			}
 		}.start();
+		*/
+		/* END CUSTOM CHANGE */
 
 		if (CrashReporter.hasSavedCrashTrace())
 		{
@@ -760,6 +783,8 @@ public final class WalletActivity extends AbstractWalletActivity
 		return dialog.create();
 	}
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private Dialog createVersionAlertDialog()
 	{
 		final PackageManager pm = getPackageManager();
@@ -801,7 +826,11 @@ public final class WalletActivity extends AbstractWalletActivity
 		dialog.setNegativeButton(R.string.button_dismiss, null);
 		return dialog.create();
 	}
+	*/
+	/* END CUSTOM CHANGE */
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private void restoreWalletFromProtobuf(@Nonnull final File file, @Nonnull final String password)
 	{
 		try
@@ -886,7 +915,11 @@ public final class WalletActivity extends AbstractWalletActivity
 			log.info("problem restoring wallet", x);
 		}
 	}
+	*/
+	/* END CUSTOM CHANGE */
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private void importPrivateKeysFromBase58(@Nonnull final File file, @Nonnull final String password)
 	{
 		try
@@ -974,7 +1007,11 @@ public final class WalletActivity extends AbstractWalletActivity
 			log.info("problem reading private keys", x);
 		}
 	}
-
+	*/
+	/* END CUSTOM CHANGE */
+	
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private void backupWallet(@Nonnull final String password)
 	{
 		Constants.Files.EXTERNAL_WALLET_BACKUP_DIR.mkdirs();
@@ -1034,7 +1071,11 @@ public final class WalletActivity extends AbstractWalletActivity
 			}
 		}
 	}
+	*/
+	/* END CUSTOM CHANGE */
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private void archiveWalletBackup(@Nonnull final File file)
 	{
 		final Intent intent = new Intent(Intent.ACTION_SEND);
@@ -1056,4 +1097,6 @@ public final class WalletActivity extends AbstractWalletActivity
 			log.error("archiving wallet backup failed", x);
 		}
 	}
+	*/
+	/* END CUSTOM CHANGE */
 }

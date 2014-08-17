@@ -3,8 +3,8 @@
 	xmlns:tools="http://schemas.android.com/tools"
 	package="com.helioscard.wallet.bitcoin"
 	android:installLocation="internalOnly"
-	android:versionCode="175"
-	android:versionName="3.54-test" >
+	android:versionCode="1"
+	android:versionName="1.0.0-test" >
 
 	<uses-sdk
 		android:minSdkVersion="10"

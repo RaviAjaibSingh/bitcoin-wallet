@@ -87,8 +87,10 @@ public final class Constants
 			: BITEASY_API_URL_TEST;
 
 	/** URL to fetch version alerts from. */
-	public static final String VERSION_URL = "http://wallet.schildbach.de/version";
-
+	/* BEGIN CUSTOM CHANGE */
+	// public static final String VERSION_URL = "http://wallet.schildbach.de/version";
+	/* END CUSTOM CHANGE */
+	
 	/** MIME type used for transmitting single transactions. */
 	public static final String MIMETYPE_TRANSACTION = "application/x-btctx";
 
@@ -99,8 +101,10 @@ public final class Constants
 	public static final int MAX_NUM_CONFIRMATIONS = 7;
 
 	/** User-agent to use for network access. */
-	public static final String USER_AGENT = "Bitcoin Wallet";
-
+	/* BEGIN CUSTOM CHANGE */
+	public static final String USER_AGENT = "Helios Bitcoin Wallet";
+	/* BEGIN CUSTOM CHANGE */
+	
 	/** Default currency to use if all default mechanisms fail. */
 	public static final String DEFAULT_EXCHANGE_CURRENCY = "USD";
 
@@ -117,7 +121,9 @@ public final class Constants
 	public static final String DONATION_ADDRESS = "18CK5k1gajRKKSC7yVSTXT9LUzbheh1XY4";
 
 	/** Recipient e-mail address for reports. */
-	public static final String REPORT_EMAIL = "wallet@schildbach.de";
+	/* BEGIN CUSTOM CHANGE */
+	public static final String REPORT_EMAIL = "wallet@helioscard.com";
+	/* END CUSTOM CHANGE */
 
 	/** Subject line for manually reported issues. */
 	public static final String REPORT_SUBJECT_ISSUE = "Reported issue";
@@ -140,19 +146,21 @@ public final class Constants
 	public static final int UBTC_MAX_PRECISION = 2;
 	public static final int LOCAL_PRECISION = 4;
 
+	/* BEGIN CUSTOM CHANGE */
 	public static final String LICENSE_URL = "http://www.gnu.org/licenses/gpl-3.0.txt";
-	public static final String SOURCE_URL = "https://github.com/schildbach/bitcoin-wallet";
-	public static final String BINARY_URL = "https://github.com/schildbach/bitcoin-wallet/releases";
+	public static final String SOURCE_URL = "https://github.com/RaviAjaibSingh/bitcoin-wallet";
+	// public static final String BINARY_URL = "https://github.com/schildbach/bitcoin-wallet/releases";
 	public static final String CREDITS_BITCOINJ_URL = "http://code.google.com/p/bitcoinj/";
 	public static final String CREDITS_ZXING_URL = "https://github.com/zxing/zxing";
 	public static final String CREDITS_ICON_URL = "https://bitcointalk.org/index.php?action=profile;u=2062";
-	public static final String AUTHOR_TWITTER_URL = "https://twitter.com/#!/bitcoin_wallet";
-	public static final String AUTHOR_GOOGLEPLUS_URL = "https://profiles.google.com/andreas.schildbach";
-	public static final String COMMUNITY_GOOGLEPLUS_URL = "https://plus.google.com/communities/105515929887248493912";
-	public static final String MARKET_APP_URL = "market://details?id=%s";
-	public static final String WEBMARKET_APP_URL = "https://play.google.com/store/apps/details?id=%s";
-	public static final String MARKET_PUBLISHER_URL = "market://search?q=pub:\"Andreas Schildbach\"";
-
+	// public static final String AUTHOR_TWITTER_URL = "https://twitter.com/#!/bitcoin_wallet";
+	// public static final String AUTHOR_GOOGLEPLUS_URL = "https://profiles.google.com/andreas.schildbach";
+	// public static final String COMMUNITY_GOOGLEPLUS_URL = "https://plus.google.com/communities/105515929887248493912";
+	// public static final String MARKET_APP_URL = "market://details?id=%s";
+	// public static final String WEBMARKET_APP_URL = "https://play.google.com/store/apps/details?id=%s";
+	// public static final String MARKET_PUBLISHER_URL = "market://search?q=pub:\"Andreas Schildbach\"";
+	/* END CUSTOM CHANGE */
+	
 	public static final int HTTP_TIMEOUT_MS = 15 * (int) DateUtils.SECOND_IN_MILLIS;
 
 	public static final long LAST_USAGE_THRESHOLD_JUST_MS = DateUtils.HOUR_IN_MILLIS;

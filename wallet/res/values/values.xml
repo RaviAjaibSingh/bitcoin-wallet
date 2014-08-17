@@ -4,7 +4,10 @@
 	<string name="symbol_to">→</string>
 	<string name="symbol_from">←</string>
 	<string name="symbol_internal">⇄</string>
-	<string name="app_name">Testnet3</string>
+
+	<!-- BEGIN CUSTOM CHANGE -->
+	<string name="app_name">HeliosCard Bitcoin</string>
+	<!-- END CUSTOM CHANGE -->
 
 	<string-array name="preferences_precision_values">
 		<item>8</item>

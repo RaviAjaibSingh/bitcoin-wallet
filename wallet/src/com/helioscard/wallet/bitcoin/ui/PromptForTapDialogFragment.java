@@ -55,6 +55,8 @@ public class PromptForTapDialogFragment extends DialogFragment {
 				  }
 				});
  
+		this.setCancelable(false); // prevent the user from using the back button to dismiss this dialog
+		
 		// create alert dialog
 		return alertDialogBuilder.create();
     }

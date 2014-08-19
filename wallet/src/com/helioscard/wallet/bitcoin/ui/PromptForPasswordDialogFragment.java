@@ -41,11 +41,15 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 		// Set an EditText view to get user input
 		final EditText input = new EditText(nfcAwareActivity);
 		input.setSingleLine(true);
+		
+		/*
 		InputFilter[] filterArray = new InputFilter[1];
 		// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
 		// use a different system to prevent more than 8 characters
 		filterArray[0] = new InputFilter.LengthFilter(8); // 8 characters at most
 		input.setFilters(filterArray);
+		*/
+
 		alertDialogBuilder.setView(input);
 
 	    // set dialog message
@@ -82,6 +86,8 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 		    }
 		});
 
+		
+		this.setCancelable(false); // prevent the user from using the back button to dismiss this dialog
 		
 		// create alert dialog and show it
 		return _alertDialog;

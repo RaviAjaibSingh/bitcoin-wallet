@@ -25,4 +25,5 @@
     <string name="nfc_aware_activity_enable_nfc_dialog_title">Enable NFC Radio</string>
     <string name="nfc_aware_activity_enable_nfc_dialog_message">Please turn on your device\'s NFC radio and try this operation again. Press OK to be brought to the NFC settings screen.</string>    
     <string name="nfc_aware_activity_enable_nfc_dialog_some_operations_will_not_work">Your device\'s NFC radio is off. You will not be able to perform certain operations with the card. Press OK to be brought to the NFC settings screen.</string>
+    <string name="nfc_aware_activity_password_successfully_changed">Your password was successfully changed.</string>
 </resources>

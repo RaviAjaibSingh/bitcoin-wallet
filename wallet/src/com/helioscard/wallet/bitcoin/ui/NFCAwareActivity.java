@@ -80,6 +80,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private byte[] _pendingEditPublicKey;
     private String _pendingEditLabel;
     private byte[] _pendingDeleteKeyPublicKeyBytes;
+    private String _pendingChangePasswordNewPassword;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -574,6 +575,36 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		PromptForLabelDialogFragment.prompt(getSupportFragmentManager());
 	}
 	
+	protected void promptToChangePassword() {
+		if (!checkIfNFCRadioOnPromptUser(true)) {
+			// the NFC radio isn't on, prompt the user to turn it on and abort
+			return;
+		}
+		
+		HeliosChangePasswordDialogFragment.prompt(getSupportFragmentManager());
+	}
+	
+	public void changePasswordPreTap(String newPassword) {
+		_logger.info("changePasswordPreTap: called");
+		// get a secure element session that is authenticated (authenticated session needed to add a key)
+		// Note that we do NOT use the existing session - we want to force the user to enter the password
+		// because we need the old password in the change password command
+		this.getSecureElementAppletPromptIfNeeded(true, false);
+		_pendingChangePasswordNewPassword = newPassword;
+	}
+	
+	private void changePasswordPostTap(SecureElementApplet secureElementApplet, String oldPassword, String newPassword) {
+		_logger.info("changePasswordPostTap: called");	
+		try {
+			secureElementApplet.setCardPassword(oldPassword, newPassword);
+			// if we got here it worked.  Tell the user the password was changed successfully
+			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_password_successfully_changed), Toast.LENGTH_LONG).show();
+		} catch (IOException e) {
+			_logger.error("changePasswordPostTap: received bad exception: " + e.toString());
+			showException(e);
+		}
+	}
+	
 	public void createKeyPreTap(String labelForKey) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
 		SecureElementApplet secureElementApplet = this.getSecureElementAppletPromptIfNeeded(true, true);
@@ -633,7 +664,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	    _logger.info("editKeyPreTap: have authenticated session, editing key");
 	    editKeyPostTap(secureElementApplet, editPublicKey, editLabel);
 	}
-
 	
 	private void editKeyPostTap(SecureElementApplet secureElementApplet, byte[] editPublicKey, String editLabel) {
 		_logger.info("editKeyPostTap: called");
@@ -652,25 +682,29 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 	
 	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
-		if (_pendingAddKeyLabel != null && authenticated) {
+		if (_pendingAddKeyLabel != null) {
 			// we had a request to add a key to the card, do that instead
 			_logger.info("handleCardDetectedSuper: generating key with label");
 			String pendingLabel = _pendingAddKeyLabel;
 			_pendingAddKeyLabel = null;
 			createKeyPostTap(secureElementApplet, pendingLabel);
 			return;
-		} else if (_pendingEditPublicKey != null && authenticated) {
+		} else if (_pendingEditPublicKey != null) {
 			byte[] pendingEditPublicKey = _pendingEditPublicKey;
 			_pendingEditPublicKey = null;
 			String pendingEditLabel = _pendingEditLabel;
 			_pendingEditLabel = null;
 			editKeyPostTap(secureElementApplet, pendingEditPublicKey, pendingEditLabel);
 			return;
-		} else if (_pendingDeleteKeyPublicKeyBytes != null && authenticated) {
+		} else if (_pendingDeleteKeyPublicKeyBytes != null) {
 			byte[] pendingDeleteKeyPublicKeyBytes = _pendingDeleteKeyPublicKeyBytes;
 			_pendingDeleteKeyPublicKeyBytes = null;
-			deleteKeyPreTap(pendingDeleteKeyPublicKeyBytes);
+			deleteKeyPostTap(secureElementApplet, pendingDeleteKeyPublicKeyBytes);
 			return;
+		} else if (_pendingChangePasswordNewPassword != null) {
+			String newPassword = _pendingChangePasswordNewPassword;
+			_pendingChangePasswordNewPassword = null;
+			changePasswordPostTap(secureElementApplet, password, newPassword);
 		}
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
 	}
@@ -685,7 +719,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_pendingEditPublicKey = null;
 		_pendingEditLabel = null;
 	    _pendingDeleteKeyPublicKeyBytes = null;
-		
+	    _pendingChangePasswordNewPassword = null;
+	    
        	// we have no keys in the wallet - prompt the user to add one
         showGetStartedDialogIfNeeded();
         

@@ -56,6 +56,12 @@
 		android:id="@+id/wallet_options_network_monitor"
 		android:showAsAction="never"
 		android:title="@string/network_monitor_activity_title"/>
+	<!-- BEGIN CUSTOM CHANGE -->
+	<item
+		android:id="@+id/option_change_password"
+		android:showAsAction="never"
+		android:title="@string/option_change_password"/>
+	<!-- END CUSTOM CHANGE -->
 	<item
 		android:id="@+id/wallet_options_preferences"
 		android:showAsAction="never"
@@ -64,10 +70,14 @@
 		android:id="@+id/wallet_options_about"
 		android:showAsAction="never"
 		android:title="@string/about_title"/>
+	<!-- BEGIN CUSTOM CHANGE -->
+	<!-- 
 	<item
 		android:id="@+id/wallet_options_donate"
 		android:showAsAction="never"
 		android:title="@string/wallet_options_donate"/>
+	-->
+	<!-- END CUSTOM CHANGE -->
 	<item
 		android:id="@+id/wallet_options_help"
 		android:showAsAction="never"

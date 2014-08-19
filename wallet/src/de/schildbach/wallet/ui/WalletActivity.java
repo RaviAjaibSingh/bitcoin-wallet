@@ -244,7 +244,10 @@ public final class WalletActivity extends AbstractWalletActivity
 		super.onCreateOptionsMenu(menu);
 
 		getSupportMenuInflater().inflate(R.menu.wallet_options, menu);
-		menu.findItem(R.id.wallet_options_donate).setVisible(!Constants.TEST);
+		
+		/* BEGIN CUSTOM CHANGE */
+		// menu.findItem(R.id.wallet_options_donate).setVisible(!Constants.TEST);
+		/* END CUSTOM CHANGe */
 
 		return true;
 	}
@@ -270,6 +273,12 @@ public final class WalletActivity extends AbstractWalletActivity
 	{
 		switch (item.getItemId())
 		{
+			/* BEGIN CUSTOM CHANGE */
+			case R.id.option_change_password:
+				this.promptToChangePassword();
+				return true;
+			/* END CUSTOM CHANGE */
+		
 			case R.id.wallet_options_request:
 				handleRequestCoins();
 				return true;
@@ -321,9 +330,13 @@ public final class WalletActivity extends AbstractWalletActivity
 				HelpDialogFragment.page(getSupportFragmentManager(), R.string.help_safety);
 				return true;
 
+			/* BEGIN CUSTOM CHANGE */
+			/*
 			case R.id.wallet_options_donate:
 				handleDonate();
 				return true;
+			*/
+			/* END CUSTOM CHANGE */
 
 			case R.id.wallet_options_help:
 				HelpDialogFragment.page(getSupportFragmentManager(), R.string.help_wallet);
@@ -356,6 +369,8 @@ public final class WalletActivity extends AbstractWalletActivity
 		/* END CUSTOM CHANGE */
 	}
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private void handleDonate()
 	{
 		try
@@ -368,7 +383,9 @@ public final class WalletActivity extends AbstractWalletActivity
 			throw new RuntimeException(x);
 		}
 	}
-
+	*/
+	/* BEGIN CUSTOM CHANGE */
+	
 	@Override
 	protected Dialog onCreateDialog(final int id, final Bundle args)
 	{

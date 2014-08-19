@@ -6,8 +6,9 @@
 	android:versionCode="1"
 	android:versionName="1.0.0" >
 
+    <!--  BEGIN CUSTOM CHANGE: Make minimum API level 11 for FLAG_ACTIVITY_CLEAR_TASK -->
 	<uses-sdk
-		android:minSdkVersion="10"
+		android:minSdkVersion="11"
 		android:targetSdkVersion="11"
 		tools:ignore="OldTargetApi" />
 

@@ -14,6 +14,7 @@ import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
 import com.helioscard.wallet.bitcoin.secureelement.ECUtil;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.wallet.bitcoin.secureelement.SmartCardReader;
+import com.helioscard.wallet.bitcoin.secureelement.exception.CardWasWipedException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.KeyAlreadyExistsException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.SmartCardFullException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.WrongPasswordException;
@@ -99,7 +100,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		_currentState = SecureElementState.STATE_INFORMATION_READ;
 	}
 	
-	private static void ensureResponseEndsWith9000(byte[] responseAPDU) throws IOException {
+	private void ensureResponseEndsWith9000(byte[] responseAPDU) throws IOException {
 		if (responseAPDU == null) {
 			_logger.info("ensureResponseEndsWith9000: response was null");
 			throw new IOException("Received null response from card.");			
@@ -124,6 +125,12 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		} else if (sw1 == (byte)0x69 && sw2 == (byte)0x84) {
 			// SW_INVALID_DATA
 			throw new KeyAlreadyExistsException();
+		} else if (sw1 == (byte)0x69 && sw2 == (byte)0x83) {
+			_logger.info("ensureResponseEndsWith9000: card was wiped!");
+			// force get the status again to refresh our view of the card
+			// so that we know no PIN is set, for example
+			ensureInitialStateRead(true);
+			throw new CardWasWipedException();
 		}
 		
 		throw new IOException("Received unknown response from card");
@@ -169,6 +176,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte[] finalCommandAPDU = commandAPDUByteArrayOutputStream.toByteArray();
 		// don't log the APDU itself as it's sensitive
 		_logger.info("Sending command APDU to set password");
+		// _logger.info("APDU: " + Util.bytesToHex(finalCommandAPDU));
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(finalCommandAPDU);
 		_logger.info("Got response: " + Util.bytesToHex(responseAPDU));
 

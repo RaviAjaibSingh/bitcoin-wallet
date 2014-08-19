@@ -20,7 +20,8 @@
     <string name="nfc_aware_activity_error_dialog_message_smartcard_full">There is no more space left on the card.</string>
     <string name="nfc_aware_activity_error_dialog_message_tag_lost">Communication error with the card. You may not be positioning the card properly against the phone.</string>
     <string name="nfc_aware_activity_error_dialog_message_unknown">An unknown error has occurred while communication with the card.</string>
-    <string name="nfc_aware_activity_error_dialog_message_key_already_exists">The key already exists on the card.</string>    
+    <string name="nfc_aware_activity_error_dialog_message_key_already_exists">The key already exists on the card.</string>
+    <string name="nfc_aware_activity_error_dialog_message_card_was_wiped">The card was wiped due to too many incorrect password attempts.</string>    
     <string name="nfc_aware_activity_enable_nfc_dialog_title">Enable NFC Radio</string>
     <string name="nfc_aware_activity_enable_nfc_dialog_message">Please turn on your device\'s NFC radio and try this operation again. Press OK to be brought to the NFC settings screen.</string>    
     <string name="nfc_aware_activity_enable_nfc_dialog_some_operations_will_not_work">Your device\'s NFC radio is off. You will not be able to perform certain operations with the card. Press OK to be brought to the NFC settings screen.</string>

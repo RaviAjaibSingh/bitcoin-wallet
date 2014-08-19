@@ -46,6 +46,7 @@ import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.wallet.bitcoin.secureelement.SmartCardReader;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet.PINState;
 import com.helioscard.wallet.bitcoin.secureelement.androidadapter.SmartCardReaderImpl;
+import com.helioscard.wallet.bitcoin.secureelement.exception.CardWasWipedException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.KeyAlreadyExistsException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.SmartCardFullException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.WrongPasswordException;
@@ -117,7 +118,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	
         	// Otherwise, ensure we are focused on the tap to begin screen to prompt the user to tap
         	Intent intentToStartTapToBeginActivity = new Intent(this, MainActivity.class);
-        	intentToStartTapToBeginActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        	intentToStartTapToBeginActivity.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         	startActivity(intentToStartTapToBeginActivity);
         	this.finish();
         	return;
@@ -708,6 +709,36 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_key_already_exists);
     	} else if (e instanceof TagLostException) {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_tag_lost);
+    	} else if (e instanceof CardWasWipedException) {
+    		_logger.info("showException: card was wiped");
+    		// the card was just wiped - clear the current card identifier, reset the block chain, and restart the app
+    		WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
+    		walletGlobals.setCardIdentifier(this, null);
+      		Wallet wallet = IntegrationConnector.getWallet(this);
+			List<ECKey> listFromCachedWallet = wallet.getKeys();
+			if (listFromCachedWallet.size() > 0) {
+	    		// persist the fact that we're about to modify the wallet, in case we can interrupted
+	    		// before we get a chance to tell the service to delete the block chain and restart
+	      		walletGlobals.persistServiceNeedsToReplayBlockchain();
+	      		
+	      		// Remove all the keys from the wallet
+				for (int i = 0; i < listFromCachedWallet.size(); i++) {
+					ECKey keyFromCachedWallet = listFromCachedWallet.get(i);
+					wallet.removeKey(keyFromCachedWallet);
+				}
+
+				// clear any existing transactions
+				wallet.clearTransactions(0);
+				
+				// Replay the block chain
+				IntegrationConnector.deleteBlockchainAndRestartService(this);
+			}
+
+    		Intent intentToRestartApplication = new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS);
+    		intentToRestartApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    		startActivity(intentToRestartApplication);
+    		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_card_was_wiped);
+    		this.finish();
     	} else {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_unknown);
     	}

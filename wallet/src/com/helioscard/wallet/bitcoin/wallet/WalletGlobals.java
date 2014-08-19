@@ -109,6 +109,7 @@ public class WalletGlobals {
 
 				if (wipeWalletIfNeeded) {
 					wallet.clearTransactions(0);
+					persistServiceNeedsToReplayBlockchain();
 				}
 
 				cachedWalletWasCleared = true;
@@ -144,7 +145,7 @@ public class WalletGlobals {
 				if (!keyFound) {
 					_logger.info("synchronizeKeysWithSecureElement: removing a cached wallet key");
 					serviceNeedsToClearAndRestart = true;
-					
+					persistServiceNeedsToReplayBlockchain();					
 					wallet.clearTransactions(0);
 					
 					removeECKeyFromCachedWallet(activityContext, wallet, keyFromCachedWallet);
@@ -153,6 +154,14 @@ public class WalletGlobals {
 		}
 		
 		return serviceNeedsToClearAndRestart;
+	}
+	
+	public static void persistServiceNeedsToReplayBlockchain() {
+		// Call this method to indicate the contents of the wallet are about to change, and that we need to ensure
+		// that the service clears the blockchain and replays it.  This is to prevent an interruption where we change the 
+		// wallet and then we reset the device before we can tell the service to delete the blockchain.  On service startup,
+		// the service should check to see whether the block chain needs to be replayed, and if so, replay it and clear this flag
+		// TODO: implement something here to write a persistent flag and in the service startup to check the flag, and if it's set, wipe the block chain, and clear the flag
 	}
 
 	public static void addECKeyEntryToCachedWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {

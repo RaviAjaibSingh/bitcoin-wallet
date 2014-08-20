@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,12 +13,15 @@ import org.spongycastle.util.Arrays;
 
 import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
 import com.helioscard.wallet.bitcoin.secureelement.ECUtil;
+import com.helioscard.wallet.bitcoin.secureelement.PKCS5Util;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.wallet.bitcoin.secureelement.SmartCardReader;
 import com.helioscard.wallet.bitcoin.secureelement.exception.CardWasWipedException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.KeyAlreadyExistsException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.SmartCardFullException;
 import com.helioscard.wallet.bitcoin.secureelement.exception.WrongPasswordException;
+import com.helioscard.wallet.bitcoin.secureelement.exception.WrongVersionException;
+import com.helioscard.wallet.bitcoin.Constants;
 import com.helioscard.wallet.bitcoin.util.Util;
 
 public class SecureElementAppletImpl extends SecureElementApplet {
@@ -42,6 +46,17 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	private int _passwordAttemptsLeft;
 	private PINState _pinState = PINState.NOT_SET;
 	private boolean _loggedIn;
+
+	private static final int LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS = 256;
+	private static final int DEFAULT_ITERATION_COUNT = 20000;
+	private int _passwordMetaDataVersion = -1;
+	private static final int FIELD_PASSWORD_META_DATA_VERSION = 1;
+	private static final int FIELD_PASSWORD_META_DATA_PKCS5_ITERATION_COUNT = 2;
+	private static final int FIELD_PASSWORD_META_DATA_PKCS5_PASSWORD_KEY_SALT = 3;
+	private static final int FIELD_PASSWORD_META_DATA_PKCS5_ENCRYPTION_KEY_SALT = 4;
+	private int _passwordPKCS5IterationCount;
+	private byte[] _passwordPKCS5PasswordKeySalt;
+	private byte[] _passwordPKCS5EncryptionKeySalt;
 
 	public SecureElementAppletImpl(SmartCardReader smartCardReader) {
 		_smartCardReader = smartCardReader;
@@ -90,12 +105,82 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			_pinState = PINState.BLANK; // the PIN is set to blank
 		}
 		_logger.info("PIN state: " + _pinState);
-		
+
 		_loggedIn = (responseAPDU[10] & 0x20) != 0;
 		_logger.info("Logged in: " + _loggedIn);
-		
+
 		_passwordAttemptsLeft = responseAPDU[11] & 0xFF;
 		_logger.info("Password attempts left: " + _passwordAttemptsLeft);
+
+		byte lengthOfPasswordMetaData = (byte)(responseAPDU[12] & 0xFF);
+		_logger.info("Length of password meta data: " + lengthOfPasswordMetaData);
+		
+		if (lengthOfPasswordMetaData > 0) {
+			// the rest is TLE encoded - read the data out
+			ByteArrayInputStream stream = new ByteArrayInputStream(responseAPDU, 13, lengthOfPasswordMetaData);
+			try {
+				while (stream.available() > 0) {
+					int fieldType = stream.read();
+					if (fieldType == -1 || fieldType == 0) {
+						// reached end of stream
+						return;
+					}
+					int fieldLength = stream.read();
+					if (fieldLength == -1) {
+						// reached end of stream
+						return;
+					}
+					if (fieldLength == 0) {
+						// 0-length field?
+						_logger.info("ensureInitialStateRead: read 0 length field");
+						continue;
+					}
+					byte[] fieldData = new byte[fieldLength];
+					if (stream.read(fieldData, 0, fieldLength) == -1) {
+						_logger.error("ensureInitialStateRead: Field was missing bytes");
+						return;
+					}
+
+					switch(fieldType) {
+						case FIELD_PASSWORD_META_DATA_VERSION: {
+							_passwordMetaDataVersion = fieldData[0] & 0xff; // expected one byte
+							_logger.info("ensureInitialStateRead: read password meta data version " + _passwordMetaDataVersion);
+							if (_passwordMetaDataVersion != 1) {
+								throw new WrongVersionException();
+							}
+							break;
+						}
+						case FIELD_PASSWORD_META_DATA_PKCS5_ITERATION_COUNT: {
+							_passwordPKCS5IterationCount = Util.bytesToInt(fieldData);
+							_logger.info("ensureInitialStateRead: read iteration count of " + _passwordPKCS5IterationCount);
+							break;
+						}
+						case FIELD_PASSWORD_META_DATA_PKCS5_PASSWORD_KEY_SALT: {
+							_passwordPKCS5PasswordKeySalt = fieldData;
+							_logger.info("ensureInitialStateRead: read password key salt of " + Util.bytesToHex(_passwordPKCS5PasswordKeySalt));
+							break;
+						}
+						case FIELD_PASSWORD_META_DATA_PKCS5_ENCRYPTION_KEY_SALT: {
+							_passwordPKCS5EncryptionKeySalt = fieldData;
+							_logger.info("ensureInitialStateRead: read encryption key salt of " + Util.bytesToHex(_passwordPKCS5EncryptionKeySalt));
+							break;
+						}
+						default: {
+							_logger.info("ensureInitialStateRead: skipped unknown field");
+							break;
+						}
+					}
+				}
+			} finally {
+				try {
+					stream.close();
+				} catch (IOException e) {
+					_logger.error("ensureInitialStateRead: error closing stream: " + e.toString());
+				}
+			}
+		} else {
+			_passwordMetaDataVersion = -1;
+		}
 
 		_currentState = SecureElementState.STATE_INFORMATION_READ;
 	}
@@ -141,26 +226,65 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		ensureInitialStateRead(false);
 		return _pinState;
 	}
-	
+
 	@Override
 	public void setCardPassword(String oldPassword, String newPassword) throws IOException {
 		ensureInitialStateRead(false);
 		byte[] oldPasswordBytes = null;
 		int oldPasswordBytesLength = 0;
 		if (oldPassword != null && oldPassword.length() > 0) {
-			oldPasswordBytes = oldPassword.getBytes();
+			PINState currentPINState = getPINState();
+			if (currentPINState == PINState.NOT_SET || currentPINState == PINState.BLANK || _passwordMetaDataVersion == -1) {
+				// we received a password, but there's no password set, or we have no password meta data
+				// throw an error here
+				_logger.error("setCardPassword: received old password, but no password set or no password meta data");
+				throw new IOException("setCardPassword: received old password, but no password set or no password meta data");
+			}
+
+			// use PKCS5 derivation to derive the old password
+			oldPasswordBytes = PKCS5Util.derivePKCS5Key(oldPassword, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
 			oldPasswordBytesLength = oldPasswordBytes.length;
 		}
-		
+
 		byte[] newPasswordBytes = null;
 		int newPasswordBytesLength = 0;
+		
+		byte[] passwordMetaData = null;
+		int passwordMetaDataLength = 0;
 		if (newPassword != null && newPassword.length() > 0) {
-			newPasswordBytes = newPassword.getBytes();
+			// generate the iteration counts and salts for the password key and encryption key
+			int newPasswordPKCS5IterationCount = DEFAULT_ITERATION_COUNT;
+			byte[] newPasswordPKCS5PasswordKeySalt = new byte[LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS / 8];
+			new Random().nextBytes(newPasswordPKCS5PasswordKeySalt);
+			byte[] newPasswordPKCS5EncryptionKeySalt = new byte[LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS / 8];
+			new Random().nextBytes(newPasswordPKCS5EncryptionKeySalt);
+			ByteArrayOutputStream passwordMetaDataOutputStream = new ByteArrayOutputStream();
+			passwordMetaDataOutputStream.write(FIELD_PASSWORD_META_DATA_VERSION);
+			passwordMetaDataOutputStream.write(0x01);
+			passwordMetaDataOutputStream.write(0x01); // this code only writes version 1
+
+			passwordMetaDataOutputStream.write(FIELD_PASSWORD_META_DATA_PKCS5_ITERATION_COUNT);
+			passwordMetaDataOutputStream.write(0x04);
+			passwordMetaDataOutputStream.write(Util.intToBytes(newPasswordPKCS5IterationCount));
+
+			passwordMetaDataOutputStream.write(FIELD_PASSWORD_META_DATA_PKCS5_PASSWORD_KEY_SALT);			
+			passwordMetaDataOutputStream.write(newPasswordPKCS5PasswordKeySalt.length);
+			passwordMetaDataOutputStream.write(newPasswordPKCS5PasswordKeySalt);
+
+			passwordMetaDataOutputStream.write(FIELD_PASSWORD_META_DATA_PKCS5_ENCRYPTION_KEY_SALT);			
+			passwordMetaDataOutputStream.write(newPasswordPKCS5EncryptionKeySalt.length);
+			passwordMetaDataOutputStream.write(newPasswordPKCS5EncryptionKeySalt);
+
+			passwordMetaData = passwordMetaDataOutputStream.toByteArray();
+			passwordMetaDataLength = passwordMetaData.length;
+			
+			// use PKCS5 to derive the new password
+			newPasswordBytes = PKCS5Util.derivePKCS5Key(newPassword, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, newPasswordPKCS5PasswordKeySalt, newPasswordPKCS5IterationCount);
 			newPasswordBytesLength = newPasswordBytes.length;
 		}
 
 		// create an APDU with p1 set to length of old password, p2 set to length of new password
-		byte[] commandAPDUInitializePassword = new byte[] {(byte)0x80, 0x02, (byte)(oldPasswordBytesLength), (byte)(newPasswordBytesLength), (byte)(oldPasswordBytesLength + newPasswordBytesLength)};		
+		byte[] commandAPDUInitializePassword = new byte[] {(byte)0x80, 0x02, (byte)(oldPasswordBytesLength), (byte)(newPasswordBytesLength), (byte)(oldPasswordBytesLength + newPasswordBytesLength + passwordMetaDataLength)};		
 		ByteArrayOutputStream commandAPDUByteArrayOutputStream = new ByteArrayOutputStream(commandAPDUInitializePassword.length + oldPasswordBytesLength + newPasswordBytesLength);
 
 		commandAPDUByteArrayOutputStream.write(commandAPDUInitializePassword);
@@ -171,12 +295,18 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		if (newPasswordBytes != null) {
 			commandAPDUByteArrayOutputStream.write(newPasswordBytes);
 		}
-	
-		
+		if (passwordMetaDataLength != 0) {
+			commandAPDUByteArrayOutputStream.write(passwordMetaData);
+		}
+
 		byte[] finalCommandAPDU = commandAPDUByteArrayOutputStream.toByteArray();
-		// don't log the APDU itself as it's sensitive
 		_logger.info("Sending command APDU to set password");
-		// _logger.info("APDU: " + Util.bytesToHex(finalCommandAPDU));
+		// don't log the APDU itself as it's sensitive
+		/*
+		if (!Constants.PRODUCTION_BUILD) {
+			_logger.info("APDU: " + Util.bytesToHex(finalCommandAPDU));
+		}
+		*/
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(finalCommandAPDU);
 		_logger.info("Got response: " + Util.bytesToHex(responseAPDU));
 
@@ -317,9 +447,10 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			return;
 		}
 
-		byte[] passwordBytes = password.getBytes();
+		// use PKCS5 derivation to derive the password
+		byte[] passwordBytes = PKCS5Util.derivePKCS5Key(password, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
 		int lengthOfPasswordBytes = passwordBytes.length;
-		
+				
 		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x03, 0x00, 0x00, (byte)lengthOfPasswordBytes};
 		
 		ByteArrayOutputStream commandAPDUByteArrayOutputStream = new ByteArrayOutputStream(commandAPDUHeader.length + lengthOfPasswordBytes);

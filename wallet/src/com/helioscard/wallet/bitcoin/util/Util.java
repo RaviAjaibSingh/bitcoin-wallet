@@ -42,5 +42,17 @@ public class Util {
 	    buffer.putLong(incomingLong);
 	    return buffer.array();
 	}
+	
+	public static int bytesToInt(byte[] bytes) {
+	    ByteBuffer buffer = ByteBuffer.allocate(4);
+	    buffer.put(bytes);
+	    buffer.flip(); //need flip 
+	    return buffer.getInt();		
+	}
 
+	public static byte[] intToBytes(int incomingInt) {
+	    ByteBuffer buffer = ByteBuffer.allocate(4);
+	    buffer.putInt(incomingInt);
+	    return buffer.array();
+	}
 }

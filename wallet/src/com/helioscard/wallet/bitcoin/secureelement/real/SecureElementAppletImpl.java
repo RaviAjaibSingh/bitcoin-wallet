@@ -368,7 +368,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte[] passwordBytes = null;
 		int lengthOfPasswordBytes = 0;
 		if (password != null && password.length() > 0) {
-			passwordBytes = password.getBytes();
+			passwordBytes = PKCS5Util.derivePKCS5Key(password, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
 			lengthOfPasswordBytes = passwordBytes.length;
 		}
 

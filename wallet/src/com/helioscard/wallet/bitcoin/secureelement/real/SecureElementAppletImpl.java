@@ -333,13 +333,15 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 				break;
 			}
 			
+			boolean isLocked = extractIsLocked(responseAPDU);
+			
 			// copy the public key bytes out
 			byte[] publicKeyBytes = extractPublicKey(responseAPDU);
 			
 			// copy the associated data bytes out
 			byte[] associatedDataBytes = extractAssociatedData(responseAPDU);
 
-			ECKeyEntry ecKeyEntry = new ECKeyEntry(publicKeyBytes, associatedDataBytes);
+			ECKeyEntry ecKeyEntry = new ECKeyEntry(isLocked, publicKeyBytes, associatedDataBytes);
 			list.add(ecKeyEntry);
 
 			 // set P1 to 01 to indicate we want to read the next key
@@ -536,25 +538,31 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		
 		ensureResponseEndsWith9000(responseAPDU);
 
+		boolean isLocked = extractIsLocked(responseAPDU);
+		
 		// copy the public key bytes out
 		byte[] publicKeyBytesFromSecureElement = extractPublicKey(responseAPDU);
 		
 		// copy the associated data bytes out
 		byte[] associatedDataBytesFromSecureElement = extractAssociatedData(responseAPDU);
 
-		return new ECKeyEntry(publicKeyBytesFromSecureElement, associatedDataBytesFromSecureElement);
+		return new ECKeyEntry(isLocked, publicKeyBytesFromSecureElement, associatedDataBytesFromSecureElement);
+	}
+	
+	private static boolean extractIsLocked(byte[] responseAPDU) {
+		return responseAPDU[0] == 1;
 	}
 	
 	private static byte[] extractPublicKey(byte[] responseAPDU) {
 		byte[] publicKeyBytesFromSecureElement = new byte[LENGTH_OF_PUBLIC_KEY];
-		System.arraycopy(responseAPDU, 0, publicKeyBytesFromSecureElement, 0, LENGTH_OF_PUBLIC_KEY);
+		System.arraycopy(responseAPDU, 1, publicKeyBytesFromSecureElement, 0, LENGTH_OF_PUBLIC_KEY);
 		return publicKeyBytesFromSecureElement;
 	}
 	
 	private static byte[] extractAssociatedData(byte[] responseAPDU) {
 		// copy the associated data bytes out
 		byte[] associatedDataBytesFromSecureElement = new byte[LENGTH_OF_ASSOCIATED_DATA];
-		System.arraycopy(responseAPDU, LENGTH_OF_PUBLIC_KEY, associatedDataBytesFromSecureElement, 0, LENGTH_OF_ASSOCIATED_DATA);
+		System.arraycopy(responseAPDU, LENGTH_OF_PUBLIC_KEY + 1, associatedDataBytesFromSecureElement, 0, LENGTH_OF_ASSOCIATED_DATA);
 		return associatedDataBytesFromSecureElement;
 	}
 

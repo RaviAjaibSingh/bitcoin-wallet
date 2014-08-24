@@ -32,7 +32,7 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 		List<ECKeyEntry> list = new ArrayList<ECKeyEntry>();
 
 		byte[] publicKeyBytes = Util.hexStringToByteArray("0224A1F7144E508E236F726A06FD098BED00FA92B6D87192AEE992C86E68CA56DC"); 
-		ECKeyEntry info1 = new ECKeyEntry(publicKeyBytes, null);
+		ECKeyEntry info1 = new ECKeyEntry(false, publicKeyBytes, null);
 
 		list.add(info1);
 		return list;

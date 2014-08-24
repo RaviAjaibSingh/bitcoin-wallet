@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.helioscard.wallet.bitcoin.util.Util;
 
 public class ECKeyEntry {
+	private boolean _isLocked;
 	private byte[] _publicKeyBytes;
 	private String _friendlyName;
 	private long _timeOfKeyCreationMillisSinceEpoch = -1;
@@ -22,7 +23,8 @@ public class ECKeyEntry {
 	
 	private boolean _isPublicKeyUncompressed = false;
 	
-	public ECKeyEntry(byte[] publicKeyBytes, byte[] associatedData) {
+	public ECKeyEntry(boolean isLocked, byte[] publicKeyBytes, byte[] associatedData) {
+		_isLocked = isLocked;
 		_publicKeyBytes = publicKeyBytes;
 		
 		// decode the associated data

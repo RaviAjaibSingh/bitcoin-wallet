@@ -56,7 +56,7 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 
 
 	@Override
-	public byte[] doSimpleSign(String password, byte[] publicKeyToUse,
+	public byte[] doSimpleSign(byte[] publicKeyToUse,
 			byte[] bytesToSign) {
 		// TODO Auto-generated method stub
 		return null;

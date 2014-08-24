@@ -362,29 +362,19 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	}
 	
 	@Override
-	public byte[] doSimpleSign(String password, byte[] publicKeyToUse, byte[] bytesToSign) throws IOException {
+	public byte[] doSimpleSign(byte[] publicKeyToUse, byte[] bytesToSign) throws IOException {
 		ensureInitialStateRead(false);
-
-		byte[] passwordBytes = null;
-		int lengthOfPasswordBytes = 0;
-		if (password != null && password.length() > 0) {
-			passwordBytes = PKCS5Util.derivePKCS5Key(password, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
-			lengthOfPasswordBytes = passwordBytes.length;
-		}
 
 		byte[] publicKey = ECUtil.getPublicKeyBytesFromEncoding(publicKeyToUse, false); // make sure we have the uncompressed form of the public key
 		
 		int lengthOfBytesToSign = bytesToSign.length;
 
-		byte lengthNeededForPayload = (byte)(lengthOfPasswordBytes + LENGTH_OF_PUBLIC_KEY + lengthOfBytesToSign);
-		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x0C, (byte)lengthOfPasswordBytes, (byte)lengthOfBytesToSign, lengthNeededForPayload};
+		byte lengthNeededForPayload = (byte)(LENGTH_OF_PUBLIC_KEY + lengthOfBytesToSign);
+		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x0C, (byte)lengthOfBytesToSign, 0x00, lengthNeededForPayload};
 		ByteArrayOutputStream commandAPDUByteArrayOutputStream = new ByteArrayOutputStream(commandAPDUHeader.length + lengthNeededForPayload);
 		
 		commandAPDUByteArrayOutputStream.write(commandAPDUHeader);
 		commandAPDUByteArrayOutputStream.write(publicKey);
-		if (passwordBytes != null) {
-			commandAPDUByteArrayOutputStream.write(passwordBytes);
-		}
 		commandAPDUByteArrayOutputStream.write(bytesToSign);
 		
 		byte[] commandAPDU = commandAPDUByteArrayOutputStream.toByteArray();

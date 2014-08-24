@@ -910,9 +910,9 @@ public final class SendCoinsFragment extends SherlockFragment
 		// Prompt the user to tap the card so we can sign the transaction
 		try {
 			wallet.completeTx(sendRequest);
-			_secureElementTransactionSigner = new com.helioscard.wallet.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet, false);
+			_secureElementTransactionSigner = new com.helioscard.wallet.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet);
 			com.helioscard.wallet.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity();
-			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
+			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, true);
 			
 			// update the UI to show progress about how the signing is going
 			setProgressViewsInitialState();			
@@ -972,9 +972,6 @@ public final class SendCoinsFragment extends SherlockFragment
 		log.info("handleCardDetected called");
 		com.helioscard.wallet.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity();
 		if (_secureElementTransactionSigner != null) {
-			if (password != null) {
-				_secureElementTransactionSigner.setPassword(password);
-			}
 
 			// It's possible we've already run once, and we disconnected from the card due to a TagLostException
 			// recreate the AsyncTask based on the old one (we can't re-use the same one in case it already ran) and then run the new one

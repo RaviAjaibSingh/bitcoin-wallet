@@ -24,7 +24,7 @@ public abstract class SecureElementApplet {
 	
 	public abstract void close();
 	
-	public abstract byte[] doSimpleSign(String password, byte[] publicKeyToUse, byte[] bytesToSign) throws IOException;
+	public abstract byte[] doSimpleSign(byte[] publicKeyToUse, byte[] bytesToSign) throws IOException;
 	
 	public abstract void beginTransactionSigningOperation(String password, byte[] destinationAddress, long amount) throws IOException;
 	

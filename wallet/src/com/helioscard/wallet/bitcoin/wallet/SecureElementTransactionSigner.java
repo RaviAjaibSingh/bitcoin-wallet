@@ -47,12 +47,9 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	private volatile Address _returnAddress;
 	private volatile BigInteger _finalAmount;
 	private volatile Wallet _wallet;
-	private volatile String _password;
 	private volatile TransactionSignature[] _signatures;
     private volatile ECKey[] _signingKeys;
-	private volatile byte[][] _cachedTransactionIdentifiers;
 	private volatile byte[][] _dataToSign;
-	private volatile boolean _useSignatureCaching;
 	private volatile int _currentInputIndex;
 	
 	public interface Listener {
@@ -60,23 +57,18 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 		public void secureElementTransactionListenerSignerFinished(int result);
 	}
 	
-	public SecureElementTransactionSigner(Listener listener, Transaction transaction, Address returnAddress, BigInteger finalAmount, Wallet wallet, boolean useSignatureCaching) {
+	public SecureElementTransactionSigner(Listener listener, Transaction transaction, Address returnAddress, BigInteger finalAmount, Wallet wallet) {
 		_listener = listener;
 		_transaction = transaction;
 		_returnAddress = returnAddress;
 		_finalAmount = finalAmount;
 		_wallet = wallet;
-		_useSignatureCaching = useSignatureCaching;
 
 		int numInputs = _transaction.getInputs().size();
         _signatures = new TransactionSignature[numInputs];
         _signingKeys = new ECKey[numInputs];
         
         _dataToSign = new byte[numInputs][];
-        
-        if (_useSignatureCaching) {
-        	_cachedTransactionIdentifiers = new byte[numInputs][];
-        }
 	}
 	
 	public SecureElementTransactionSigner(SecureElementTransactionSigner secureElementTransactionSigner) {
@@ -85,21 +77,12 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 		_returnAddress = secureElementTransactionSigner._returnAddress;
 		_finalAmount = secureElementTransactionSigner._finalAmount;
 		_wallet = secureElementTransactionSigner._wallet;
-		_password = secureElementTransactionSigner._password;
 		_signatures = secureElementTransactionSigner._signatures;
 	    _signingKeys = secureElementTransactionSigner._signingKeys;
-		_cachedTransactionIdentifiers = secureElementTransactionSigner._cachedTransactionIdentifiers;
 		_dataToSign = secureElementTransactionSigner._dataToSign;
-		_useSignatureCaching = secureElementTransactionSigner._useSignatureCaching;
 		_currentInputIndex = secureElementTransactionSigner._currentInputIndex;
-		_password = secureElementTransactionSigner._password;
+	}
 
-	}
-	
-	public void setPassword(String password) {
-		_password = password;
-	}
-		
 	public Transaction getTransaction() {
 		return _transaction;
 	}
@@ -244,31 +227,12 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	        		break;
 	        	}
 	        	// Now get the secure element to sign all the data
-		        byte[] signatureFromSecureElement = null;
-		        if (_useSignatureCaching) {
-		        	// the caller is worried that this device may lose the connection with the secure element in the middle of signing
-		        	// see if the secure element already has a cached signature for us
-		        	if (_cachedTransactionIdentifiers[i] != null) {
-		        		_logger.info("signTransaction: attempting to fetch cached signature for input index " + i);
-		        		byte[] cachedTransactionIdentifier = _cachedTransactionIdentifiers[i];
-		        		_cachedTransactionIdentifiers[i] = null;
-		        		signatureFromSecureElement = secureElementApplet.getCachedSigningDataForIdentifier(_password, cachedTransactionIdentifier);
-		
-		        	} else {
-		        		// ask the secure element to cache the signature so we can retrieve it later in case we lose the connection
-		        		_cachedTransactionIdentifiers[i] = secureElementApplet.enableCachedSigning();
-		        	}
-		        }
 		        
-		        if (signatureFromSecureElement == null) {
-		        	// we didn't get a cached signature
-		        	// now sign with the smart card - it will hash the bytes a second time
-		        	// before actually signing, which is what we want because that's what bitcoin does- double hashed signature
-		    		_logger.info("signTransaction: signing with secure element for input index " + i);
-		        	signatureFromSecureElement = secureElementApplet.doSimpleSign(_password, ECUtil.getPublicKeyBytesFromEncoding(_signingKeys[i].getPubKey(), false), _dataToSign[i]);
-		        } else {
-		    		_logger.info("signTransaction: successfully using cached signature");
-		        }
+		        // we didn't get a cached signature
+		        // now sign with the smart card - it will hash the bytes a second time
+		        // before actually signing, which is what we want because that's what bitcoin does- double hashed signature
+		    	_logger.info("signTransaction: signing with secure element for input index " + i);
+		    	byte[] signatureFromSecureElement = secureElementApplet.doSimpleSign(ECUtil.getPublicKeyBytesFromEncoding(_signingKeys[i].getPubKey(), false), _dataToSign[i]);
 		
 		        ECDSASignature ecdsaSignature = ECDSASignature.decodeFromDER(signatureFromSecureElement);
 		        

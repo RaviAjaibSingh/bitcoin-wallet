@@ -31,12 +31,12 @@ public class PromptForBackupOrRestoreDialogFragment extends DialogFragment {
 				dialog.dismiss();
 			}
 		});
-        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file), new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setNeutralButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
 			}
 		});
-        alertDialogBuilder.setNeutralButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				// if this button is clicked, just close
 				// the dialog box and do nothing

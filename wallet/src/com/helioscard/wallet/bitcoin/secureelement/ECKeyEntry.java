@@ -2,6 +2,7 @@ package com.helioscard.wallet.bitcoin.secureelement;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import com.helioscard.wallet.bitcoin.util.Util;
 public class ECKeyEntry {
 	private boolean _isLocked;
 	private byte[] _publicKeyBytes;
+	private byte[] _privateKeyBytes;
 	private String _friendlyName;
 	private long _timeOfKeyCreationMillisSinceEpoch = -1;
 	
@@ -23,9 +25,10 @@ public class ECKeyEntry {
 	
 	private boolean _isPublicKeyUncompressed = false;
 	
-	public ECKeyEntry(boolean isLocked, byte[] publicKeyBytes, byte[] associatedData) {
+	public ECKeyEntry(boolean isLocked, byte[] publicKeyBytes, byte[] associatedData, byte[] privateKeyBytes) {
 		_isLocked = isLocked;
 		_publicKeyBytes = publicKeyBytes;
+		_privateKeyBytes = privateKeyBytes;
 		
 		// decode the associated data
 		if (associatedData != null) {
@@ -107,5 +110,12 @@ public class ECKeyEntry {
 	
 	public long getTimeOfKeyCreationSecondsSinceEpoch() {
 		return _timeOfKeyCreationMillisSinceEpoch / 1000; // convert to seconds
+	}
+	
+	@Override
+	public void finalize() {
+		if (_privateKeyBytes != null) {
+			Arrays.fill(_privateKeyBytes, 0, _privateKeyBytes.length - 1, (byte)0);
+		}
 	}
 }

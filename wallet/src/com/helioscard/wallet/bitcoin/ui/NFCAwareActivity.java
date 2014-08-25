@@ -73,6 +73,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private static final String INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY = "INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY";
     private static final String INSTANCE_STATE_PENDING_EDIT_LABEL = "INSTANCE_STATE_PENDING_EDIT_LABEL";
     private static final String INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES = "INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES";
+    private static final String INSTANCE_STATE_PENDING_BACKUP_CARD = "INSTANCE_STATE_PENDING_BACKUP_CARD";
     
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
@@ -81,6 +82,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private String _pendingEditLabel;
     private byte[] _pendingDeleteKeyPublicKeyBytes;
     private String _pendingChangePasswordNewPassword;
+    private boolean _pendingBackupCard;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +139,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	outState.putByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY, _pendingEditPublicKey);
     	outState.putString(INSTANCE_STATE_PENDING_EDIT_LABEL, _pendingEditLabel);
     	outState.putByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES, _pendingDeleteKeyPublicKeyBytes);
+    	outState.putBoolean(INSTANCE_STATE_PENDING_BACKUP_CARD, _pendingBackupCard);
     }
     
     @Override
@@ -150,6 +153,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	_pendingEditPublicKey = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_EDIT_PUBLIC_KEY);
     	_pendingEditLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_LABEL);
     	_pendingDeleteKeyPublicKeyBytes = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES);
+    	_pendingBackupCard = savedInstanceState.getBoolean(INSTANCE_STATE_PENDING_BACKUP_CARD);
     }
 
     @Override
@@ -226,92 +230,104 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        		_cachedSecureElementApplet = new SecureElementAppletSimulatorImpl();
 	        	}
 
+	        	FragmentManager fragmentManager = getSupportFragmentManager();    	
 
-                // set the card identifier appropriately in the bitcoin wallet
-                WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
-                // Get the list of public keys from the secure element
-                List<ECKeyEntry> _ecPublicKeyEntries = _cachedSecureElementApplet.getECPublicKeyEntries();
+                // Special case - we're in the middle of a backup/restore
+	        	// Don't sync the keys, just process the tap immediately.
+	        	if (!_pendingBackupCard) {
+		        	// set the card identifier appropriately in the bitcoin wallet
+	                WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
+	                // Get the list of public keys from the secure element
+	                List<ECKeyEntry> _ecPublicKeyEntries = _cachedSecureElementApplet.getECKeyEntries(false);
+	
+	                // Synchronize the keys with the secure element.  E.g. make sure our local cache of public keys matches
+	                // what's on this card
+	                // TODO: there's a race condition here, where the wallet has the newly synchronized keys, but it could be the case we had to
+	                // tell the service to stop and destroy its current block chain file.  But there's a chance the process could be terminated
+	                // or the device could be rebooted before the service gets a chance to do that
+			
+	                boolean needsToGoToInitializationScreen = false;
+	                boolean cardIdentifierWasChanged = false;
+	
+	                String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
+	                String newCardIdentifier = _cachedSecureElementApplet.getCardIdentifier();
+		        	PromptOnNewCardDialogFragment promptOnNewCardDialogFragment = (PromptOnNewCardDialogFragment)fragmentManager.findFragmentByTag(PromptOnNewCardDialogFragment.TAG);
+	                if (currentCardIdentifier != null && !currentCardIdentifier.equals(newCardIdentifier)) {
+	                    _logger.info("onNewIntent: had an old card identifier, but new card was tapped");
+	                	// we are switching cards - prompt the user
+	    	        	if (promptOnNewCardDialogFragment != null) {
+	                        _logger.info("onNewIntent: already showing new card dialog fragment");
+	    	        		// we were already showing the prompt on new card dialog fragment - we're ready to switch to this card now
+	    	        		promptOnNewCardDialogFragment.dismiss();
+	    	        		walletGlobals.setCardIdentifier(this, newCardIdentifier);
+	    	        		cardIdentifierWasChanged = true;
+	    	        	} else {
+	                        _logger.info("onNewIntent: prompting user to switch cards");
+	    	        		// prompt the user to switch cards
+	    	        		PromptOnNewCardDialogFragment.prompt(fragmentManager);
+	    	        		return true;
+	    	        	}
+	                } else if (promptOnNewCardDialogFragment != null) {
+	                	// we were showing the prompt on new card dialog fragment, but the user tapped the old card
+	                	// dismiss the dialog
+	                    _logger.info("onNewIntent: same card tapped while showing new card dialog, dismissing");
+	                	promptOnNewCardDialogFragment.dismiss();
+	                } else if (currentCardIdentifier == null){
+	                	// a card was tapped, and none was registered before
+	                    _logger.info("onNewIntent: new card tapped and no registered old card");
+	                	walletGlobals.setCardIdentifier(this, newCardIdentifier);
+		        		cardIdentifierWasChanged = true;
+	                }
+	                
+	                if (_cachedSecureElementApplet.getPINState() == PINState.NOT_SET) {
+	                	// this is a brand new card.  we are going to need to send the user to the initialization screen
+	                    _logger.info("onNewIntent: detected uninitialized card");
+	                    if (this instanceof InitializeCardActivity) {
+	                        _logger.info("onNewIntent: already in InitializeCardActivity, not doing anything");
+	                    } else {
+	                        _logger.info("onNewIntent: need to go to initialization screen");
+	                        needsToGoToInitializationScreen = true;
+	                    }
+	                }
+	
+		        	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
+	                Wallet wallet = IntegrationConnector.getWallet(this);
+	                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries, promptForTapOnceMoreDialogFragment == null);
+	                if (serviceNeedsToClearAndRestart) {
+	                    // the keys between the secure element and our cached copy of public keys didn't match
+	                    _logger.info("onNewIntent: service needs to clear and restart");
+	                }
+	                
+	                if (serviceNeedsToClearAndRestart) {
+	                	if (promptForTapOnceMoreDialogFragment == null) {
+	                		// We were tapped by a card but we weren't tracking all the keys - restart the service
+	                		// Also, there was no tap to finish dialog showing, or there was one, but the user tapped a different card 
+	                		IntegrationConnector.deleteBlockchainAndRestartService(this);
+	                	} else {
+	                		_logger.info("processIntent: ignoring service needs to restart due to prompt for tap dialog");
+	                		serviceNeedsToClearAndRestart = false;
+	                	}
+	                }
+	
+	                if (cardIdentifierWasChanged || serviceNeedsToClearAndRestart || needsToGoToInitializationScreen) {
+	                    // We need to restart the application because we have a new card, or we have new keys, or we need to go to the initialization screen
+	                    // We want to clear any activities off the task and basically restart the activity stack focused on a new card
+	                    Intent intentToRelaunchApplication = new Intent(this, needsToGoToInitializationScreen ? InitializeCardActivity.class : IntegrationConnector.WALLET_ACTIVITY_CLASS);
+	                    intentToRelaunchApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+	                    startActivity(intentToRelaunchApplication);
+	                    this.finish();
+	
+	                    return true;
+	                }
 
-                // Synchronize the keys with the secure element.  E.g. make sure our local cache of public keys matches
-                // what's on this card
-                // TODO: there's a race condition here, where the wallet has the newly synchronized keys, but it could be the case we had to
-                // tell the service to stop and destroy its current block chain file.  But there's a chance the process could be terminated
-                // or the device could be rebooted before the service gets a chance to do that
-	        	FragmentManager fragmentManager = getSupportFragmentManager();
-
-                boolean needsToGoToInitializationScreen = false;
-                boolean cardIdentifierWasChanged = false;
-
-                String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
-                String newCardIdentifier = _cachedSecureElementApplet.getCardIdentifier();
-	        	PromptOnNewCardDialogFragment promptOnNewCardDialogFragment = (PromptOnNewCardDialogFragment)fragmentManager.findFragmentByTag(PromptOnNewCardDialogFragment.TAG);
-                if (currentCardIdentifier != null && !currentCardIdentifier.equals(newCardIdentifier)) {
-                    _logger.info("onNewIntent: had an old card identifier, but new card was tapped");
-                	// we are switching cards - prompt the user
-    	        	if (promptOnNewCardDialogFragment != null) {
-                        _logger.info("onNewIntent: already showing new card dialog fragment");
-    	        		// we were already showing the prompt on new card dialog fragment - we're ready to switch to this card now
-    	        		promptOnNewCardDialogFragment.dismiss();
-    	        		walletGlobals.setCardIdentifier(this, newCardIdentifier);
-    	        		cardIdentifierWasChanged = true;
-    	        	} else {
-                        _logger.info("onNewIntent: prompting user to switch cards");
-    	        		// prompt the user to switch cards
-    	        		PromptOnNewCardDialogFragment.prompt(fragmentManager);
-    	        		return true;
-    	        	}
-                } else if (promptOnNewCardDialogFragment != null) {
-                	// we were showing the prompt on new card dialog fragment, but the user tapped the old card
-                	// dismiss the dialog
-                    _logger.info("onNewIntent: same card tapped while showing new card dialog, dismissing");
-                	promptOnNewCardDialogFragment.dismiss();
-                } else if (currentCardIdentifier == null){
-                	// a card was tapped, and none was registered before
-                    _logger.info("onNewIntent: new card tapped and no registered old card");
-                	walletGlobals.setCardIdentifier(this, newCardIdentifier);
-	        		cardIdentifierWasChanged = true;
-                }
-                
-                if (_cachedSecureElementApplet.getPINState() == PINState.NOT_SET) {
-                	// this is a brand new card.  we are going to need to send the user to the initialization screen
-                    _logger.info("onNewIntent: detected uninitialized card");
-                    if (this instanceof InitializeCardActivity) {
-                        _logger.info("onNewIntent: already in InitializeCardActivity, not doing anything");
-                    } else {
-                        _logger.info("onNewIntent: need to go to initialization screen");
-                        needsToGoToInitializationScreen = true;
-                    }
-                }
-
-	        	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
-                Wallet wallet = IntegrationConnector.getWallet(this);
-                boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries, promptForTapOnceMoreDialogFragment == null);
-                if (serviceNeedsToClearAndRestart) {
-                    // the keys between the secure element and our cached copy of public keys didn't match
-                    _logger.info("onNewIntent: service needs to clear and restart");
-                }
-                
-                if (serviceNeedsToClearAndRestart) {
-                	if (promptForTapOnceMoreDialogFragment == null) {
-                		// We were tapped by a card but we weren't tracking all the keys - restart the service
-                		// Also, there was no tap to finish dialog showing, or there was one, but the user tapped a different card 
-                		IntegrationConnector.deleteBlockchainAndRestartService(this);
-                	} else {
-                		_logger.info("processIntent: ignoring service needs to restart due to prompt for tap dialog");
-                		serviceNeedsToClearAndRestart = false;
-                	}
-                }
-
-                if (cardIdentifierWasChanged || serviceNeedsToClearAndRestart || needsToGoToInitializationScreen) {
-                    // We need to restart the application because we have a new card, or we have new keys, or we need to go to the initialization screen
-                    // We want to clear any activities off the task and basically restart the activity stack focused on a new card
-                    Intent intentToRelaunchApplication = new Intent(this, needsToGoToInitializationScreen ? InitializeCardActivity.class : IntegrationConnector.WALLET_ACTIVITY_CLASS);
-                    intentToRelaunchApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    startActivity(intentToRelaunchApplication);
-                    this.finish();
-
-                    return true;
-                }
+		        	if (promptForTapOnceMoreDialogFragment != null) {
+		        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
+		        		// synchronize the keys.  That has already been done by the time we get here, so nothing to do here.
+		        		promptForTapOnceMoreDialogFragment.dismiss();
+		        		showGetStartedDialogIfNeeded();
+		        		return true;
+		        	}
+	        	}
 
 	        	PromptForPasswordDialogFragment promptForPasswordDialogFragment = (PromptForPasswordDialogFragment)fragmentManager.findFragmentByTag(PromptForPasswordDialogFragment.TAG);
 	        	if (promptForPasswordDialogFragment != null) {
@@ -334,14 +350,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			loginToCard(_pendingCardPassword);
 	        			return true;
 	        		}
-	        	}
-
-	        	if (promptForTapOnceMoreDialogFragment != null) {
-	        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
-	        		// synchronize the keys.  That has already been done by the time we get here, so nothing to do here.
-	        		promptForTapOnceMoreDialogFragment.dismiss();
-	        		showGetStartedDialogIfNeeded();
-	        		return true;
 	        	}
 
                 // let the activity know a card has been detected
@@ -392,8 +400,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 		} catch (IOException e) {
 			showException(e);
-			// we might be down to 0 keys, in which case we need to show a dialog prompting the user to add one
-			showGetStartedDialogIfNeeded();
 		}
 	}
 
@@ -610,6 +616,31 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		HeliosChangePasswordDialogFragment.prompt(getSupportFragmentManager());
 	}
 	
+	public void backupCardPreTap() {
+		_logger.info("backupCardPreTap: called");
+		
+		// Note that we do NOT use the existing session - we want to force the user to re-tap and re-enter the password
+		// in case the user is holding the wrong card to the phone
+		_pendingBackupCard = true;
+		this.getSecureElementAppletPromptIfNeeded(true, false);
+	}
+	
+	public void backupCardPostTap(SecureElementApplet secureElementApplet) {
+		_logger.info("backupCardPostTap: called");
+		
+		try {
+			// get a list of keys from the card including private key
+            List<ECKeyEntry> _ecKeyEntries = _cachedSecureElementApplet.getECKeyEntries(true);
+    		_logger.info("backupCardPostTap: got keys");
+		} catch (IOException e) {
+			_logger.error("backupCardPostTap: received bad exception: " + e.toString());
+			showException(e);
+			// we're giving up, clear out any pending variables
+			userCanceledSecureElementPromptSuper();
+		}
+	}
+		
+	
 	public void changePasswordPreTap(String newPassword) {
 		_logger.info("changePasswordPreTap: called");
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
@@ -628,6 +659,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} catch (IOException e) {
 			_logger.error("changePasswordPostTap: received bad exception: " + e.toString());
 			showException(e);
+			// we're giving up, clear out any pending variables
+			userCanceledSecureElementPromptSuper();
 		}
 	}
 	
@@ -668,7 +701,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			} else {
 				_logger.error("generateKeyOnSecureElement: received bad exception: " + e.toString());
 				showException(e);
-				showGetStartedDialogIfNeeded();
+				// we're giving up, clear out any pending variables
+				userCanceledSecureElementPromptSuper();
 			}
 		}
 	}
@@ -703,6 +737,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// update the key label in the content provider as well
 		} catch (IOException e) {
 			showException(e);
+			// we're giving up, clear out any pending variables
+			userCanceledSecureElementPromptSuper();
 		}
 	}
 
@@ -731,7 +767,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			String newPassword = _pendingChangePasswordNewPassword;
 			_pendingChangePasswordNewPassword = null;
 			changePasswordPostTap(secureElementApplet, password, newPassword);
+			return;
+		} else if (_pendingBackupCard) {
+			_pendingBackupCard = false;
+			backupCardPostTap(secureElementApplet);
 		}
+
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
 	}
 	
@@ -746,7 +787,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_pendingEditLabel = null;
 	    _pendingDeleteKeyPublicKeyBytes = null;
 	    _pendingChangePasswordNewPassword = null;
-	    
+	    _pendingBackupCard = false;
+
        	// we have no keys in the wallet - prompt the user to add one
         showGetStartedDialogIfNeeded();
         
@@ -760,6 +802,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	// utility method for subclasses to show errors
 	public void showException(IOException e) {
 		String errorMessage;
+		
+		boolean finishing = false;
 		
 		if (e instanceof WrongPasswordException) {
     		// Toast.makeText(this, this.getResources().getString("Wrong password"), Toast.LENGTH_LONG).show();
@@ -799,11 +843,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     		intentToRestartApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     		startActivity(intentToRestartApplication);
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_card_was_wiped);
+    		finishing = true;
     		this.finish();
     	} else {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_unknown);
     	}
 		
 		Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
+		if (!finishing) {
+			showGetStartedDialogIfNeeded();
+		}
 	}
 }

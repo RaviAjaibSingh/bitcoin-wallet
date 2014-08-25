@@ -4,12 +4,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.spongycastle.util.Arrays;
 
 import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
 import com.helioscard.wallet.bitcoin.secureelement.ECUtil;
@@ -317,15 +317,20 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	}
 
 	@Override
-	public List<ECKeyEntry> getECPublicKeyEntries() throws IOException {
+	public List<ECKeyEntry> getECKeyEntries(boolean includePrivate) throws IOException {
 		ensureInitialStateRead(false);
 		List<ECKeyEntry> list = new ArrayList<ECKeyEntry>();
 		
-		byte[] commandAPDU = new byte[] {(byte)0x80, 0x05, 0x00, 0x00, 0x00};
+		byte[] commandAPDU = new byte[] {(byte)0x80, 0x05, 0x00, includePrivate ? (byte)0x01 : 0x00, 0x00};
 		while (true) {
-			_logger.info("getECPublicKeyEntries: Sending command APDU to get public keys " + Util.bytesToHex(commandAPDU));
+			_logger.info("getECKeyEntries: Sending command APDU to get public keys " + Util.bytesToHex(commandAPDU));
 			byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
-			_logger.info("getECPublicKeyEntries: Got response: " + Util.bytesToHex(responseAPDU));
+			if (!includePrivate) {
+				// don't log if we fetched the private key
+				_logger.info("getECKeyEntries: Got response: " + Util.bytesToHex(responseAPDU));
+			} else {
+				_logger.info("getECKeyEntries: Got a response");
+			}
 			ensureResponseEndsWith9000(responseAPDU);
 
 			if (responseAPDU.length == 2) {
@@ -340,12 +345,21 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			
 			// copy the associated data bytes out
 			byte[] associatedDataBytes = extractAssociatedData(responseAPDU);
+			
+			byte[] privateKeyData = null;
+			if (includePrivate && !isLocked) {
+				// if we asked for the private key back, assuming the key isn't locked, check if we got the private key data
+				privateKeyData = extractPrivateKey(responseAPDU);
+			}
 
-			ECKeyEntry ecKeyEntry = new ECKeyEntry(isLocked, publicKeyBytes, associatedDataBytes);
+			ECKeyEntry ecKeyEntry = new ECKeyEntry(isLocked, publicKeyBytes, associatedDataBytes, privateKeyData);
 			list.add(ecKeyEntry);
 
 			 // set P1 to 01 to indicate we want to read the next key
 			commandAPDU[2] = 0x01;
+			
+			// zero out the response APDU
+			Arrays.fill(responseAPDU, 0, responseAPDU.length - 1, (byte)0);
 		}
 
 		return list;
@@ -546,7 +560,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		// copy the associated data bytes out
 		byte[] associatedDataBytesFromSecureElement = extractAssociatedData(responseAPDU);
 
-		return new ECKeyEntry(isLocked, publicKeyBytesFromSecureElement, associatedDataBytesFromSecureElement);
+		return new ECKeyEntry(isLocked, publicKeyBytesFromSecureElement, associatedDataBytesFromSecureElement, null);
 	}
 	
 	private static boolean extractIsLocked(byte[] responseAPDU) {
@@ -562,8 +576,14 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	private static byte[] extractAssociatedData(byte[] responseAPDU) {
 		// copy the associated data bytes out
 		byte[] associatedDataBytesFromSecureElement = new byte[LENGTH_OF_ASSOCIATED_DATA];
-		System.arraycopy(responseAPDU, LENGTH_OF_PUBLIC_KEY + 1, associatedDataBytesFromSecureElement, 0, LENGTH_OF_ASSOCIATED_DATA);
+		System.arraycopy(responseAPDU, 1 + LENGTH_OF_PUBLIC_KEY, associatedDataBytesFromSecureElement, 0, LENGTH_OF_ASSOCIATED_DATA);
 		return associatedDataBytesFromSecureElement;
+	}
+	
+	private static byte[] extractPrivateKey(byte[] responseAPDU) {
+		byte[] privateKeyBytesFromSecureElement = new byte[LENGTH_OF_PRIVATE_KEY];
+		System.arraycopy(responseAPDU, 1 + LENGTH_OF_PUBLIC_KEY + LENGTH_OF_ASSOCIATED_DATA, privateKeyBytesFromSecureElement, 0, LENGTH_OF_PRIVATE_KEY);
+		return privateKeyBytesFromSecureElement;
 	}
 
 	@Override

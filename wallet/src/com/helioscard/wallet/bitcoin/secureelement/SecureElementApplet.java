@@ -18,7 +18,7 @@ public abstract class SecureElementApplet {
 	
 	public abstract void setCardPassword(String oldPassword, String newPassword) throws IOException;
 
-	public abstract List<ECKeyEntry> getECPublicKeyEntries() throws IOException;
+	public abstract List<ECKeyEntry> getECKeyEntries(boolean includePrivate) throws IOException;
 
 	public abstract boolean checkConnection();
 	

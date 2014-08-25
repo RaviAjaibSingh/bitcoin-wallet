@@ -6,6 +6,7 @@
 
     <!-- BEGIN CUSTOM CHANGE -->    
 	<fragment
+	    android:id="@+id/helios_card_info_fragment"
 		android:name="com.helioscard.wallet.bitcoin.ui.HeliosCardInfoFragment"
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content" />

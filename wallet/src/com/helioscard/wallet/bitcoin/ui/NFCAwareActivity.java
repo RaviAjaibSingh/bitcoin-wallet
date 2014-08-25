@@ -592,6 +592,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		PromptForLabelDialogFragment.prompt(getSupportFragmentManager());
 	}
 	
+	public void promptForBackupOrRestore() {
+		if (!checkIfNFCRadioOnPromptUser(true)) {
+			// the NFC radio isn't on, prompt the user to turn it on and abort
+			return;
+		}
+
+		PromptForBackupOrRestoreDialogFragment.prompt(getSupportFragmentManager());
+	}
+	
 	protected void promptToChangePassword() {
 		if (!checkIfNFCRadioOnPromptUser(true)) {
 			// the NFC radio isn't on, prompt the user to turn it on and abort

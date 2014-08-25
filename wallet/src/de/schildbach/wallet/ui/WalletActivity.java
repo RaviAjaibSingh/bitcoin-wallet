@@ -261,9 +261,14 @@ public final class WalletActivity extends AbstractWalletActivity
 		final String externalStorageState = Environment.getExternalStorageState();
 
 		menu.findItem(R.id.wallet_options_exchange_rates).setVisible(res.getBoolean(R.bool.show_exchange_rates_option));
+
+		/* BEGIN CUSTOM CHANGE */
+		/*
 		menu.findItem(R.id.wallet_options_import_keys).setEnabled(
 				Environment.MEDIA_MOUNTED.equals(externalStorageState) || Environment.MEDIA_MOUNTED_READ_ONLY.equals(externalStorageState));
 		menu.findItem(R.id.wallet_options_export_keys).setEnabled(Environment.MEDIA_MOUNTED.equals(externalStorageState));
+		*/
+		/* END CUSTOM CHANGE */
 
 		return true;
 	}
@@ -312,12 +317,15 @@ public final class WalletActivity extends AbstractWalletActivity
 			case R.id.wallet_options_import_keys:
 				showDialog(DIALOG_IMPORT_KEYS);
 				return true;
-			*/
-			/* END CUSTOM CHANGE */
 			case R.id.wallet_options_export_keys:
 				handleExportKeys();
 				return true;
-
+			*/
+			case R.id.wallet_options_backup_or_restore:
+				this.promptForBackupOrRestore();
+				return true;
+			/* END CUSTOM CHANGE */
+				
 			case R.id.wallet_options_preferences:
 				startActivity(new Intent(this, PreferencesActivity.class));
 				return true;
@@ -326,12 +334,12 @@ public final class WalletActivity extends AbstractWalletActivity
 				startActivity(new Intent(this, AboutActivity.class));
 				return true;
 
+			/* BEGIN CUSTOM CHANGE */
+			/*
 			case R.id.wallet_options_safety:
 				HelpDialogFragment.page(getSupportFragmentManager(), R.string.help_safety);
 				return true;
 
-			/* BEGIN CUSTOM CHANGE */
-			/*
 			case R.id.wallet_options_donate:
 				handleDonate();
 				return true;

@@ -26,6 +26,9 @@
 		android:icon="@drawable/ic_action_labels"
 		android:showAsAction="ifRoom|withText"
 		android:title="@string/address_book_activity_title"/>
+	
+	<!-- BEGIN CUSTOM CHANGE -->
+	<!--
 	<item
 		android:showAsAction="never"
 		android:title="@string/wallet_options_safety_menu">
@@ -44,6 +47,12 @@
 				android:title="@string/import_keys_dialog_title"/>
 		</menu>
 	</item>
+	 -->
+	<item
+		android:id="@+id/wallet_options_backup_or_restore"
+		android:showAsAction="never"
+		android:title="@string/nfc_aware_activity_prompt_for_backup_or_restore_dialog_title"/>
+	<!-- END CUSTOM CHANGE -->
 	<item
 		android:id="@+id/wallet_options_exchange_rates"
 		android:showAsAction="never"

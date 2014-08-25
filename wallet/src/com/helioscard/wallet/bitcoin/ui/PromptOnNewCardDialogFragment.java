@@ -26,13 +26,22 @@ public class PromptOnNewCardDialogFragment extends DialogFragment {
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		alertDialogBuilder.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message));
         alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_title));
-        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_backup_restore), new DialogInterface.OnClickListener() {
+        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_title), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
+				nfcAwareActivity.promptForBackupOrRestore();
 			}
 		});
-        
-        // prevent us from being cancelable, we want to force the user to create or import a key
+		alertDialogBuilder.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				// if this button is clicked, just close
+				// the dialog box and do nothing
+				dialog.cancel();
+				nfcAwareActivity.userCanceledSecureElementPromptSuper();
+			  }
+		});
+       
+        // prevent us from being cancelable via the back button or clicking outside the bounds of the dialog
         this.setCancelable(false);
 
         return alertDialogBuilder.create();

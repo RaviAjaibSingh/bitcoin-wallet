@@ -41,6 +41,13 @@ public final class HeliosCardInfoFragment extends Fragment
 		_cardIdentifierTextView = (TextView)view.findViewById(R.id.helios_card_info_fragment_card_identifier);
 		_networkStatusTextView = (TextView)view.findViewById(R.id.helios_card_info_fragment_network_status);
 	}
+	
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		_cardIdentifierTextView = null;
+		_networkStatusTextView = null;
+	}
 
 	@Override
 	public void onResume() {
@@ -64,7 +71,11 @@ public final class HeliosCardInfoFragment extends Fragment
 
 	public void updateView() {
 		String cardIdentifier = WalletGlobals.getInstance(getActivity()).getCardIdentifier();
-		_cardIdentifierTextView.setText(cardIdentifier);
+		if (cardIdentifier != null) {
+			_cardIdentifierTextView.setText(cardIdentifier);
+		} else {
+			_cardIdentifierTextView.setText("");
+		}
 	}
 
 	private void updateNetworkStatus() {

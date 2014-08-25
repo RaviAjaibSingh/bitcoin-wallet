@@ -31,13 +31,13 @@ public class PromptForBackupOrRestoreDialogFragment extends DialogFragment {
 				// if this button is clicked, just close
 				// the dialog box and do nothing
 				dialog.cancel();
-				nfcAwareActivity.userCanceledSecureElementPromptSuper();
+				((NFCAwareActivity)getActivity()).resetState();
 			  }
 		});
         alertDialogBuilder.setNegativeButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
-				nfcAwareActivity.backupCardPreTap();
+				((NFCAwareActivity)getActivity()).backupCardPreTap();
 			}
 		});
         alertDialogBuilder.setNeutralButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file), new DialogInterface.OnClickListener() {

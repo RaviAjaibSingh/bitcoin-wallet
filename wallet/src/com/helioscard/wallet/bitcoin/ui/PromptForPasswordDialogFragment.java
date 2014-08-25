@@ -59,7 +59,7 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 				public void onClick(DialogInterface dialog, int id) {
 					// now try to login to the card
 					dialog.dismiss();
-				    nfcAwareActivity.userProceededOnPasswordDialog(input.getText().toString());
+					((NFCAwareActivity)getActivity()).userProceededOnPasswordDialog(input.getText().toString());
 				  }
 				})
 			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
@@ -67,7 +67,7 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					nfcAwareActivity.userCanceledSecureElementPromptSuper();
+					((NFCAwareActivity)getActivity()).resetState();
 				  }
 				});
 
@@ -79,7 +79,7 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 		    public boolean onKey(View v, int keyCode, KeyEvent event) {
 		        if(keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_UP) {
 		        	_alertDialog.dismiss();
-		        	nfcAwareActivity.userProceededOnPasswordDialog(input.getText().toString());
+		        	((NFCAwareActivity)getActivity()).userProceededOnPasswordDialog(input.getText().toString());
 		        	return true;
 		        }
 		        return false;

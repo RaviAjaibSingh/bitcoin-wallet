@@ -159,6 +159,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        
+        if (_cachedSecureElementApplet != null) {
+        	_cachedSecureElementApplet.close();
+        	_cachedSecureElementApplet = null;
+        }
     }
 
     @Override
@@ -397,9 +402,13 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 this.finish();
                 return;
             }
-
+            
+			// reset state
+			resetState();
 		} catch (IOException e) {
 			showException(e);
+			// reset state
+			resetState();
 		}
 	}
 
@@ -636,7 +645,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_logger.error("backupCardPostTap: received bad exception: " + e.toString());
 			showException(e);
 			// we're giving up, clear out any pending variables
-			userCanceledSecureElementPromptSuper();
+			resetState();
 		}
 	}
 		
@@ -659,8 +668,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} catch (IOException e) {
 			_logger.error("changePasswordPostTap: received bad exception: " + e.toString());
 			showException(e);
-			// we're giving up, clear out any pending variables
-			userCanceledSecureElementPromptSuper();
+		} finally {
+			// reset state
+			resetState();
 		}
 	}
 	
@@ -690,6 +700,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 			// Ensure the wallet address display is displaying the correct address
 			IntegrationConnector.ensureWalletAddressDisplayIsUpdated(this);
+
+			// reset state
+			resetState();
+
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
@@ -701,8 +715,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			} else {
 				_logger.error("generateKeyOnSecureElement: received bad exception: " + e.toString());
 				showException(e);
-				// we're giving up, clear out any pending variables
-				userCanceledSecureElementPromptSuper();
+				// reset state
+				resetState();
 			}
 		}
 	}
@@ -737,8 +751,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// update the key label in the content provider as well
 		} catch (IOException e) {
 			showException(e);
-			// we're giving up, clear out any pending variables
-			userCanceledSecureElementPromptSuper();
+		} finally {
+			// reset state
+			resetState();
 		}
 	}
 
@@ -780,7 +795,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		// default implementation does nothing, override to hear about card detection events
 	}
 
-	protected void userCanceledSecureElementPromptSuper() {
+	protected void resetState() {
 		_pendingCardPassword = null;
 		_pendingAddKeyLabel = null;
 		_pendingEditPublicKey = null;

@@ -29,13 +29,13 @@ public class PromptForGetStartedDialogFragment extends DialogFragment {
         alertDialogBuilder.setNegativeButton(getResources().getString(R.string.nfc_aware_activity_get_started_dialog_create_new_key), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
-				nfcAwareActivity.promptToAddKey();							
+				((NFCAwareActivity)getActivity()).promptToAddKey();							
 			}
 		});
         alertDialogBuilder.setPositiveButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_title), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
-				nfcAwareActivity.promptForBackupOrRestore();
+				((NFCAwareActivity)getActivity()).promptForBackupOrRestore();
 			}
 		});
         

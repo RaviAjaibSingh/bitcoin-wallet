@@ -51,7 +51,7 @@ public class PromptForTapDialogFragment extends DialogFragment {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					nfcAwareActivity.userCanceledSecureElementPromptSuper();
+					((NFCAwareActivity)getActivity()).resetState();
 				  }
 				});
  

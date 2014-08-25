@@ -55,7 +55,7 @@ public class PromptForLabelDialogFragment extends DialogFragment {
 						return;
 					}
 					dialog.dismiss();
-					nfcAwareActivity.createKeyPreTap(input.getText().toString());
+					((NFCAwareActivity)getActivity()).createKeyPreTap(input.getText().toString());
 				}
 				})
 			.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
@@ -63,7 +63,7 @@ public class PromptForLabelDialogFragment extends DialogFragment {
 					// if this button is clicked, just close
 					// the dialog box and do nothing
 					dialog.cancel();
-					nfcAwareActivity.userCanceledSecureElementPromptSuper();
+					((NFCAwareActivity)getActivity()).resetState();
 				  }
 				});
 		
@@ -79,7 +79,7 @@ public class PromptForLabelDialogFragment extends DialogFragment {
 						return true;
 					}
 		        	alertDialog.dismiss();
-		        	nfcAwareActivity.createKeyPreTap(input.getText().toString());
+		        	((NFCAwareActivity)getActivity()).createKeyPreTap(input.getText().toString());
 		        	return true;
 		        }
 		        return false;

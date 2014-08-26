@@ -344,7 +344,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	                	// a card was tapped, and none was registered before
 	                    _logger.info("onNewIntent: new card tapped and no registered old card");
 	                	walletGlobals.setCardIdentifier(this, newCardIdentifier);
-		        		cardIdentifierWasChanged = true;
 	                }
 	                
 	                if (_cachedSecureElementApplet.getPINState() == PINState.NOT_SET) {

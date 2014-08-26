@@ -1029,8 +1029,7 @@ public final class WalletActivity extends AbstractWalletActivity
 	/* END CUSTOM CHANGE */
 	
 	/* BEGIN CUSTOM CHANGE */
-	/*
-	private void backupWallet(@Nonnull final String password)
+	public void backupWallet(@Nonnull final String password, Wallet walletToBackup)
 	{
 		Constants.Files.EXTERNAL_WALLET_BACKUP_DIR.mkdirs();
 		final DateFormat dateFormat = Iso8601Format.newDateFormat();
@@ -1038,7 +1037,8 @@ public final class WalletActivity extends AbstractWalletActivity
 		final File file = new File(Constants.Files.EXTERNAL_WALLET_BACKUP_DIR, Constants.Files.EXTERNAL_WALLET_BACKUP + "-"
 				+ dateFormat.format(new Date()));
 
-		final Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(wallet);
+		// final Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(wallet);
+		final Protos.Wallet walletProto = new WalletProtobufSerializer().walletToProto(walletToBackup);
 
 		Writer cipherOut = null;
 
@@ -1089,18 +1089,20 @@ public final class WalletActivity extends AbstractWalletActivity
 			}
 		}
 	}
-	*/
 	/* END CUSTOM CHANGE */
 
 	/* BEGIN CUSTOM CHANGE */
-	/*
 	private void archiveWalletBackup(@Nonnull final File file)
 	{
 		final Intent intent = new Intent(Intent.ACTION_SEND);
 		intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.export_keys_dialog_mail_subject));
+		
+		// intent.putExtra(Intent.EXTRA_TEXT,
+		//		getString(R.string.export_keys_dialog_mail_text) + "\n\n" + String.format(Constants.WEBMARKET_APP_URL, getPackageName()) + "\n\n"
+		//				+ Constants.SOURCE_URL + '\n');
 		intent.putExtra(Intent.EXTRA_TEXT,
-				getString(R.string.export_keys_dialog_mail_text) + "\n\n" + String.format(Constants.WEBMARKET_APP_URL, getPackageName()) + "\n\n"
-						+ Constants.SOURCE_URL + '\n');
+			getString(R.string.export_keys_dialog_mail_text));
+
 		intent.setType(Constants.MIMETYPE_WALLET_BACKUP);
 		intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
 
@@ -1115,6 +1117,5 @@ public final class WalletActivity extends AbstractWalletActivity
 			log.error("archiving wallet backup failed", x);
 		}
 	}
-	*/
 	/* END CUSTOM CHANGE */
 }

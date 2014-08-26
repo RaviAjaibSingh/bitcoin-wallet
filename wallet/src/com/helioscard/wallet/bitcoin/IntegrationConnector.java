@@ -58,4 +58,10 @@ public class IntegrationConnector {
 			}
 		}
 	}
+	
+	public static void backupWallet(Activity activity, String password, Wallet wallet) {
+		if (activity instanceof WalletActivity) {
+			((WalletActivity)activity).backupWallet(password, wallet);
+		}
+	}
 }

@@ -45,6 +45,9 @@
     <string name="nfc_aware_activity_choose_keys_to_backup_dialog_label">Label: %1$s\nAddress: %2$s</string>
     <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_title">Save Keys</string>
     <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_message">To save the keys to another card, please tap the other card now.  Or, to save the keys to a file, please make the appropriate choice below.</string>
+    <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_save_to_file">Save to File</string>
+    <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_no_password_entered">Error: no password was entered.</string>    
+    <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_hint_enter_password_to_encrypt_file_against">Password to encrypt file against</string>    
     <string name="nfc_aware_activity_same_card_tapped">Error: you tapped the same card that contains the keys you are backing up.  Please tap a different card.</string>
     <string name="nfc_aware_activity_successfully_wrote_data">Successfully backed up keys to new card.</string>    
 </resources>

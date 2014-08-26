@@ -138,6 +138,13 @@ public final class WalletActivity extends AbstractWalletActivity
 		config.touchLastUsed();
 
 		handleIntent(getIntent());
+
+		/* BEGIN CUSTOM CHANGE */
+		if (wallet.getKeys().size() == 0) {
+			// there's no keys in the wallet - prompt the user to get started
+			showGetStartedDialogIfNeeded();
+		}
+		/* END CUSTOM CHANGE */
 	}
 
 	@Override
@@ -148,13 +155,6 @@ public final class WalletActivity extends AbstractWalletActivity
 		getWalletApplication().startBlockchainService(true);
 
 		checkLowStorageAlert();
-
-		/* BEGIN CUSTOM CHANGE */
-		if (wallet.getKeys().size() == 0) {
-			// there's no keys in the wallet - prompt the user to get started
-			showGetStartedDialogIfNeeded();
-		}
-		/* END CUSTOM CHANGE */
 	}
 
 	@Override

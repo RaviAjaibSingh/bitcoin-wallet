@@ -393,7 +393,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		        		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
 		        		// synchronize the keys.  That has already been done by the time we get here, so nothing to do here.
 		        		promptForTapOnceMoreDialogFragment.dismiss();
-		        		showGetStartedDialogIfNeeded();
 		        		return true;
 		        	}
 	        	}
@@ -423,8 +422,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
                 // let the activity know a card has been detected
                 handleCardDetectedSuper(_cachedSecureElementApplet, tapRequested, false, null);
+                
+                // the wallet may have a key now - hide the get started dialog if it's showing
+                hideGetStartedDialogIfNeeded();
                 return true;
         	} catch(IOException e) {
+        		showException(e);
         		_cachedSecureElementApplet = null;
 			    _logger.error("onNewIntent: IOException getting cached secure element: " + e.toString());
         	}
@@ -465,14 +468,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 startActivity(intentToRelaunchApplication);
                 this.finish();
                 return;
-            }
-            
-			// reset state
-			resetState();
+            }            
 		} catch (IOException e) {
 			showException(e);
-			// reset state
-			resetState();
 		}
 	}
 
@@ -494,6 +492,22 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         }
 
     	PromptForGetStartedDialogFragment.prompt(fragmentManager);
+    }
+    
+    protected void hideGetStartedDialogIfNeeded() {
+	    _logger.info("hideGetStartedDialogIfNeeded: called");
+	    
+        Wallet wallet = IntegrationConnector.getWallet(this);
+        if (wallet.getKeys().size() > 0) {
+	    	FragmentManager fragmentManager = getSupportFragmentManager();
+	    	PromptForGetStartedDialogFragment promptForGetStartedDialogFragment = (PromptForGetStartedDialogFragment)fragmentManager.findFragmentByTag(PromptForGetStartedDialogFragment.TAG);
+	    	if (promptForGetStartedDialogFragment != null) {
+	    		// dialog is already showing, ignore this
+			    _logger.info("hideGetStartedDialogIfNeeded: hiding dialog");
+			    promptForGetStartedDialogFragment.dismiss();
+	    		return;
+	    	}
+        }
     }
     
 	protected void simulateSecureElementAppletDetected() {
@@ -708,7 +722,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     		if (ecKeyEntries.size() == 0) {
     			// no keys to backup on this card
     			Toast.makeText(this,  getResources().getString(R.string.nfc_aware_activity_card_not_initialized), Toast.LENGTH_LONG).show();
-    			resetState();
     			return;
     		}
 
@@ -717,8 +730,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} catch (IOException e) {
 			_logger.error("backupCardPostTap: received bad exception: " + e.toString());
 			showException(e);
-			// we're giving up, clear out any pending variables
-			resetState();
 		}
 	}
 	
@@ -745,9 +756,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} catch (IOException e) {
 			_logger.error("changePasswordPostTap: received bad exception: " + e.toString());
 			showException(e);
-		} finally {
-			// reset state
-			resetState();
 		}
 	}
 	
@@ -778,9 +786,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// Ensure the wallet address display is displaying the correct address
 			IntegrationConnector.ensureWalletAddressDisplayIsUpdated(this);
 
-			// reset state
-			resetState();
-
+			// we just created a key - hide the get started dialog if appropriate
+			hideGetStartedDialogIfNeeded();
 		} catch (IOException e) {
 			if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
@@ -792,8 +799,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			} else {
 				_logger.error("generateKeyOnSecureElement: received bad exception: " + e.toString());
 				showException(e);
-				// reset state
-				resetState();
 			}
 		}
 	}
@@ -828,9 +833,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			// update the key label in the content provider as well
 		} catch (IOException e) {
 			showException(e);
-		} finally {
-			// reset state
-			resetState();
 		}
 	}
 
@@ -863,6 +865,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} else if (_pendingBackupCard) {
 			_pendingBackupCard = false;
 			backupCardPostTap(secureElementApplet, password);
+			return;
 		}
 
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
@@ -882,7 +885,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	    _pendingBackupCard = false;
 
        	// we have no keys in the wallet - prompt the user to add one
-        showGetStartedDialogIfNeeded();
+        hideGetStartedDialogIfNeeded();
         
         userCanceledSecureElementPrompt();
 	}
@@ -894,8 +897,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	// utility method for subclasses to show errors
 	public void showException(IOException e) {
 		String errorMessage;
-		
-		boolean finishing = false;
 		
 		if (e instanceof WrongPasswordException) {
     		// Toast.makeText(this, this.getResources().getString("Wrong password"), Toast.LENGTH_LONG).show();
@@ -935,15 +936,11 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     		intentToRestartApplication.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     		startActivity(intentToRestartApplication);
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_card_was_wiped);
-    		finishing = true;
     		this.finish();
     	} else {
     		errorMessage = getResources().getString(R.string.nfc_aware_activity_error_dialog_message_unknown);
     	}
 		
 		Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show();
-		if (!finishing) {
-			showGetStartedDialogIfNeeded();
-		}
 	}
 }

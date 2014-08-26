@@ -15,11 +15,16 @@ public class PromptForTapDialogFragment extends DialogFragment {
     public static final String TAG = "PromptForTapDialogFragment";
 
     public static final String FIELD_TYPE = "type";
-	public static void prompt(FragmentManager fragmentManager, boolean type) {
+    
+    public static final int TYPE_NORMAL = 0;
+    public static final int TYPE_REPOSITION = 1;
+    public static final int TYPE_BACKUP = 2;
+
+	public static void prompt(FragmentManager fragmentManager, int type) {
 		PromptForTapDialogFragment frag = new PromptForTapDialogFragment();
 		
 		Bundle arguments = new Bundle();
-		arguments.putBoolean(FIELD_TYPE, type);
+		arguments.putInt(FIELD_TYPE, type);
 		frag.setArguments(arguments);
 		
     	frag.show(fragmentManager, TAG);
@@ -31,15 +36,18 @@ public class PromptForTapDialogFragment extends DialogFragment {
     	
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		 
+		int type = getArguments().getInt(FIELD_TYPE);
+		
 		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title));
+		alertDialogBuilder.setTitle(getResources().getString(type == TYPE_BACKUP ? R.string.nfc_aware_activity_prompt_for_tap_dialog_title_backup_card_text : R.string.nfc_aware_activity_prompt_for_tap_dialog_title));
  
 		String alertDialogMessage;
-		boolean type = getArguments().getBoolean(FIELD_TYPE);
-		if (type == true) {
+		if (type == TYPE_NORMAL) {
 			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message);
-		} else {
-			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_reposition);
+		} else if (type == TYPE_REPOSITION) {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message_reposition);
+		} else /*if (type == TYPE_BACKUP)*/ {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message_backup_card_text);			
 		}
 		
 			// set dialog message

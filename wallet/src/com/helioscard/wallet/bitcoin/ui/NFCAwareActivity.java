@@ -582,7 +582,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				if (requirePassword) {
 					showPromptForPasswordDialog();
 				} else {
-					showPromptForTapDialog(true);
+					showPromptForTapDialog(PromptForTapDialogFragment.TYPE_NORMAL);
 				}
 				return _cachedSecureElementApplet;
 			}
@@ -593,7 +593,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 	
 	private void showPromptForPasswordDialog() {
-		PromptForPasswordDialogFragment.prompt(getSupportFragmentManager());
+		PromptForPasswordDialogFragment.prompt(getSupportFragmentManager(), _pendingBackupCard);
 	}
 
 	
@@ -670,8 +670,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	
 	// if type = true - just prompts the user to tap
 	// if type = false - prompts the user to tap to finish signing, connection was lost
-	public void showPromptForTapDialog(boolean type) {
-		PromptForTapDialogFragment.prompt(getSupportFragmentManager(), type);
+	public void showPromptForTapDialog(int type) {
+		PromptForTapDialogFragment.prompt(getSupportFragmentManager(), _pendingBackupCard ? PromptForTapDialogFragment.TYPE_BACKUP : type);
 	}
 	
 	public void promptToAddKey() {

@@ -23,20 +23,27 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
     public static final String TAG = "PromptForPasswordDialogFragment";
     
     private AlertDialog _alertDialog;
-		    
-	public static void prompt(FragmentManager fragmentManager) {
+    
+    private static final String SHOW_BACKUP_CARD_TEXT = "SHOW_BACKUP_CARD_TEXT";
+    
+	public static void prompt(FragmentManager fragmentManager, boolean showBackupCardText) {
 		PromptForPasswordDialogFragment frag = new PromptForPasswordDialogFragment();
+		Bundle args = new Bundle();
+		args.putBoolean(SHOW_BACKUP_CARD_TEXT, showBackupCardText);
+		frag.setArguments(args);
     	frag.show(fragmentManager, TAG);
 	}
 
-    @Override
+	@Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
     	final NFCAwareActivity nfcAwareActivity = (NFCAwareActivity)getActivity();
+    	
+    	boolean showBackupCardText = getArguments().getBoolean(SHOW_BACKUP_CARD_TEXT);
     	
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		 
 		// set title
-		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_password_title));
+		alertDialogBuilder.setTitle(getResources().getString(showBackupCardText ? R.string.nfc_aware_activity_prompt_for_password_title_backup_card_text : R.string.nfc_aware_activity_prompt_for_password_title));
 
 		// Set an EditText view to get user input
 		final EditText input = new EditText(nfcAwareActivity);
@@ -105,8 +112,8 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 			} catch (IOException e) {
 			}
 		}
-		
-		String alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_message) + " ";
+    	boolean showBackupCardText = getArguments().getBoolean(SHOW_BACKUP_CARD_TEXT);		
+		String alertDialogMessage = getResources().getString(showBackupCardText ? R.string.nfc_aware_activity_prompt_for_password_message_backup_card_text : R.string.nfc_aware_activity_prompt_for_password_message) + " ";
 		if (passwordAttemptsLeft == -1) {
 			// we don't know how many password attempts left
 			alertDialogMessage += getResources().getString(R.string.nfc_aware_activity_prompt_for_password_number_attempts_left_unknown); 

@@ -951,7 +951,7 @@ public final class SendCoinsFragment extends SherlockFragment
 	        // secureElementTransactionSigner.signTransaction(secureElementApplet) function call. Prompt for another tap
 			// in which case this function will be called and we'll try again
 			log.info("handleCardDetected: TagLostException");
-			nfcAwareActivity.showPromptForTapDialog(false);				
+			nfcAwareActivity.showPromptForTapDialog(com.helioscard.wallet.bitcoin.ui.PromptForTapDialogFragment.TYPE_REPOSITION);				
 		} else if (result == com.helioscard.wallet.bitcoin.wallet.SecureElementTransactionSigner.ERROR) {
 			log.error("secureElementTransactionListenerSignerFinished: error!");
 			// this shouldn't ever happen, no need to localize

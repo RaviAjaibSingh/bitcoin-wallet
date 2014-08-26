@@ -4,12 +4,16 @@
     <string name="nfc_aware_activity_get_started_dialog_message">To send and receive coins, you need an address (or \"key\") in your wallet.  You can create a new key, or import an existing one.</string>
     <string name="nfc_aware_activity_get_started_dialog_create_new_key">Create New Key</string>    
     <string name="nfc_aware_activity_prompt_for_tap_dialog_title">Card Needed</string>
+    <string name="nfc_aware_activity_prompt_for_tap_dialog_title_backup_card_text">Card *Containing Keys To Copy* Needed</string>
     <string name="nfc_aware_activity_prompt_for_tap_dialog_message">Please hold your card against the device to continue.</string>
-    <string name="nfc_aware_activity_prompt_for_tap_reposition">The connection to your card was lost.  Please move it away from your handheld device and tap it again.  If you see this message frequently, you may have to reposition where you hold the card relative to the handheld device.</string>    
+    <string name="nfc_aware_activity_prompt_for_tap_dialog_message_backup_card_text">Please tap the card that *contains the keys you wish to copy*.</string>
+    <string name="nfc_aware_activity_prompt_for_tap_dialog_message_reposition">The connection to your card was lost.  Please move it away from your handheld device and tap it again.  If you see this message frequently, you may have to reposition where you hold the card relative to the handheld device.</string>    
     <string name="nfc_aware_activity_tap_to_continue_dialog_title">Tap Once More</string>
     <string name="nfc_aware_activity_tap_to_continue_dialog_message">Please remove your card and tap it once more to the device to finish.</string>
     <string name="nfc_aware_activity_prompt_for_password_title">Password Needed</string>
+    <string name="nfc_aware_activity_prompt_for_password_title_backup_card_text">Password Needed For Card Containing Keys To Copy</string>
     <string name="nfc_aware_activity_prompt_for_password_message">Please enter the card\'s password.</string>
+    <string name="nfc_aware_activity_prompt_for_password_message_backup_card_text">Please enter the password for the card that *contains the keys you wish to copy*.</string>
     <string name="nfc_aware_activity_prompt_for_password_number_attempts_left_unknown">To determine how many password attempts are left, tap the card to the phone now. If this is the last attempt, entering the wrong password will erase all data on the card.</string>
     <string name="nfc_aware_activity_prompt_for_password_number_attempts_left">You have %1$d password attempts left.</string>
     <string name="nfc_aware_activity_prompt_for_password_number_attempts_warning_only_1_left">WARNING: This is your last password attempt.  Entering the password wrong will erase all data on the card.</string>
@@ -30,7 +34,7 @@
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_title">New Card Detected</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_message">It is important that you backup your keys in case your card is lost or damaged.  You can copy keys from one card to another card or to a file, or restore keys from a file.  Please make a selection below.</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_title">Backup or Restore Keys</string>
-    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card">Backup Card</string>
+    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card">Copy From Card</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file">Restore From File</string>
     <string name="nfc_aware_activity_card_not_initialized">This card contains no keys to backup.</string>
     <string name="nfc_aware_activity_choose_keys_to_backup_dialog_title">Choose Keys To Backup</string>

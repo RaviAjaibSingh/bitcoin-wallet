@@ -19,6 +19,7 @@ public class PromptForTapDialogFragment extends DialogFragment {
     public static final int TYPE_NORMAL = 0;
     public static final int TYPE_REPOSITION = 1;
     public static final int TYPE_BACKUP = 2;
+    public static final int TYPE_SAVE_KEYS_TO_CARD = 3;
 
 	public static void prompt(FragmentManager fragmentManager, int type) {
 		PromptForTapDialogFragment frag = new PromptForTapDialogFragment();
@@ -39,15 +40,25 @@ public class PromptForTapDialogFragment extends DialogFragment {
 		int type = getArguments().getInt(FIELD_TYPE);
 		
 		// set title
-		alertDialogBuilder.setTitle(getResources().getString(type == TYPE_BACKUP ? R.string.nfc_aware_activity_prompt_for_tap_dialog_title_backup_card_text : R.string.nfc_aware_activity_prompt_for_tap_dialog_title));
+		String alertDialogTitle;
+		if (type == TYPE_BACKUP) {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title_backup_card_text);
+		} else if (type == TYPE_SAVE_KEYS_TO_CARD) {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title_save_keys_to_card);
+		} else {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_title);
+		}
+		alertDialogBuilder.setTitle(alertDialogTitle);
  
 		String alertDialogMessage;
-		if (type == TYPE_NORMAL) {
-			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message);
-		} else if (type == TYPE_REPOSITION) {
+		if (type == TYPE_REPOSITION) {
 			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message_reposition);
-		} else /*if (type == TYPE_BACKUP)*/ {
+		} else if (type == TYPE_BACKUP) {
 			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message_backup_card_text);			
+		} else if (type == TYPE_SAVE_KEYS_TO_CARD) {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message_save_keys_to_card);			
+		} else {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_tap_dialog_message);
 		}
 		
 			// set dialog message

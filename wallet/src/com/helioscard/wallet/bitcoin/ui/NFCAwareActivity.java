@@ -74,6 +74,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private static final String INSTANCE_STATE_PENDING_EDIT_LABEL = "INSTANCE_STATE_PENDING_EDIT_LABEL";
     private static final String INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES = "INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES";
     private static final String INSTANCE_STATE_PENDING_BACKUP_CARD = "INSTANCE_STATE_PENDING_BACKUP_CARD";
+    private static final String INSTANCE_STATE_PENDING_SAVE_KEYS_TO_CARD = "INSTANCE_STATE_PENDING_SAVE_KEYS_TO_CARD";
     
     private String _pendingCardPassword;
     private boolean _pendingUseExistingSessionIfPossible;
@@ -83,6 +84,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     private byte[] _pendingDeleteKeyPublicKeyBytes;
     private String _pendingChangePasswordNewPassword;
     private boolean _pendingBackupCard;
+    private boolean _pendingSaveKeysToCard;
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,6 +108,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         
         _intentFiltersArray = new IntentFilter[] {ndefFilter};
 
+        if (this instanceof de.schildbach.wallet.ui.WalletActivity) {
+        	showGetStartedDialogIfNeeded();
+        }
+        
          // if we're first launched by an NFC tag, we don't get an onNewIntent message, so route it through
          // now
          boolean startedByCardTap = processIntent(getIntent());
@@ -140,6 +146,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	outState.putString(INSTANCE_STATE_PENDING_EDIT_LABEL, _pendingEditLabel);
     	outState.putByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES, _pendingDeleteKeyPublicKeyBytes);
     	outState.putBoolean(INSTANCE_STATE_PENDING_BACKUP_CARD, _pendingBackupCard);
+    	outState.putBoolean(INSTANCE_STATE_PENDING_SAVE_KEYS_TO_CARD, _pendingSaveKeysToCard);
     }
     
     @Override
@@ -154,6 +161,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	_pendingEditLabel = savedInstanceState.getString(INSTANCE_STATE_PENDING_EDIT_LABEL);
     	_pendingDeleteKeyPublicKeyBytes = savedInstanceState.getByteArray(INSTANCE_STATE_PENDING_DELETE_KEY_PUBLIC_KEY_BYTES);
     	_pendingBackupCard = savedInstanceState.getBoolean(INSTANCE_STATE_PENDING_BACKUP_CARD);
+    	_pendingSaveKeysToCard = savedInstanceState.getBoolean(INSTANCE_STATE_PENDING_SAVE_KEYS_TO_CARD);
     }
 
     @Override
@@ -230,11 +238,15 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		        	Tag tagFromIntent = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
 		            // isoDep should be non-null, this is the only technology type we're listening for
 		            SmartCardReader smartCardReader = new SmartCardReaderImpl(tagFromIntent);
+		            if (!smartCardReader.checkConnection()) {
+		        		_logger.info("processIntent: bailing, reader not connected");
+		            	return true;
+		            }
 					_cachedSecureElementApplet = new SecureElementAppletImpl(smartCardReader);
 	        	} else {
 	        		_cachedSecureElementApplet = new SecureElementAppletSimulatorImpl();
 	        	}
-
+	        	
 	        	FragmentManager fragmentManager = getSupportFragmentManager();    	
                 String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
                 String newCardIdentifier = _cachedSecureElementApplet.getCardIdentifier();
@@ -248,7 +260,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_card_not_initialized), Toast.LENGTH_LONG).show();
 	        			return true;
 	        		}
-	        	} else if (promptToSaveBackupDataDialogFragment != null) {
+	        	} else if (promptToSaveBackupDataDialogFragment != null && !_pendingSaveKeysToCard) {
 	        		_logger.info("processIntent: promptToSaveBackupDataDialogFragment existed");
 	        		// the user is being prompted to tap in order to save keys to a card
 	        		String sourceCardIdentifier = promptToSaveBackupDataDialogFragment.getSourceCardIdentifier();
@@ -271,39 +283,19 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        				_cachedSecureElementApplet.setCardPassword(null, password);
 	        				_cachedSecureElementApplet.login(password);
 	        			} else {
-	        				// The PIN on this new card is already set.  Try logging on
+	        				// The PIN on this new card is already set.  Prompt the user to login
 	    	        		_logger.info("processIntent: logging on now");
-	        				_cachedSecureElementApplet.login(password);
+	    	        		_pendingSaveKeysToCard = true;
+	    	        		getSecureElementAppletPromptIfNeeded(true, false);
+	    	        		return true;
 	        			}
 	        		}
 	        		
-	        		// If we get here, we're authenticated to the new card.  Write the key data to it
-	        		List<ECKeyEntry> _listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
-	        		int numKeys = _listOfKeys.size();
-	        		_logger.info("processIntent: writing " + numKeys + " to new card");
-	        		for (int i = 0; i < numKeys; i++) {
-	        			ECKeyEntry ecKeyEntry = _listOfKeys.get(i);
-	        			try {
-	        				_cachedSecureElementApplet.createOrInjectKey(ecKeyEntry.getAssociatedData(), null, ecKeyEntry.getPrivateKeyBytes(), ecKeyEntry.getPublicKeyBytes());
-	        			} catch (KeyAlreadyExistsException e) {
-	    	        		// just skip it if we've already written this key
-	        				_logger.info("processIntent: swallowing KeyAlreadyExistsException");
-	        			}
-	        		}
-	        		// If we get here, the keys have been successfully injected - write a message out
-	        		promptToSaveBackupDataDialogFragment.dismiss();
-        			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_successfully_wrote_data), Toast.LENGTH_LONG).show();
-        			if (newCardIdentifier.equals(currentCardIdentifier)) {
-        				// The card we just restored data on to was the one we were actively tracking.  Fall through to process
-        				// the tap as per normal, such that we replay the block chain as needed
-        				_logger.info("processIntent: restored keys on to currently tracked card, process as normal tap");
-        			} else {
-        				_logger.info("processIntent: restored keys on to untracked card, dropping tap");
-        				return true;
-        			}
+	        		saveKeysOnCardPostTap(_cachedSecureElementApplet);
+	        		return true;
 	        	}
 
-	        	if (!_pendingBackupCard) {
+	        	if (!_pendingBackupCard && !_pendingSaveKeysToCard) {
 	        		_logger.info("processIntent: normal tap");
 					// set the card identifier appropriately in the bitcoin wallet
 	                WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
@@ -593,7 +585,13 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 	
 	private void showPromptForPasswordDialog() {
-		PromptForPasswordDialogFragment.prompt(getSupportFragmentManager(), _pendingBackupCard);
+		int type = PromptForPasswordDialogFragment.TYPE_NORMAL;
+		if (_pendingBackupCard) {
+			type = PromptForPasswordDialogFragment.TYPE_BACKUP;
+		} else if (_pendingSaveKeysToCard) {
+			type = PromptForPasswordDialogFragment.TYPE_SAVE_KEYS_TO_CARD;
+		}
+		PromptForPasswordDialogFragment.prompt(getSupportFragmentManager(), type);
 	}
 
 	
@@ -671,7 +669,12 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	// if type = true - just prompts the user to tap
 	// if type = false - prompts the user to tap to finish signing, connection was lost
 	public void showPromptForTapDialog(int type) {
-		PromptForTapDialogFragment.prompt(getSupportFragmentManager(), _pendingBackupCard ? PromptForTapDialogFragment.TYPE_BACKUP : type);
+		if (_pendingBackupCard) {
+			type = PromptForTapDialogFragment.TYPE_BACKUP;
+		} else if (_pendingSaveKeysToCard) {
+			type = PromptForTapDialogFragment.TYPE_SAVE_KEYS_TO_CARD;
+		}
+		PromptForTapDialogFragment.prompt(getSupportFragmentManager(), type);
 	}
 	
 	public void promptToAddKey() {
@@ -835,6 +838,42 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			showException(e);
 		}
 	}
+	
+	private void saveKeysOnCardPostTap(SecureElementApplet secureElementApplet) {
+		// If we get here, we're authenticated to the new card.  Write the key data to it
+    	try {
+        	FragmentManager fragmentManager = getSupportFragmentManager();
+    		String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
+            String newCardIdentifier = _cachedSecureElementApplet.getCardIdentifier();
+    		
+    		PromptToSaveBackupDataDialogFragment promptToSaveBackupDataDialogFragment = (PromptToSaveBackupDataDialogFragment)fragmentManager.findFragmentByTag(PromptToSaveBackupDataDialogFragment.TAG);
+			List<ECKeyEntry> _listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
+			int numKeys = _listOfKeys.size();
+			_logger.info("saveKeysOnCardPostTap: writing " + numKeys + " to new card");
+			for (int i = 0; i < numKeys; i++) {
+				ECKeyEntry ecKeyEntry = _listOfKeys.get(i);
+				try {
+					_cachedSecureElementApplet.createOrInjectKey(ecKeyEntry.getAssociatedData(), null, ecKeyEntry.getPrivateKeyBytes(), ecKeyEntry.getPublicKeyBytes());
+				} catch (KeyAlreadyExistsException e) {
+	        		// just skip it if we've already written this key
+					_logger.info("saveKeysOnCardPostTap: swallowing KeyAlreadyExistsException");
+				}
+			}
+			// If we get here, the keys have been successfully injected - write a message out
+			promptToSaveBackupDataDialogFragment.dismiss();
+			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_successfully_wrote_data), Toast.LENGTH_LONG).show();
+			if (newCardIdentifier.equals(currentCardIdentifier)) {
+				// The card we just restored data on to was the one we were actively tracking.  We should replay the block chain
+				// and restart the app
+				_logger.info("saveKeysOnCardPostTap: restored keys on to currently tracked card, process as normal tap");
+			} else {
+				_logger.info("saveKeysOnCardPostTap: restored keys on to untracked card, dropping tap");
+			}
+    	} catch (IOException e) {
+			_logger.error("saveKeysOnCardPostTap: IOException " + e.toString());
+    		showException(e);
+    	}
+	}
 
 	
 	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
@@ -866,6 +905,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_pendingBackupCard = false;
 			backupCardPostTap(secureElementApplet, password);
 			return;
+		} else if (_pendingSaveKeysToCard) {
+			_pendingSaveKeysToCard = false;
+			saveKeysOnCardPostTap(secureElementApplet);
+			return;
 		}
 
 		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
@@ -883,7 +926,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	    _pendingDeleteKeyPublicKeyBytes = null;
 	    _pendingChangePasswordNewPassword = null;
 	    _pendingBackupCard = false;
-
+	    _pendingSaveKeysToCard = false;
+	    
        	// we have no keys in the wallet - prompt the user to add one
         hideGetStartedDialogIfNeeded();
         

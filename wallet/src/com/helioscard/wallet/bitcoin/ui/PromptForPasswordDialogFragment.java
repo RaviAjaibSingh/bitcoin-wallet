@@ -24,12 +24,17 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
     
     private AlertDialog _alertDialog;
     
-    private static final String SHOW_BACKUP_CARD_TEXT = "SHOW_BACKUP_CARD_TEXT";
+    private static final String FIELD_TYPE = "type";
+
+    public static final int TYPE_NORMAL = 0;
+    public static final int TYPE_BACKUP = 1;
+    public static final int TYPE_SAVE_KEYS_TO_CARD = 2;
+
     
-	public static void prompt(FragmentManager fragmentManager, boolean showBackupCardText) {
+	public static void prompt(FragmentManager fragmentManager, int type) {
 		PromptForPasswordDialogFragment frag = new PromptForPasswordDialogFragment();
 		Bundle args = new Bundle();
-		args.putBoolean(SHOW_BACKUP_CARD_TEXT, showBackupCardText);
+		args.putInt(FIELD_TYPE, type);
 		frag.setArguments(args);
     	frag.show(fragmentManager, TAG);
 	}
@@ -38,12 +43,20 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
     	final NFCAwareActivity nfcAwareActivity = (NFCAwareActivity)getActivity();
     	
-    	boolean showBackupCardText = getArguments().getBoolean(SHOW_BACKUP_CARD_TEXT);
+    	int type = getArguments().getInt(FIELD_TYPE);
     	
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		 
+		String alertDialogTitle;
+		if (type == TYPE_BACKUP) {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_title_backup_card_text); 			
+		} else if (type == TYPE_SAVE_KEYS_TO_CARD) {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_title_save_keys_to_card);			
+		} else {
+			alertDialogTitle = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_title);			
+		}
 		// set title
-		alertDialogBuilder.setTitle(getResources().getString(showBackupCardText ? R.string.nfc_aware_activity_prompt_for_password_title_backup_card_text : R.string.nfc_aware_activity_prompt_for_password_title));
+		alertDialogBuilder.setTitle(alertDialogTitle);
 
 		// Set an EditText view to get user input
 		final EditText input = new EditText(nfcAwareActivity);
@@ -112,8 +125,17 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 			} catch (IOException e) {
 			}
 		}
-    	boolean showBackupCardText = getArguments().getBoolean(SHOW_BACKUP_CARD_TEXT);		
-		String alertDialogMessage = getResources().getString(showBackupCardText ? R.string.nfc_aware_activity_prompt_for_password_message_backup_card_text : R.string.nfc_aware_activity_prompt_for_password_message) + " ";
+    	int type = getArguments().getInt(FIELD_TYPE);		
+		String alertDialogMessage;
+		if (type == TYPE_BACKUP) {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_message_backup_card_text);
+		} else if (type == TYPE_SAVE_KEYS_TO_CARD) {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_message_save_keys_to_card);
+		} else {
+			alertDialogMessage = getResources().getString(R.string.nfc_aware_activity_prompt_for_password_message);			
+		}
+		
+		alertDialogMessage += " ";
 		if (passwordAttemptsLeft == -1) {
 			// we don't know how many password attempts left
 			alertDialogMessage += getResources().getString(R.string.nfc_aware_activity_prompt_for_password_number_attempts_left_unknown); 

@@ -16,10 +16,10 @@
     <string name="nfc_aware_activity_prompt_enter_label_title">Enter Label</string>
     <string name="nfc_aware_activity_prompt_enter_label_message">Please enter a label for the key.</string>
     <string name="nfc_aware_activity_prompt_enter_label_error">You cannot have an empty label.</string>
-    <string name="nfc_aware_activity_error_dialog_message_wrong_password">You have entered in the wrong password.</string>
-    <string name="nfc_aware_activity_error_dialog_message_smartcard_full">There is no more space left on the card.</string>
-    <string name="nfc_aware_activity_error_dialog_message_tag_lost">Communication error with the card. You may not be positioning the card properly against the phone.</string>
-    <string name="nfc_aware_activity_error_dialog_message_unknown">An unknown error has occurred while communication with the card.</string>
+    <string name="nfc_aware_activity_error_dialog_message_wrong_password">Error: you have entered in the wrong password.</string>
+    <string name="nfc_aware_activity_error_dialog_message_smartcard_full">Error: there is no more space left on the card.</string>
+    <string name="nfc_aware_activity_error_dialog_message_tag_lost">Error: communication error with the card. You may not be positioning the card properly against the phone.</string>
+    <string name="nfc_aware_activity_error_dialog_message_unknown">Error: an unknown error has occurred while communication with the card.</string>
     <string name="nfc_aware_activity_error_dialog_message_key_already_exists">The key already exists on the card.</string>
     <string name="nfc_aware_activity_error_dialog_message_card_was_wiped">The card was wiped due to too many incorrect password attempts.</string>    
     <string name="nfc_aware_activity_enable_nfc_dialog_title">Enable NFC Radio</string>
@@ -32,5 +32,11 @@
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_title">Backup or Restore Keys</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card">Backup Card</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file">Restore From File</string>
-    
+    <string name="nfc_aware_activity_card_not_initialized">This card contains no keys to backup.</string>
+    <string name="nfc_aware_activity_choose_keys_to_backup_dialog_title">Choose Keys To Backup</string>
+    <string name="nfc_aware_activity_choose_keys_to_backup_dialog_label">Label: %1$s\nAddress: %2$s</string>
+    <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_title">Save Keys</string>
+    <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_message">To save the keys to another card, please tap the other card now.  Or, to save the keys to a file, please make the appropriate choice below.</string>
+    <string name="nfc_aware_activity_same_card_tapped">Error: you tapped the same card that contains the keys you are backing up.  Please tap a different card.</string>
+    <string name="nfc_aware_activity_successfully_wrote_data">Successfully backed up keys to new card.</string>    
 </resources>

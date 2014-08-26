@@ -15,6 +15,7 @@ public class ECKeyEntry {
 	private byte[] _privateKeyBytes;
 	private String _friendlyName;
 	private long _timeOfKeyCreationMillisSinceEpoch = -1;
+	private byte[] _originalAssociatedData;
 	
 	public static final int ASSOCIATED_DATA_TYPE_VERSION = 1;
 	public static final int ASSOCIATED_DATA_TYPE_FRIENDLY_NAME = 2;
@@ -37,6 +38,7 @@ public class ECKeyEntry {
 	}
 	
 	private void decodeAssociatedData(byte[] associatedData) {
+		_originalAssociatedData = associatedData;
 		ByteArrayInputStream stream = new ByteArrayInputStream(associatedData);
 		try {
 			while (stream.available() > 0) {
@@ -92,6 +94,10 @@ public class ECKeyEntry {
 		}
 	}
 	
+	public byte[] getAssociatedData() {
+		return _originalAssociatedData;
+	}
+	
 	public byte[] getPublicKeyBytes() {
 		// The key that we read from the smart card is always uncompressed
 		// but now check if the way the key is used within the bitcoin system is compressed
@@ -102,6 +108,10 @@ public class ECKeyEntry {
 		} else {
 			return _publicKeyBytes;
 		}
+	}
+	
+	public byte[] getPrivateKeyBytes() {
+		return _privateKeyBytes;
 	}
 	
 	public String getFriendlyName() {

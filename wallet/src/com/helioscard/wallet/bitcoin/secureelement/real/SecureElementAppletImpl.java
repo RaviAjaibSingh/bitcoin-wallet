@@ -483,7 +483,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	}
 
 	@Override
-	public ECKeyEntry createOrInjectKey(String friendlyName, byte[] privateKey,
+	public ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey,
 			byte[] publicKey) throws IOException {
 		_logger.info("createOrInjectKey: called");
 		ensureInitialStateRead(false);
@@ -493,30 +493,33 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			throw new IOException("createOrInjectKey: Not authenticated");
 		}
 		
-		byte[] friendlyNameBytes = friendlyName.getBytes();
-		int lengthOfFriendlyNameBytes = friendlyNameBytes.length;
-		
-		ByteArrayOutputStream associatedDataByteArrayOutputStream = new ByteArrayOutputStream(64);
-		associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_VERSION);
-		associatedDataByteArrayOutputStream.write(0x01);
-		associatedDataByteArrayOutputStream.write(0x01);
-		
-		associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_FRIENDLY_NAME);
-		associatedDataByteArrayOutputStream.write(lengthOfFriendlyNameBytes);
-		associatedDataByteArrayOutputStream.write(friendlyNameBytes);
-		
-		associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_GENERATION_TIME);
-		associatedDataByteArrayOutputStream.write(0x08);
-		associatedDataByteArrayOutputStream.write(Util.longToBytes(System.currentTimeMillis()));
-		
-		// we need a total of 64 bytes of associated data, pad the stream
-		int lengthSoFar = associatedDataByteArrayOutputStream.size();
-		int bytesToWrite = LENGTH_OF_ASSOCIATED_DATA - lengthSoFar;
-		for (int i = 0; i < bytesToWrite; i++) {
-			associatedDataByteArrayOutputStream.write(0);
+		if (associatedDataBytes == null) {
+			// the caller did not supply associated data, generate it for caller
+			byte[] friendlyNameBytes = friendlyName.getBytes();
+			int lengthOfFriendlyNameBytes = friendlyNameBytes.length;
+			
+			ByteArrayOutputStream associatedDataByteArrayOutputStream = new ByteArrayOutputStream(64);
+			associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_VERSION);
+			associatedDataByteArrayOutputStream.write(0x01);
+			associatedDataByteArrayOutputStream.write(0x01);
+			
+			associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_FRIENDLY_NAME);
+			associatedDataByteArrayOutputStream.write(lengthOfFriendlyNameBytes);
+			associatedDataByteArrayOutputStream.write(friendlyNameBytes);
+			
+			associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_GENERATION_TIME);
+			associatedDataByteArrayOutputStream.write(0x08);
+			associatedDataByteArrayOutputStream.write(Util.longToBytes(System.currentTimeMillis()));
+			
+			// we need a total of 64 bytes of associated data, pad the stream
+			int lengthSoFar = associatedDataByteArrayOutputStream.size();
+			int bytesToWrite = LENGTH_OF_ASSOCIATED_DATA - lengthSoFar;
+			for (int i = 0; i < bytesToWrite; i++) {
+				associatedDataByteArrayOutputStream.write(0);
+			}
+			
+			associatedDataBytes = associatedDataByteArrayOutputStream.toByteArray();
 		}
-		
-		byte[] associatedDataBytes = associatedDataByteArrayOutputStream.toByteArray();
 		
 		int lengthOfAssociatedDataBytes = associatedDataBytes.length;
 		

@@ -30,7 +30,7 @@ public abstract class SecureElementApplet {
 	
 	public abstract void login(String password) throws IOException;
 	
-	public abstract ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey, byte[] publicKey) throws IOException;
+	public abstract ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey, byte[] publicKey, long creationTimeMillis) throws IOException;
 	
 	public abstract int getNumberPasswordAttemptsLeft() throws IOException;
 	

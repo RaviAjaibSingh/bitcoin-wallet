@@ -64,4 +64,10 @@ public class IntegrationConnector {
 			((WalletActivity)activity).backupWallet(password, wallet);
 		}
 	}
+
+	public static void showRestoreWalletFromFileDialog(Activity activity) {
+		if (activity instanceof WalletActivity) {
+			((WalletActivity)activity).showDialog(WalletActivity.DIALOG_IMPORT_KEYS);
+		}		
+	}
 }

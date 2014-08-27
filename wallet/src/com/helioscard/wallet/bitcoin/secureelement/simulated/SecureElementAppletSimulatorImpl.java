@@ -78,7 +78,7 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 
 	@Override
 	public ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey,
-			byte[] publicKey) throws IOException {
+			byte[] publicKey, long creationTimeMillis) throws IOException {
 		return null;
 	}
 

@@ -70,6 +70,7 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.actionbarsherlock.view.Menu;
 import com.actionbarsherlock.view.MenuItem;
@@ -108,7 +109,7 @@ import com.helioscard.wallet.bitcoin.R;
 public final class WalletActivity extends AbstractWalletActivity
 {
 	/* BEGIN CUSTOM CHANGE */
-	// private static final int DIALOG_IMPORT_KEYS = 0;
+	public static final int DIALOG_IMPORT_KEYS = 0;
 	// private static final int DIALOG_EXPORT_KEYS = 1;
 	// private static final int DIALOG_TIMESKEW_ALERT = 2;
 	// private static final int DIALOG_VERSION_ALERT = 3;
@@ -391,9 +392,9 @@ public final class WalletActivity extends AbstractWalletActivity
 	protected Dialog onCreateDialog(final int id, final Bundle args)
 	{
 		/* BEGIN CUSTOM CHANGE */
-		/*
 		if (id == DIALOG_IMPORT_KEYS)
 			return createImportKeysDialog();
+		/*
 		else if (id == DIALOG_EXPORT_KEYS)
 			return createExportKeysDialog();
 		else if (id == DIALOG_TIMESKEW_ALERT)
@@ -409,20 +410,16 @@ public final class WalletActivity extends AbstractWalletActivity
 	}
 
 	/* BEGIN CUSTOM CHANGE */
-	/*
 	@Override
 	protected void onPrepareDialog(final int id, final Dialog dialog)
 	{
 		if (id == DIALOG_IMPORT_KEYS)
 			prepareImportKeysDialog(dialog);
-		else if (id == DIALOG_EXPORT_KEYS)
-			prepareExportKeysDialog(dialog);
+		// else if (id == DIALOG_EXPORT_KEYS)
+		//	prepareExportKeysDialog(dialog);
 	}
-	*/
 	/* END CUSTOM CHANGE */
 
-	/* BEGIN CUSTOM CHANGE */
-	/*
 	private Dialog createImportKeysDialog()
 	{
 		final View view = getLayoutInflater().inflate(R.layout.import_keys_from_storage_dialog, null);
@@ -447,7 +444,10 @@ public final class WalletActivity extends AbstractWalletActivity
 				if (isProtobuf)
 					restoreWalletFromProtobuf(file, password);
 				else
-					importPrivateKeysFromBase58(file, password);
+					/* BEGIN CUSTOM CHANGE */
+					// importPrivateKeysFromBase58(file, password);
+					// not supported right now
+					Toast.makeText(WalletActivity.this, "Error: Unsupported file type", Toast.LENGTH_LONG);
 			}
 		});
 		dialog.setNegativeButton(R.string.button_cancel, new OnClickListener()
@@ -566,6 +566,8 @@ public final class WalletActivity extends AbstractWalletActivity
 		showView.setOnCheckedChangeListener(new ShowPasswordCheckListener(passwordView));
 	}
 
+	/* BEGIN CUSTOM CHANGE */
+	/*
 	private Dialog createExportKeysDialog()
 	{
 		final View view = getLayoutInflater().inflate(R.layout.export_keys_dialog, null);
@@ -847,8 +849,6 @@ public final class WalletActivity extends AbstractWalletActivity
 	*/
 	/* END CUSTOM CHANGE */
 
-	/* BEGIN CUSTOM CHANGE */
-	/*
 	private void restoreWalletFromProtobuf(@Nonnull final File file, @Nonnull final String password)
 	{
 		try
@@ -874,8 +874,9 @@ public final class WalletActivity extends AbstractWalletActivity
 			if (!wallet.getParams().equals(Constants.NETWORK_PARAMETERS))
 				throw new UnreadableWalletException("bad wallet network parameters: " + wallet.getParams().getId());
 
-			application.replaceWallet(wallet);
-
+			// application.replaceWallet(wallet);
+			this.promptSaveBackupData(null, null, null, wallet);
+			/*
 			config.disarmBackupReminder();
 
 			final DialogBuilder dialog = new DialogBuilder(this);
@@ -897,6 +898,7 @@ public final class WalletActivity extends AbstractWalletActivity
 			dialog.show();
 
 			log.info("restored wallet from: '" + file + "'");
+			*/
 		}
 		catch (final IOException x)
 		{
@@ -933,8 +935,6 @@ public final class WalletActivity extends AbstractWalletActivity
 			log.info("problem restoring wallet", x);
 		}
 	}
-	*/
-	/* END CUSTOM CHANGE */
 
 	/* BEGIN CUSTOM CHANGE */
 	/*

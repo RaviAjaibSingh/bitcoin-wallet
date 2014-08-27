@@ -484,7 +484,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 
 	@Override
 	public ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey,
-			byte[] publicKey) throws IOException {
+			byte[] publicKey, long creationTimeMillis) throws IOException {
 		_logger.info("createOrInjectKey: called");
 		ensureInitialStateRead(false);
 		if (!isAuthenticated()) {
@@ -492,7 +492,24 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			_logger.error("createOrInjectKey: Not authenticated");
 			throw new IOException("createOrInjectKey: Not authenticated");
 		}
-		
+
+		int lengthOfPrivateKey = 0;
+		int lengthOfPublicKey = 0;
+		boolean publicKeyWasCompressed = false;
+		if (privateKey != null && publicKey != null) {
+			byte[] uncompressedPublicKey = ECUtil.getPublicKeyBytesFromEncoding(publicKey, false); // make sure we have an uncompressed encoding of the public key
+			if (uncompressedPublicKey != publicKey) {
+				// the original key was compressed
+				publicKeyWasCompressed = true;
+				publicKey = uncompressedPublicKey;
+			}
+			lengthOfPrivateKey = privateKey.length;
+			lengthOfPublicKey = publicKey.length;
+			if (lengthOfPrivateKey != LENGTH_OF_PRIVATE_KEY || lengthOfPublicKey != LENGTH_OF_PUBLIC_KEY) {
+				throw new IllegalArgumentException("Key length was wrong.");
+			}
+		}
+
 		if (associatedDataBytes == null) {
 			// the caller did not supply associated data, generate it for caller
 			byte[] friendlyNameBytes = friendlyName.getBytes();
@@ -509,7 +526,11 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			
 			associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_GENERATION_TIME);
 			associatedDataByteArrayOutputStream.write(0x08);
-			associatedDataByteArrayOutputStream.write(Util.longToBytes(System.currentTimeMillis()));
+			associatedDataByteArrayOutputStream.write(Util.longToBytes(creationTimeMillis));
+
+			associatedDataByteArrayOutputStream.write(ECKeyEntry.ASSOCIATED_DATA_TYPE_MISC_BIT_FIELD);
+			associatedDataByteArrayOutputStream.write(0x01);
+			associatedDataByteArrayOutputStream.write(publicKeyWasCompressed ? 0x80 : 0x00); 
 			
 			// we need a total of 64 bytes of associated data, pad the stream
 			int lengthSoFar = associatedDataByteArrayOutputStream.size();
@@ -523,16 +544,6 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		
 		int lengthOfAssociatedDataBytes = associatedDataBytes.length;
 		
-		int lengthOfPrivateKey = 0;
-		int lengthOfPublicKey = 0;
-		if (privateKey != null && publicKey != null) {
-			publicKey = ECUtil.getPublicKeyBytesFromEncoding(publicKey, false); // make sure we have an uncompressed encoding of the public key
-			lengthOfPrivateKey = privateKey.length;
-			lengthOfPublicKey = publicKey.length;
-			if (lengthOfPrivateKey != LENGTH_OF_PRIVATE_KEY || lengthOfPublicKey != LENGTH_OF_PUBLIC_KEY) {
-				throw new IllegalArgumentException("Key length was wrong.");
-			}
-		}
 		int totalLengthOfCommandAPDU = lengthOfAssociatedDataBytes + lengthOfPrivateKey + lengthOfPublicKey; 
 		
 		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x04, 0x00, 0x00, (byte)(totalLengthOfCommandAPDU)};

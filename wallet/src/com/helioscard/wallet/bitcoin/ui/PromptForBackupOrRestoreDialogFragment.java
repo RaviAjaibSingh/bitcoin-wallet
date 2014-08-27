@@ -9,6 +9,7 @@ import android.view.View;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 
+import com.helioscard.wallet.bitcoin.IntegrationConnector;
 import com.helioscard.wallet.bitcoin.R;
 
 public class PromptForBackupOrRestoreDialogFragment extends DialogFragment {
@@ -43,6 +44,7 @@ public class PromptForBackupOrRestoreDialogFragment extends DialogFragment {
         alertDialogBuilder.setNeutralButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
+				IntegrationConnector.showRestoreWalletFromFileDialog(getActivity());
 			}
 		});
         

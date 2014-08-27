@@ -1,6 +1,7 @@
 package com.helioscard.wallet.bitcoin.ui;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -272,16 +273,22 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        		}
 	        		
 	        		// There are two possibilities: this card has never had a PIN set, or it has a PIN/blank PIN
-	        		// 1. If it's never had a PIN set, we need to set a PIN.
+	        		// 1. It's never had a PIN set
 	        		// 2. We have to login to the card to get the authenticated session.
-	        		String password = promptToSaveBackupDataDialogFragment.getPassword();
 	        		if (!_cachedSecureElementApplet.isAuthenticated()) {
 	        			PINState pinState = _cachedSecureElementApplet.getPINState();
 	        			if (pinState == PINState.NOT_SET) {
-	        				// The new card has never been used.  Make its password the same as the card we are backing up from.
+	        				// The new card has never been used.  If we are restoring from an existing card, make its password the same as the card we are backing up from.
 	    	        		_logger.info("processIntent: card never used, setting password");
-	        				_cachedSecureElementApplet.setCardPassword(null, password);
-	        				_cachedSecureElementApplet.login(password);
+	    	        		String password = promptToSaveBackupDataDialogFragment.getPassword();
+	    	        		if (password != null) {
+	    	        			_cachedSecureElementApplet.setCardPassword(null, password);
+	    	        			_cachedSecureElementApplet.login(password);
+	    	        		} else {
+	    	        			// show an error indicating this card has no password set
+	    	        			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_error_no_password_set_on_card), Toast.LENGTH_LONG).show();
+	    	        			return true;
+	    	        		}
 	        			} else {
 	        				// The PIN on this new card is already set.  Prompt the user to login
 	    	        		_logger.info("processIntent: logging on now");
@@ -291,7 +298,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			}
 	        		}
 	        		
-	        		saveKeysOnCardPostTap(_cachedSecureElementApplet);
+	        		saveKeysToCardPostTap(_cachedSecureElementApplet);
 	        		return true;
 	        	}
 
@@ -750,8 +757,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 	
-	public void promptSaveBackupData(String sourceCardIdentifier, List<ECKeyEntry> selectedList, String password) {
-		PromptToSaveBackupDataDialogFragment.prompt(getSupportFragmentManager(), sourceCardIdentifier, selectedList, password);
+	public void promptSaveBackupData(String sourceCardIdentifier, List<ECKeyEntry> selectedList, String password, Wallet walletFromFile) {
+		PromptToSaveBackupDataDialogFragment.prompt(getSupportFragmentManager(), sourceCardIdentifier, selectedList, password, walletFromFile);
 	}
 		
 	
@@ -794,7 +801,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	private void createKeyPostTap(SecureElementApplet secureElementApplet, String labelForKey) {
 		_logger.info("generateKeyOnSecureElement: called");
 		try {
-			ECKeyEntry keyFromSecureElementToAddToCachedWallet = secureElementApplet.createOrInjectKey(null, labelForKey, null, null);
+			ECKeyEntry keyFromSecureElementToAddToCachedWallet = secureElementApplet.createOrInjectKey(null, labelForKey, null, null, System.currentTimeMillis());
 			// we just generated a key on the card and got back the public key bytes
 			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
 			// to the key
@@ -853,7 +860,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		}
 	}
 	
-	private void saveKeysOnCardPostTap(SecureElementApplet secureElementApplet) {
+	private void saveKeysToCardPostTap(SecureElementApplet secureElementApplet) {
 		// If we get here, we're authenticated to the new card.  Write the key data to it
     	try {
         	FragmentManager fragmentManager = getSupportFragmentManager();
@@ -861,31 +868,50 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
             String newCardIdentifier = secureElementApplet.getCardIdentifier();
     		
     		PromptToSaveBackupDataDialogFragment promptToSaveBackupDataDialogFragment = (PromptToSaveBackupDataDialogFragment)fragmentManager.findFragmentByTag(PromptToSaveBackupDataDialogFragment.TAG);
-			List<ECKeyEntry> _listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
-			int numKeys = _listOfKeys.size();
-			_logger.info("saveKeysOnCardPostTap: writing " + numKeys + " to new card");
-			for (int i = 0; i < numKeys; i++) {
-				ECKeyEntry ecKeyEntry = _listOfKeys.get(i);
-				try {
-					secureElementApplet.createOrInjectKey(ecKeyEntry.getAssociatedData(), null, ecKeyEntry.getPrivateKeyBytes(), ecKeyEntry.getPublicKeyBytes());
-				} catch (KeyAlreadyExistsException e) {
-	        		// just skip it if we've already written this key
-					_logger.info("saveKeysOnCardPostTap: swallowing KeyAlreadyExistsException");
+			List<ECKeyEntry> listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
+			if (listOfKeys != null) {
+				int numKeys = listOfKeys.size();
+				_logger.info("saveKeysToCardPostTap: writing " + numKeys + " to new card from old card");
+				for (int i = 0; i < numKeys; i++) {
+					ECKeyEntry ecKeyEntry = listOfKeys.get(i);
+					try {
+						secureElementApplet.createOrInjectKey(ecKeyEntry.getAssociatedData(), null, ecKeyEntry.getPrivateKeyBytes(), ecKeyEntry.getPublicKeyBytes(), ecKeyEntry.getTimeOfKeyCreationSecondsSinceEpoch() * 1000);
+					} catch (KeyAlreadyExistsException e) {
+		        		// just skip it if we've already written this key
+						_logger.info("saveKeysToCardPostTap: swallowing KeyAlreadyExistsException");
+					}
+				}
+			} else {
+				_logger.info("saveKeysToCardPostTap: restoring keys from file");
+				// we are restoring keys from a file
+				Wallet walletToRestore = promptToSaveBackupDataDialogFragment.getWalletFromFile();
+				List<ECKey> listOfKeysFromFile = walletToRestore.getKeys();
+				int numKeys = listOfKeysFromFile.size();
+				_logger.info("saveKeysToCardPostTap: writing " + numKeys + " to new card from file");
+				for (int i = 0; i < numKeys; i++) {
+					ECKey ecKey = listOfKeysFromFile.get(i);
+					try {
+						secureElementApplet.createOrInjectKey(null, "Key" + (i + 1), ecKey.getPrivKeyBytes(), ecKey.getPubKey(), ecKey.getCreationTimeSeconds() * 1000);
+					} catch (KeyAlreadyExistsException e) {
+		        		// just skip it if we've already written this key
+						_logger.info("saveKeysToCardPostTap: swallowing KeyAlreadyExistsException");
+					}					
 				}
 			}
+
 			// If we get here, the keys have been successfully injected - write a message out
 			promptToSaveBackupDataDialogFragment.dismiss();
 			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_successfully_wrote_data), Toast.LENGTH_LONG).show();
 			if (newCardIdentifier.equals(currentCardIdentifier)) {
 				// The card we just restored data on to was the one we were actively tracking.  We should replay the block chain
 				// and restart the app
-				_logger.info("saveKeysOnCardPostTap: restored keys on to currently tracked card, process as normal tap");
+				_logger.info("saveKeysToCardPostTap: restored keys on to currently tracked card, process as normal tap");
 				handleNormalTap(secureElementApplet, currentCardIdentifier, newCardIdentifier);
 			} else {
-				_logger.info("saveKeysOnCardPostTap: restored keys on to untracked card, dropping tap");
+				_logger.info("saveKeysToCardPostTap: restored keys on to untracked card, dropping tap");
 			}
     	} catch (IOException e) {
-			_logger.error("saveKeysOnCardPostTap: IOException " + e.toString());
+			_logger.error("saveKeysToCardPostTap: IOException " + e.toString());
     		showException(e);
     	}
 	}
@@ -922,7 +948,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			return;
 		} else if (_pendingSaveKeysToCard) {
 			_pendingSaveKeysToCard = false;
-			saveKeysOnCardPostTap(secureElementApplet);
+			saveKeysToCardPostTap(secureElementApplet);
 			return;
 		}
 

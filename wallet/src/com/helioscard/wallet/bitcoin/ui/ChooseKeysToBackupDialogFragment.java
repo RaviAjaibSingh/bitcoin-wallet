@@ -81,7 +81,7 @@ public class ChooseKeysToBackupDialogFragment extends DialogFragment {
 			    		selectedList.add(_listOfKeys.get(i));
 			    	}
 			    }
-				((NFCAwareActivity)getActivity()).promptSaveBackupData(_sourceCardIdentifier, selectedList, _password);
+				((NFCAwareActivity)getActivity()).promptSaveBackupData(_sourceCardIdentifier, selectedList, _password, null);
 			}
 		});
         alertDialogBuilder.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {

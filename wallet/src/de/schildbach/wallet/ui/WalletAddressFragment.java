@@ -64,6 +64,10 @@ public final class WalletAddressFragment extends Fragment
 
 	private Bitmap qrCodeBitmap;
 
+	/* BEGIN CUSTOM CHANGE */
+	private boolean _paused;
+	/* END CUSTOM CHANGE */
+	
 	@Override
 	public void onAttach(final Activity activity)
 	{
@@ -107,8 +111,12 @@ public final class WalletAddressFragment extends Fragment
 	@Override
 	public void onResume()
 	{
+		/* BEGIN CUSTOM CHANGE */
+		_paused = false;
+		/* END CUSTOM CHANGE */
+		
 		super.onResume();
-
+		
 		config.registerOnSharedPreferenceChangeListener(prefsListener);
 
 		updateView();
@@ -116,7 +124,11 @@ public final class WalletAddressFragment extends Fragment
 
 	@Override
 	public void onPause()
-	{
+	{		
+		/* BEGIN CUSTOM CHANGE */
+		_paused = true;
+		/* END CUSTOM CHANGE */
+		
 		config.unregisterOnSharedPreferenceChangeListener(prefsListener);
 
 		Nfc.unpublish(nfcManager, getActivity());
@@ -151,7 +163,13 @@ public final class WalletAddressFragment extends Fragment
 			qrCodeBitmap = Qr.bitmap(addressStr, size);
 			bitcoinAddressQrView.setImageBitmap(qrCodeBitmap);
 
-			Nfc.publishUri(nfcManager, getActivity(), addressStr);
+			/* BEGIN CUSTOM CHANGE */
+			// An updateView call can come in while we are paused (if a key is deleted), which would make the below
+			// method crash
+			if (!_paused) {
+				Nfc.publishUri(nfcManager, getActivity(), addressStr);
+			}
+			/* END CUSTOM CHANGE */
 		}
 	}
 

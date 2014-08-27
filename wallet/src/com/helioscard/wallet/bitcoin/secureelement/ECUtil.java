@@ -20,7 +20,7 @@ public class ECUtil {
 		ECPoint originalPoint = ecCurve.decodePoint(publicKeyEncoding);
 		if (originalPoint.isCompressed() == compressed) {
 			// the caller wants back a point encoded in the way it's already encoded
-			return originalPoint.getEncoded();
+			return publicKeyEncoding;
 		}
 		
 		// now re-create the point as a compressed or uncompressed point via SpongyCastle

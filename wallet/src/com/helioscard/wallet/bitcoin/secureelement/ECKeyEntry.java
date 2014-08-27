@@ -14,7 +14,7 @@ public class ECKeyEntry {
 	private byte[] _publicKeyBytes;
 	private byte[] _privateKeyBytes;
 	private String _friendlyName;
-	private long _timeOfKeyCreationMillisSinceEpoch = -1;
+	private long _timeOfKeyCreationMillisSinceEpoch;
 	private byte[] _originalAssociatedData;
 	
 	public static final int ASSOCIATED_DATA_TYPE_VERSION = 1;
@@ -24,7 +24,7 @@ public class ECKeyEntry {
 
 	private static Logger _logger = LoggerFactory.getLogger(ECKeyEntry.class);
 	
-	private boolean _isPublicKeyUncompressed = false;
+	private boolean _isPublicKeyCompressed = false;
 	
 	public ECKeyEntry(boolean isLocked, byte[] publicKeyBytes, byte[] associatedData, byte[] privateKeyBytes) {
 		_isLocked = isLocked;
@@ -79,8 +79,8 @@ public class ECKeyEntry {
 						break;
 					}
 					case ASSOCIATED_DATA_TYPE_MISC_BIT_FIELD: {
-						_isPublicKeyUncompressed = (fieldData[0] & 0x80) != 0;
-						_logger.info("decodeAssociatedData: read key uncompression of " + (_isPublicKeyUncompressed ? "true" : "false"));
+						_isPublicKeyCompressed = (fieldData[0] & 0x80) != 0;
+						_logger.info("decodeAssociatedData: read key compression of " + (_isPublicKeyCompressed ? "true" : "false"));
 						break;
 					}
 				}
@@ -102,7 +102,7 @@ public class ECKeyEntry {
 		// The key that we read from the smart card is always uncompressed
 		// but now check if the way the key is used within the bitcoin system is compressed
 		// or uncompressed (each form results in a different Bitcoin address).  Return the correct one.
-		if (!_isPublicKeyUncompressed) {
+		if (_isPublicKeyCompressed) {
 			// return a compressed form of the public key
 			return ECUtil.getPublicKeyBytesFromEncoding(_publicKeyBytes, true);
 		} else {

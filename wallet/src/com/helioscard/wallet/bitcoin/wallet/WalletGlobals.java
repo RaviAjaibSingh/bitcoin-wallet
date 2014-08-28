@@ -22,6 +22,7 @@ public class WalletGlobals {
 	private static WalletGlobals _walletGlobals;
     private static final String PREFERENCES_FILE_WALLET = "PREFERENCES_FILE_WALLET";
     private static final String PREFERENCES_FIELD_CARD_IDENTIFIER = "CardIdentifier";
+    private static final String PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN = "ServiceNeedsToReplayBlockChain";
 	
     private static Logger _logger = LoggerFactory.getLogger(WalletGlobals.class);
     
@@ -101,15 +102,13 @@ public class WalletGlobals {
 				// we have
 
 				// we know we need to stop the service and delete the block chain file now
-
-				// delete all the keys in the cached wallet
+				if (wipeWalletIfNeeded) {
+					persistServiceNeedsToReplayBlockchain(activityContext);
+				}
+                
+                // delete all the keys in the cached wallet
 				for (ECKey keyToDeleteInCachedWallet : listFromCachedWallet) {
 					removeECKeyFromCachedWallet(activityContext, wallet, keyToDeleteInCachedWallet);
-				}
-
-				if (wipeWalletIfNeeded) {
-					wallet.clearTransactions(0);
-					persistServiceNeedsToReplayBlockchain();
 				}
 
 				cachedWalletWasCleared = true;
@@ -145,8 +144,7 @@ public class WalletGlobals {
 				if (!keyFound) {
 					_logger.info("synchronizeKeysWithSecureElement: removing a cached wallet key");
 					serviceNeedsToClearAndRestart = true;
-					persistServiceNeedsToReplayBlockchain();					
-					wallet.clearTransactions(0);
+					persistServiceNeedsToReplayBlockchain(activityContext);					
 					
 					removeECKeyFromCachedWallet(activityContext, wallet, keyFromCachedWallet);
 				}
@@ -156,12 +154,33 @@ public class WalletGlobals {
 		return serviceNeedsToClearAndRestart;
 	}
 	
-	public static void persistServiceNeedsToReplayBlockchain() {
+	public static void persistServiceNeedsToReplayBlockchain(Activity activityContext) {
 		// Call this method to indicate the contents of the wallet are about to change, and that we need to ensure
 		// that the service clears the blockchain and replays it.  This is to prevent an interruption where we change the 
 		// wallet and then we reset the device before we can tell the service to delete the blockchain.  On service startup,
 		// the service should check to see whether the block chain needs to be replayed, and if so, replay it and clear this flag
-		// TODO: implement something here to write a persistent flag and in the service startup to check the flag, and if it's set, wipe the block chain, and clear the flag
+        SharedPreferences sharedPreferences = activityContext.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, true);
+        editor.commit();
+        
+    	Wallet wallet = IntegrationConnector.getWallet(activityContext);
+    	wallet.clearTransactions(0);
+    	wallet.setLastBlockSeenHeight(-1); // magic value
+    	wallet.setLastBlockSeenHash(null);
+	}
+	
+	public static void resetServiceNeedsToReplayBlockchain(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, false);
+        editor.commit();
+	}
+	
+	public static boolean getServiceNeedsToReplayBlockchain(Context context) {
+        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+        // read the last card identifier we used
+        return sharedPreferences.getBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, false);
 	}
 
 	public static void addECKeyEntryToCachedWallet(Context context, Wallet wallet, ECKeyEntry keyToAdd) {

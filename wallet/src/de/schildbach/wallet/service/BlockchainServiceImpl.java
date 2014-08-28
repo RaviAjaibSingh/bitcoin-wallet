@@ -603,6 +603,20 @@ public class BlockchainServiceImpl extends android.app.Service implements Blockc
 		registerReceiver(connectivityReceiver, intentFilter);
 
 		blockChainFile = new File(getDir("blockstore", Context.MODE_PRIVATE), Constants.Files.BLOCKCHAIN_FILENAME);
+		
+		/* BEGIN CUSTOM CHANGE */
+		if (com.helioscard.wallet.bitcoin.wallet.WalletGlobals.getServiceNeedsToReplayBlockchain(this)) {
+			log.info("service detected block chain reset required, resetting");
+			if (blockChainFile.exists()) {
+				blockChainFile.delete();
+			}
+
+			com.helioscard.wallet.bitcoin.wallet.WalletGlobals.resetServiceNeedsToReplayBlockchain(this);
+		} else {
+			log.info("service detected no block chain reset required");
+		}
+		/* END CUSTOM CHANGE */
+
 		final boolean blockChainFileExists = blockChainFile.exists();
 
 		if (!blockChainFileExists)

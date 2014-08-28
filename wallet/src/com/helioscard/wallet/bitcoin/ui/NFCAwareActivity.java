@@ -1010,16 +1010,13 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			if (listFromCachedWallet.size() > 0) {
 	    		// persist the fact that we're about to modify the wallet, in case we can interrupted
 	    		// before we get a chance to tell the service to delete the block chain and restart
-	      		walletGlobals.persistServiceNeedsToReplayBlockchain();
+	      		walletGlobals.persistServiceNeedsToReplayBlockchain(this);
 	      		
 	      		// Remove all the keys from the wallet
 				for (int i = 0; i < listFromCachedWallet.size(); i++) {
 					ECKey keyFromCachedWallet = listFromCachedWallet.get(i);
 					wallet.removeKey(keyFromCachedWallet);
 				}
-
-				// clear any existing transactions
-				wallet.clearTransactions(0);
 				
 				// Replay the block chain
 				IntegrationConnector.deleteBlockchainAndRestartService(this);

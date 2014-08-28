@@ -5,6 +5,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.text.InputType;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
@@ -27,21 +28,21 @@ public class PromptForLabelDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
     	final NFCAwareActivity nfcAwareActivity = (NFCAwareActivity)getActivity();
-    	
+
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
-		 
+
 		// set title
 		alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_title));
- 
+
 		// Set an EditText view to get user input
 		final EditText input = new EditText(nfcAwareActivity);
 		input.setSingleLine(true);
 		InputFilter[] filterArray = new InputFilter[1];
-		// TODO: using this input filter is preventing the use of the backspace key once you've typed 8 characters
-		// use a different system to prevent more than 8 characters
-		filterArray[0] = new InputFilter.LengthFilter(16); // 8 characters at most
+		filterArray[0] = new InputFilter.LengthFilter(10); // 10 characters at most
 		input.setFilters(filterArray);
 		alertDialogBuilder.setView(input);
+		input.setText(getResources().getString(R.string.nfc_aware_activity_prompt_enter_label_initial_label));
+		input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD); // prevent auto-suggest
 		
 	    // set dialog message
 		alertDialogBuilder

@@ -4,6 +4,14 @@
 	android:layout_height="match_parent"
 	android:orientation="vertical" >
 
+    <!-- BEGIN CUSTOM CHANGE -->    
+	<fragment
+	    android:id="@+id/helios_card_info_fragment_addresses"
+		android:name="com.helioscard.wallet.bitcoin.ui.HeliosCardInfoFragment"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content" />
+    <!-- END CUSTOM CHANGE -->
+    
 	<de.schildbach.wallet.util.ViewPagerTabs
 		android:id="@+id/address_book_pager_tabs"
 		android:layout_width="match_parent"

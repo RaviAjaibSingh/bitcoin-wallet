@@ -5,8 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,9 +23,8 @@ import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
 
 public class WalletGlobals {
 	private static WalletGlobals _walletGlobals;
-    private static final String PREFERENCES_FILE_WALLET = "PREFERENCES_FILE_WALLET";
-    private static final String PREFERENCES_FIELD_CARD_IDENTIFIER = "CardIdentifier";
-    private static final String PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN = "ServiceNeedsToReplayBlockChain";
+    private static final String PREFERENCES_FIELD_CARD_IDENTIFIER = "HeliosCardCurrentCardIdentifier";
+    private static final String PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN = "HeliosCardServiceNeedsToReplayBlockChain";
 	
     private static Logger _logger = LoggerFactory.getLogger(WalletGlobals.class);
     
@@ -36,7 +38,14 @@ public class WalletGlobals {
 	}
 	
 	public WalletGlobals(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+		Context baseContext = null;
+		if (context instanceof Activity) {
+			baseContext = ((Activity)context).getBaseContext();
+		} else if (context instanceof Service) {
+			baseContext = ((Service)context).getBaseContext();
+		}
+		
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext);
         // read the last card identifier we used
         _cardIdentifier = sharedPreferences.getString(PREFERENCES_FIELD_CARD_IDENTIFIER, null);
         _logger.info("read cached cardIdentifier: " + _cardIdentifier);
@@ -64,7 +73,14 @@ public class WalletGlobals {
 
         // update the last known card identifier, so we can re-use next time if we're reloaded without the wallet
         // app being explicitly tapped by a card
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+		Context baseContext = null;
+		if (context instanceof Activity) {
+			baseContext = ((Activity)context).getBaseContext();
+		} else if (context instanceof Service) {
+			baseContext = ((Service)context).getBaseContext();
+		}
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(PREFERENCES_FIELD_CARD_IDENTIFIER, _cardIdentifier);
         editor.commit();
@@ -159,7 +175,7 @@ public class WalletGlobals {
 		// that the service clears the blockchain and replays it.  This is to prevent an interruption where we change the 
 		// wallet and then we reset the device before we can tell the service to delete the blockchain.  On service startup,
 		// the service should check to see whether the block chain needs to be replayed, and if so, replay it and clear this flag
-        SharedPreferences sharedPreferences = activityContext.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activityContext.getBaseContext());
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, true);
         editor.commit();
@@ -171,14 +187,28 @@ public class WalletGlobals {
 	}
 	
 	public static void resetServiceNeedsToReplayBlockchain(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+		Context baseContext = null;
+		if (context instanceof Activity) {
+			baseContext = ((Activity)context).getBaseContext();
+		} else if (context instanceof Service) {
+			baseContext = ((Service)context).getBaseContext();
+		}
+		
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, false);
         editor.commit();
 	}
 	
 	public static boolean getServiceNeedsToReplayBlockchain(Context context) {
-        SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCES_FILE_WALLET, Context.MODE_PRIVATE);
+		Context baseContext = null;
+		if (context instanceof Activity) {
+			baseContext = ((Activity)context).getBaseContext();
+		} else if (context instanceof Service) {
+			baseContext = ((Service)context).getBaseContext();
+		}
+
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(baseContext);
         // read the last card identifier we used
         return sharedPreferences.getBoolean(PREFERENCES_FIELD_SERVICE_NEEDS_TO_REPLAY_BLOCKCHAIN, false);
 	}

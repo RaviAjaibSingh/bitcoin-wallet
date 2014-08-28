@@ -74,10 +74,11 @@ public final class WalletDisclaimerFragment extends Fragment implements OnShared
 			public void onClick(final View v)
 			{
 				final boolean showBackup = config.remindBackup();
-				if (showBackup)
+				/* BEGIN CUSTOM CHANGE */
+				// if (showBackup)
 					((WalletActivity) activity).handleExportKeys();
-				else
-					HelpDialogFragment.page(getFragmentManager(), R.string.help_safety);
+				// else
+				//	HelpDialogFragment.page(getFragmentManager(), R.string.help_safety);
 			}
 		});
 
@@ -118,8 +119,13 @@ public final class WalletDisclaimerFragment extends Fragment implements OnShared
 		if (!isResumed())
 			return;
 
-		final boolean showBackup = config.remindBackup();
-		final boolean showDisclaimer = config.getDisclaimerEnabled();
+
+		/* BEGIN CUSTOM CHANGE */
+		// final boolean showBackup = config.remindBackup();
+		// final boolean showDisclaimer = config.getDisclaimerEnabled();
+		final boolean showBackup = true;
+		final boolean showDisclaimer = false;
+		/* END CUSTOM CHANGE */
 
 		final int progressResId;
 		if (download == BlockchainService.ACTION_BLOCKCHAIN_STATE_DOWNLOAD_OK)

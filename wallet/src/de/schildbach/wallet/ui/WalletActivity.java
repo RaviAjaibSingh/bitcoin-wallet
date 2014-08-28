@@ -329,11 +329,11 @@ public final class WalletActivity extends AbstractWalletActivity
 				return true;
 
 			/* BEGIN CUSTOM CHANGE */
-			/*
 			case R.id.wallet_options_safety:
-				HelpDialogFragment.page(getSupportFragmentManager(), R.string.help_safety);
+				// HelpDialogFragment.page(getSupportFragmentManager(), R.string.help_safety);
+				com.helioscard.wallet.bitcoin.ui.EULAAndSafetyDialogFragment.prompt(getSupportFragmentManager());
 				return true;
-
+			/*
 			case R.id.wallet_options_donate:
 				handleDonate();
 				return true;
@@ -367,7 +367,7 @@ public final class WalletActivity extends AbstractWalletActivity
 	{
 		/* BEGIN CUSTOM CHANGE */
 		// showDialog(DIALOG_EXPORT_KEYS);
-		// TODO: introduce custom backup/restore code for Helios cards
+		this.promptForBackupOrRestore();
 		/* END CUSTOM CHANGE */
 	}
 

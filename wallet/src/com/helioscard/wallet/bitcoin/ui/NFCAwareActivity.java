@@ -123,6 +123,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         		// But we were started by an intent which represented a card tap - everything has been handled, nothing for us to
         		// do here
         		_logger.info("onCreate: started by NFC tap, bailing");
+        		EULAAndSafetyDialogFragment.promptIfNeeded(getSupportFragmentManager(), this);
         		return;
         	}
         	
@@ -133,6 +134,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	this.finish();
         	return;
         }
+ 		EULAAndSafetyDialogFragment.promptIfNeeded(getSupportFragmentManager(), this);
     }
     
     @Override
@@ -186,7 +188,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     public void onNewIntent(Intent intent) {
 		_logger.info("onNewIntent: called");
 		processIntent(intent);
-    }
+		EULAAndSafetyDialogFragment.promptIfNeeded(getSupportFragmentManager(), this);
+	}
 	
 	protected boolean doesIntentComeFromHeliosCard(Intent intent) {
 		if (intent == null) {

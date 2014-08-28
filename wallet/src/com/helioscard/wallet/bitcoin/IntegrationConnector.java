@@ -14,6 +14,7 @@ import com.google.bitcoin.core.Address;
 import com.google.bitcoin.core.Wallet;
 
 import android.support.v4.app.FragmentActivity;
+import android.widget.Toast;
 
 import com.helioscard.wallet.bitcoin.R;
 
@@ -32,6 +33,7 @@ public class IntegrationConnector {
 	}
 	
 	public static void deleteBlockchainAndRestartService(Activity activityContext) {
+		Toast.makeText(activityContext, activityContext.getResources().getString(R.string.nfc_aware_activity_resync_blockchain), Toast.LENGTH_LONG).show();
 		((WalletApplication)activityContext.getApplication()).resetBlockchain();		
 	}
 	

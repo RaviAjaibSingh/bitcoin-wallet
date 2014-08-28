@@ -56,5 +56,6 @@
     <string name="nfc_aware_activity_prompt_to_save_backup_data_dialog_hint_enter_password_to_encrypt_file_against">Password to encrypt file against</string>    
     <string name="nfc_aware_activity_same_card_tapped">Error: you tapped the same card that contains the keys you are backing up.  Please tap a different card.</string>
     <string name="nfc_aware_activity_successfully_wrote_data">Successfully backed up keys to new card.</string>
-    <string name="nfc_aware_activity_error_no_password_set_on_card">Error: this card does not have a password set.</string>    
+    <string name="nfc_aware_activity_error_no_password_set_on_card">Error: this card does not have a password set.</string>
+    <string name="nfc_aware_activity_resync_blockchain">The wallet needs to resynchronize with the blockchain.  This may take some time.  During this time, the balance shown may not be correct.</string>    
 </resources>

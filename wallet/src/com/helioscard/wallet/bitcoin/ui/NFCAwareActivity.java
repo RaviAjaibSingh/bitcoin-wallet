@@ -357,7 +357,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     	// set the card identifier appropriately in the bitcoin wallet
         WalletGlobals walletGlobals = WalletGlobals.getInstance(this);
         // Get the list of public keys from the secure element
-        List<ECKeyEntry> _ecPublicKeyEntries = secureElementApplet.getECKeyEntries(false);
+        List<ECKeyEntry> ecPublicKeyEntries = secureElementApplet.getECKeyEntries(false);
 
         // Synchronize the keys with the secure element.  E.g. make sure our local cache of public keys matches
         // what's on this card
@@ -375,14 +375,23 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	// we are switching cards - prompt the user
         	if (promptOnNewCardDialogFragment != null) {
                 _logger.info("handleNormalTap: already showing new card dialog fragment");
-        		// we were already showing the prompt on new card dialog fragment - we're ready to switch to this card now
-        		promptOnNewCardDialogFragment.dismiss();
-        		walletGlobals.setCardIdentifier(this, newCardIdentifier);
-        		cardIdentifierWasChanged = true;
+        		// we were already showing the prompt on new card dialog fragment
+        		String cardBeingPromptedToSwitchToIdentifier = promptOnNewCardDialogFragment.getCardBeingPromptedToSwitchToIdentifier();
+                promptOnNewCardDialogFragment.dismiss();
+        		if (cardBeingPromptedToSwitchToIdentifier.equals(newCardIdentifier)) {
+        			// the user tapped the card we were prompting him to switch to
+                    _logger.info("handleNormalTap: switching to card that was being prompted to switch to");
+        			walletGlobals.setCardIdentifier(this, newCardIdentifier);
+        			cardIdentifierWasChanged = true;
+        		} else {
+                    _logger.info("handleNormalTap: user tapped 3rd card while being prompted to switch to 2nd");
+            		PromptOnNewCardDialogFragment.prompt(fragmentManager, newCardIdentifier, ecPublicKeyEntries);
+            		return true;
+        		}
         	} else {
                 _logger.info("handleNormalTap: prompting user to switch cards");
         		// prompt the user to switch cards
-        		PromptOnNewCardDialogFragment.prompt(fragmentManager);
+        		PromptOnNewCardDialogFragment.prompt(fragmentManager, newCardIdentifier, ecPublicKeyEntries);
         		return true;
         	}
         } else if (promptOnNewCardDialogFragment != null) {
@@ -411,7 +420,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
     	PromptForTapOnceMoreDialogFragment promptForTapOnceMoreDialogFragment = (PromptForTapOnceMoreDialogFragment)fragmentManager.findFragmentByTag(PromptForTapOnceMoreDialogFragment.TAG);
         Wallet wallet = IntegrationConnector.getWallet(this);
-        boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, _ecPublicKeyEntries, promptForTapOnceMoreDialogFragment == null);
+        boolean serviceNeedsToClearAndRestart = walletGlobals.synchronizeKeys(this, wallet, ecPublicKeyEntries, promptForTapOnceMoreDialogFragment == null);
         if (serviceNeedsToClearAndRestart) {
             // the keys between the secure element and our cached copy of public keys didn't match
             _logger.info("handleNormalTap: service needs to clear and restart");

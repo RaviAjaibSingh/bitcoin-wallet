@@ -5,6 +5,9 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.LinearLayout;
 
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
@@ -27,27 +30,46 @@ public class PromptForBackupOrRestoreDialogFragment extends DialogFragment {
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		alertDialogBuilder.setMessage(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_message));
         alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_title));
-        alertDialogBuilder.setPositiveButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				// if this button is clicked, just close
-				// the dialog box and do nothing
-				dialog.cancel();
-				((NFCAwareActivity)getActivity()).resetState();
-			  }
-		});
-        alertDialogBuilder.setNegativeButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card), new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.dismiss();
-				((NFCAwareActivity)getActivity()).backupCardPreTap();
+        LinearLayout linearLayout = new LinearLayout(nfcAwareActivity);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        Button button = new Button(nfcAwareActivity);
+        button.setText(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card));
+        button.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				dismiss();
+				((NFCAwareActivity)getActivity()).backupCardPreTap();				
 			}
-		});
-        alertDialogBuilder.setNeutralButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file), new DialogInterface.OnClickListener() {
-			public void onClick(DialogInterface dialog, int id) {
-				dialog.dismiss();
-				IntegrationConnector.showRestoreWalletFromFileDialog(getActivity());
-			}
-		});
+        	
+        });
+        linearLayout.addView(button);
         
+        button = new Button(nfcAwareActivity);
+        button.setText(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file));
+        button.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				dismiss();
+				IntegrationConnector.showRestoreWalletFromFileDialog(getActivity());				
+			}
+        });
+        linearLayout.addView(button);
+        
+        button = new Button(nfcAwareActivity);
+        button.setText(getResources().getString(R.string.general_cancel));
+        button.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				// TODO Auto-generated method stub
+				dismiss();
+				((NFCAwareActivity)getActivity()).resetState();				
+			}
+        });
+        linearLayout.addView(button);
+        alertDialogBuilder.setView(linearLayout);        
+
         this.setCancelable(false);
 
         return alertDialogBuilder.create();

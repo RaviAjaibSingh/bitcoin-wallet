@@ -36,10 +36,10 @@
     <string name="nfc_aware_activity_password_successfully_changed">Your password was successfully changed.</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_message">You have tapped a new card.  If you would like the wallet to switch to tracking this card, tap the card again.  Or, if you would like to backup or restore keys between cards or from files, click the button below.</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_title">New Card Detected</string>
-    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_message">It is important that you backup your keys in case your card is lost or damaged.  You can copy keys from one card to another card or to a file, or restore keys from a file.  Please make a selection below.</string>
+    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_message">You should backup your keys in case your card is lost or damaged.  You can copy keys from one card to another card or to a file, or restore keys from a file.</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_title">Backup or Restore Keys</string>
-    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card">Copy From Card</string>
-    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file">Restore From File</string>
+    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_backup_from_card">Copy Keys From One Card To Another Card or to a File</string>
+    <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_import_from_file">Restore Keys From a File To a Card</string>
     <string name="nfc_aware_activity_card_not_initialized">This card contains no keys to backup.</string>
     <string name="nfc_aware_activity_choose_keys_to_backup_dialog_title">Choose Keys To Backup</string>
     <string name="nfc_aware_activity_choose_keys_to_backup_dialog_label">Label: %1$s\nAddress: %2$s</string>

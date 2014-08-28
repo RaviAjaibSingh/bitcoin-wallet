@@ -380,13 +380,13 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         			cardIdentifierWasChanged = true;
         		} else {
                     _logger.info("handleNormalTap: user tapped 3rd card while being prompted to switch to 2nd");
-            		PromptOnNewCardDialogFragment.prompt(fragmentManager, newCardIdentifier, ecPublicKeyEntries);
+            		PromptOnNewCardDialogFragment.prompt(fragmentManager, PromptOnNewCardDialogFragment.TYPE_NEW_CARD, currentCardIdentifier, newCardIdentifier, ecPublicKeyEntries);
             		return true;
         		}
         	} else {
                 _logger.info("handleNormalTap: prompting user to switch cards");
         		// prompt the user to switch cards
-        		PromptOnNewCardDialogFragment.prompt(fragmentManager, newCardIdentifier, ecPublicKeyEntries);
+        		PromptOnNewCardDialogFragment.prompt(fragmentManager, PromptOnNewCardDialogFragment.TYPE_NEW_CARD, currentCardIdentifier, newCardIdentifier, ecPublicKeyEntries);
         		return true;
         	}
         } else if (promptOnNewCardDialogFragment != null) {
@@ -870,7 +870,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	FragmentManager fragmentManager = getSupportFragmentManager();
     		String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
             String newCardIdentifier = secureElementApplet.getCardIdentifier();
-    		
+            
     		PromptToSaveBackupDataDialogFragment promptToSaveBackupDataDialogFragment = (PromptToSaveBackupDataDialogFragment)fragmentManager.findFragmentByTag(PromptToSaveBackupDataDialogFragment.TAG);
 			List<ECKeyEntry> listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
 			if (listOfKeys != null) {
@@ -905,14 +905,18 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 
 			// If we get here, the keys have been successfully injected - write a message out
 			promptToSaveBackupDataDialogFragment.dismiss();
-			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_successfully_wrote_data), Toast.LENGTH_LONG).show();
 			if (newCardIdentifier.equals(currentCardIdentifier)) {
 				// The card we just restored data on to was the one we were actively tracking.  We should replay the block chain
 				// and restart the app
+				Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_successfully_wrote_data), Toast.LENGTH_LONG).show();
 				_logger.info("saveKeysToCardPostTap: restored keys on to currently tracked card, process as normal tap");
 				handleNormalTap(secureElementApplet, currentCardIdentifier, newCardIdentifier);
 			} else {
+				// We restored data on to a card that we're not currently tracking.  Show the user the new keys on the card
+	            // get a list of keys already on the card
+	            List<ECKeyEntry> ecPublicKeyEntries = secureElementApplet.getECKeyEntries(false);
 				_logger.info("saveKeysToCardPostTap: restored keys on to untracked card, dropping tap");
+        		PromptOnNewCardDialogFragment.prompt(fragmentManager, PromptOnNewCardDialogFragment.TYPE_SAVE_SUCCESSFUL, currentCardIdentifier, newCardIdentifier, ecPublicKeyEntries);
 			}
     	} catch (IOException e) {
 			_logger.error("saveKeysToCardPostTap: IOException " + e.toString());

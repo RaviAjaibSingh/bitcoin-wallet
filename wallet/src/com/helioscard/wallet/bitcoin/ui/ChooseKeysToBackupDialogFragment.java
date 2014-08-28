@@ -25,10 +25,15 @@ public class ChooseKeysToBackupDialogFragment extends DialogFragment {
     private final List<ECKeyEntry> _listOfKeys;
     private String _password;
     
+    private List<ECKeyEntry> _selectedItems = new ArrayList<ECKeyEntry>();
+    
     private ChooseKeysToBackupDialogFragment(String sourceCardIdentifier, List<ECKeyEntry> listOfKeys, String password) {
     	_sourceCardIdentifier = sourceCardIdentifier;
     	_listOfKeys = listOfKeys;
     	_password = password;
+    	for (int i = 0; i < _listOfKeys.size(); i++) {
+    		_selectedItems.add(_listOfKeys.get(i));
+    	}
     }
 
 	public static void prompt(FragmentManager fragmentManager, String sourceCardIdentifier, List<ECKeyEntry> listOfKeys, String password) {
@@ -70,18 +75,21 @@ public class ChooseKeysToBackupDialogFragment extends DialogFragment {
         	keyLabels[i] = String.format(unformattedKeyLabelString, ecKeyEntry.getFriendlyName(), new ECKey(null, ecKeyEntry.getPublicKeyBytes()).toAddress(Constants.NETWORK_PARAMETERS));
         }
 
-        alertDialogBuilder.setMultiChoiceItems(keyLabels, checkedItems, null);
+        alertDialogBuilder.setMultiChoiceItems(keyLabels, checkedItems, new DialogInterface.OnMultiChoiceClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+				if (isChecked) {
+					_selectedItems.add(_listOfKeys.get(which));
+				} else {
+					_selectedItems.remove(_listOfKeys.get(which));					
+				}
+			}
+		});
 
         alertDialogBuilder.setPositiveButton(getResources().getString(R.string.general_ok), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();
-				List<ECKeyEntry> selectedList = new ArrayList<ECKeyEntry>(0);
-			    for (int i = 0; i < numKeys; i++) {
-			    	if (checkedItems[i]) {
-			    		selectedList.add(_listOfKeys.get(i));
-			    	}
-			    }
-				((NFCAwareActivity)getActivity()).promptSaveBackupData(_sourceCardIdentifier, selectedList, _password, null);
+				((NFCAwareActivity)getActivity()).promptSaveBackupData(_sourceCardIdentifier, _selectedItems, _password, null);
 			}
 		});
         alertDialogBuilder.setNegativeButton(getResources().getString(R.string.general_cancel), new DialogInterface.OnClickListener() {

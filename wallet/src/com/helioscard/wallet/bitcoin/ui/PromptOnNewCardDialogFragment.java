@@ -20,16 +20,23 @@ import com.google.bitcoin.core.ECKey;
 public class PromptOnNewCardDialogFragment extends DialogFragment {
     public static final String TAG = "PromptOnNewCardDialogFragment";
     
+    private int _type;
+    private String _originalCardIdentifier;
     private String _cardBeingPromptedToSwitchToIdentifier;
-    private List<ECKeyEntry> _ecPublicKeyEntries; 
+    private List<ECKeyEntry> _ecPublicKeyEntries;
     
-    public PromptOnNewCardDialogFragment(String cardBeingPromptedToSwitchToIdentifier, List<ECKeyEntry> ecPublicKeyEntries) {
+    public static final int TYPE_NEW_CARD = 0;
+    public static final int TYPE_SAVE_SUCCESSFUL = 1;
+    
+    public PromptOnNewCardDialogFragment(int type, String originalCardIdentifier, String cardBeingPromptedToSwitchToIdentifier, List<ECKeyEntry> ecPublicKeyEntries) {
+    	_type = type;
+    	_originalCardIdentifier = originalCardIdentifier;
     	_cardBeingPromptedToSwitchToIdentifier = cardBeingPromptedToSwitchToIdentifier;
     	_ecPublicKeyEntries = ecPublicKeyEntries;
     }
 
-	public static void prompt(FragmentManager fragmentManager, String cardBeingPromptedToSwitchToIdentifier, List<ECKeyEntry> ecPublicKeyEntries) {
-		PromptOnNewCardDialogFragment frag = new PromptOnNewCardDialogFragment(cardBeingPromptedToSwitchToIdentifier, ecPublicKeyEntries);
+	public static void prompt(FragmentManager fragmentManager, int type, String originalCardIdentifier, String cardBeingPromptedToSwitchToIdentifier, List<ECKeyEntry> ecPublicKeyEntries) {
+		PromptOnNewCardDialogFragment frag = new PromptOnNewCardDialogFragment(type, originalCardIdentifier, cardBeingPromptedToSwitchToIdentifier, ecPublicKeyEntries);
     	frag.show(fragmentManager, TAG);
 	}
 	
@@ -58,21 +65,22 @@ public class PromptOnNewCardDialogFragment extends DialogFragment {
     	
 		AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(nfcAwareActivity);
 		
-		String alertMessage = String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message), _cardBeingPromptedToSwitchToIdentifier); 
+		String alertMessage = String.format(getResources().getString(_type == TYPE_NEW_CARD ? R.string.nfc_aware_activity_prompt_on_new_card_dialog_message : R.string.nfc_aware_activity_prompt_on_new_card_dialog_save_successful), _originalCardIdentifier, _cardBeingPromptedToSwitchToIdentifier); 
 		int numKeys = _ecPublicKeyEntries.size();
 		alertMessage += "\n\n";
 		if (numKeys > 0) {
-			alertMessage += getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys);
+			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys), _cardBeingPromptedToSwitchToIdentifier);
 			for (int i = 0; i < numKeys; i++) {
 				ECKeyEntry ecKeyEntry = _ecPublicKeyEntries.get(i);
 				alertMessage += "\n---------------\n";
 				alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_choose_keys_to_backup_dialog_label), ecKeyEntry.getFriendlyName(), new ECKey(null, ecKeyEntry.getPublicKeyBytes()).toAddress(Constants.NETWORK_PARAMETERS)); 
 			}
 		} else {
-			alertMessage += getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys);
+			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys), _cardBeingPromptedToSwitchToIdentifier);
 		}
 		alertDialogBuilder.setMessage(alertMessage);
-        alertDialogBuilder.setTitle(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_title));
+		
+		alertDialogBuilder.setTitle(getResources().getString(_type == TYPE_NEW_CARD ? R.string.nfc_aware_activity_prompt_on_new_card_dialog_title : R.string.nfc_aware_activity_prompt_on_new_card_dialog_title_save_successful));
         alertDialogBuilder.setPositiveButton(getResources().getString(R.string.nfc_aware_activity_prompt_for_backup_or_restore_dialog_title), new DialogInterface.OnClickListener() {
 			public void onClick(DialogInterface dialog, int id) {
 				dialog.dismiss();

@@ -43,7 +43,9 @@ public class SmartCardReaderImpl implements SmartCardReader {
 			// we haven't tried connecting yet, try connecting now
 			try {
 				_connectionAttempted = true;
-				_isoDep.connect();
+				if (!_isoDep.isConnected()) {
+					_isoDep.connect();					
+				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				_logger.info("checkConnection: IOException" + e.toString());

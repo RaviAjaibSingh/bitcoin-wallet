@@ -168,11 +168,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        
-        if (_cachedSecureElementApplet != null) {
-        	_cachedSecureElementApplet.close();
-        	_cachedSecureElementApplet = null;
-        }
     }
 
     @Override

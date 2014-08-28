@@ -2,7 +2,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity" >
+    tools:context=".MainActivity"
+    android:paddingLeft="15dp" 
+    android:paddingTop="15dp"    
+    android:paddingRight="15dp"
+    android:paddingBottom="15dp"
+    >
 
 <!-- Comment back in the corresponding Java callbacks in MainActivity.java as well to use these
     <Button
@@ -31,7 +36,19 @@
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="79dp"
-        android:text="@string/main_welcome_message" />
+        android:text="@string/main_welcome_message"
+        android:textSize="@dimen/font_size_normal" />
 
+    <TextView 
+		android:layout_width="wrap_content" 
+		android:layout_height="wrap_content" 
+		android:text='@string/main_hyperlink'
+		android:autoLink="web"
+		android:layout_below="@id/textViewMainWelcomeMessage"
+		android:textSize="@dimen/font_size_normal"
+		android:textStyle="bold"
+		android:layout_centerHorizontal="true"
+	>
+</TextView>
+    
 </RelativeLayout>

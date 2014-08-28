@@ -1,5 +1,6 @@
 package com.helioscard.wallet.bitcoin.ui;
 
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
 import android.app.Activity;
@@ -16,6 +17,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.google.bitcoin.core.Peer;
 
 import com.helioscard.wallet.bitcoin.R;
 import com.helioscard.wallet.bitcoin.wallet.WalletGlobals;
@@ -80,7 +83,8 @@ public final class HeliosCardInfoFragment extends Fragment
 
 	private void updateNetworkStatus() {
 		if (_blockChainService != null) {
-			if (_blockChainService.getConnectedPeers().size() > 0) {
+			List<Peer> listOfPeers = _blockChainService.getConnectedPeers();
+			if (listOfPeers != null && listOfPeers.size() > 0) {
 				_networkStatusTextView.setText(getString(R.string.helios_card_info_fragment_card_connected_to_network));
 			} else {
 				_networkStatusTextView.setText(getString(R.string.helios_card_info_fragment_card_not_connected_to_network));				

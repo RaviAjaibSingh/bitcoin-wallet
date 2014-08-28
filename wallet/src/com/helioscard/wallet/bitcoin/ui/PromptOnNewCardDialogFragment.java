@@ -65,7 +65,7 @@ public class PromptOnNewCardDialogFragment extends DialogFragment {
 			alertMessage += getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys);
 			for (int i = 0; i < numKeys; i++) {
 				ECKeyEntry ecKeyEntry = _ecPublicKeyEntries.get(i);
-				alertMessage += "\n";
+				alertMessage += "\n---------------\n";
 				alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_choose_keys_to_backup_dialog_label), ecKeyEntry.getFriendlyName(), new ECKey(null, ecKeyEntry.getPublicKeyBytes()).toAddress(Constants.NETWORK_PARAMETERS)); 
 			}
 		} else {

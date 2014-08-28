@@ -34,9 +34,9 @@
     <string name="nfc_aware_activity_enable_nfc_dialog_message">Please turn on your device\'s NFC radio and try this operation again. Press OK to be brought to the NFC settings screen.</string>    
     <string name="nfc_aware_activity_enable_nfc_dialog_some_operations_will_not_work">Your device\'s NFC radio is off. You will not be able to perform certain operations with the card. Press OK to be brought to the NFC settings screen.</string>
     <string name="nfc_aware_activity_password_successfully_changed">Your password was successfully changed.</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message">You have tapped a new card with identifer %1$s.  If you would like the wallet to switch to tracking this card, tap the card again.  Or, if you would like to backup or restore keys between cards or from files, click the button below.</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys">The card contains no keys.</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys">The card contains the following keys:</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message">You have tapped a new card with identifer %1$s.  If you would like the wallet to switch to tracking this card, tap the card again.  Or, if you would like to copy keys between cards or to/from files, click the button below.</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys">The new card contains no keys.</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys">The new card contains the following keys:</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_title">New Card Detected</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_message">You should backup your keys in case your card is lost or damaged.  You can copy keys from one card to another card or to a file, or restore keys from a file.</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_title">Backup or Restore Keys</string>

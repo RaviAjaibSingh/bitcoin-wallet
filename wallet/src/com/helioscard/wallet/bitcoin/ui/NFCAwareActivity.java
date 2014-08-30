@@ -24,6 +24,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TagLostException;
 import android.nfc.tech.IsoDep;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -640,7 +641,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		    _pendingCardPassword = password;
 		    return;
 		}
-		
+
 		try {
 			if (secureElementApplet.isAuthenticated()
 			&& (_pendingUseExistingSessionIfPossible || secureElementApplet.getPINState() == PINState.BLANK)) {
@@ -652,24 +653,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				handleCardDetectedSuper(secureElementApplet, true, true, password);
 				return;
 			}
+
+			PleaseWaitDialogFragment pleaseWaitDialogFragment = PleaseWaitDialogFragment.show(getSupportFragmentManager());
+			(new LoginToCardAsyncTask(secureElementApplet, pleaseWaitDialogFragment, password)).execute();
 			
-			try {
-				secureElementApplet.login(password);
-			} catch(IOException e) {
-				// error while logging in (possibly wrong password)
-				_logger.info("loginToCard: failed to login");
-				
-				// draw some UI for the user to indicate the error
-				showException(e);
-
-				// let the user try logging in again
-				showPromptForPasswordDialog();
-				return;
-			}
-
-			// logged in successfully
-			handleCardDetectedSuper(secureElementApplet, true, true, password);
-		
 		} catch (IOException e) {
 			_logger.info("loginToCard: IOException e while logging into card: " + e.toString());
 			showException(e);
@@ -678,6 +665,53 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			_pendingCardPassword = null;
 		}
 	}
+	
+	private class LoginToCardAsyncTask extends AsyncTask<Void, Void, IOException> {
+		private SecureElementApplet _secureElementApplet;
+		private PleaseWaitDialogFragment _pleaseWaitDialogFragment;
+		private String _password;
+		public LoginToCardAsyncTask(SecureElementApplet secureElementApplet, PleaseWaitDialogFragment pleaseWaitDialogFragment, String password) {
+			_secureElementApplet = secureElementApplet;
+			_pleaseWaitDialogFragment = pleaseWaitDialogFragment;
+			_password = password;
+		}
+		
+		@Override
+		protected IOException doInBackground(Void... params) {
+			try {
+				_secureElementApplet.login(_password);
+			} catch (IOException e) {
+				return e;
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(IOException e) {
+			_pleaseWaitDialogFragment.dismiss();
+			try {
+				if (e == null) {
+					_logger.info("loginToCard: successful");
+					// logged in successfully
+					handleCardDetectedSuper(_secureElementApplet, true, true, _password);
+				} else if (e instanceof IOException) {
+					// error while logging in (possibly wrong password)
+					_logger.info("loginToCard: failed to login");
+					
+					// draw some UI for the user to indicate the error
+					showException(e);
+	
+					// let the user try logging in again
+					showPromptForPasswordDialog();
+					return;
+				}
+			} finally {
+				_password = null;
+			}
+		}
+
+	}
+
 
 	public SecureElementApplet getCachedSecureElementApplet() {
 		// assume that if someone is explicitly asking us for the cached secure element, they
@@ -809,20 +843,49 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	
 	private void createKeyPostTap(SecureElementApplet secureElementApplet, String labelForKey) {
 		_logger.info("generateKeyOnSecureElement: called");
-		try {
-			ECKeyEntry keyFromSecureElementToAddToCachedWallet = secureElementApplet.createOrInjectKey(null, labelForKey, null, null, System.currentTimeMillis());
-			// we just generated a key on the card and got back the public key bytes
-			// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
-			// to the key
-			WalletGlobals.addECKeyEntryToCachedWallet(this, IntegrationConnector.getWallet(this), keyFromSecureElementToAddToCachedWallet);
+		
+		PleaseWaitDialogFragment pleaseWaitDialogFragment = PleaseWaitDialogFragment.show(getSupportFragmentManager());
+		(new CreateKeyAsyncTask(secureElementApplet, pleaseWaitDialogFragment, labelForKey)).execute();
+	}
+	
+	private class CreateKeyAsyncTask extends AsyncTask<Void, Void, IOException> {
+		private SecureElementApplet _secureElementApplet;
+		private PleaseWaitDialogFragment _pleaseWaitDialogFragment;
+		private String _label;
+		public CreateKeyAsyncTask(SecureElementApplet secureElementApplet, PleaseWaitDialogFragment pleaseWaitDialogFragment, String label) {
+			_secureElementApplet = secureElementApplet;
+			_pleaseWaitDialogFragment = pleaseWaitDialogFragment;
+			_label = label;
+			
+		}
+		
+		@Override
+		protected IOException doInBackground(Void... params) {
+			try {
+				ECKeyEntry keyFromSecureElementToAddToCachedWallet = _secureElementApplet.createOrInjectKey(null, _label, null, null, System.currentTimeMillis());
+				// we just generated a key on the card and got back the public key bytes
+				// add them to the cached wallet.  Add it assuming we don't need to restart the peergroup to see updates
+				// to the key
+				WalletGlobals.addECKeyEntryToCachedWallet(NFCAwareActivity.this, IntegrationConnector.getWallet(NFCAwareActivity.this), keyFromSecureElementToAddToCachedWallet);
 
-			// Ensure the wallet address display is displaying the correct address
-			IntegrationConnector.ensureWalletAddressDisplayIsUpdated(this);
+			} catch (IOException e) {
+				return e;
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(IOException e) {
+			_pleaseWaitDialogFragment.dismiss();
+			if (e == null) {
+				_logger.info("generateKeyOnSecureElement: Successfully created key");
+				// Ensure the wallet address display is displaying the correct address
+				IntegrationConnector.ensureWalletAddressDisplayIsUpdated(NFCAwareActivity.this);
 
-			// we just created a key - hide the get started dialog if appropriate
-			hideGetStartedDialogIfNeeded();
-		} catch (IOException e) {
-			if (e instanceof TagLostException) {
+				// we just created a key - hide the get started dialog if appropriate
+				hideGetStartedDialogIfNeeded();
+
+			} else if (e instanceof TagLostException) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
 				// power for the card. However, the card actually generated the key - so prompt the user to retap so we get
 				// at the key
@@ -833,7 +896,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				_logger.error("generateKeyOnSecureElement: received bad exception: " + e.toString());
 				showException(e);
 			}
+
 		}
+
 	}
 
 	public void editKeyPreTap(byte[] editPublicKey, String editLabel) {

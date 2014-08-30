@@ -283,8 +283,9 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	    	        		_logger.info("processIntent: card never used, setting password");
 	    	        		String password = promptToSaveBackupDataDialogFragment.getPassword();
 	    	        		if (password != null) {
-	    	        			_cachedSecureElementApplet.setCardPassword(null, password);
-	    	        			_cachedSecureElementApplet.login(password);
+	    	        			PleaseWaitDialogFragment pleaseWaitDialogFragment = PleaseWaitDialogFragment.show(getSupportFragmentManager());
+	    	        			(new SetPasswordOnCardAsyncTask(_cachedSecureElementApplet, pleaseWaitDialogFragment, SetPasswordOnCardAsyncTaskType.DOING_RESTORE, null, password)).execute();
+	    	        			return true;
 	    	        		} else {
 	    	        			// show an error indicating this card has no password set
 	    	        			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_error_no_password_set_on_card), Toast.LENGTH_LONG).show();
@@ -299,7 +300,6 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        			}
 	        		}
 	        		
-	        		saveKeysToCardPostTap(_cachedSecureElementApplet);
 	        		return true;
 	        	}
 
@@ -453,6 +453,8 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
     		// We were showing a tap to finish dialog - where we were asking the user to tap so we could
     		// synchronize the keys.  That has already been done by the time we get here, so nothing to do here.
     		promptForTapOnceMoreDialogFragment.dismiss();
+    		// it's possible we generated a key - dismiss the get started dialog if appropriate
+    		hideGetStartedDialogIfNeeded();
     		return true;
     	}
 
@@ -814,17 +816,87 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		_pendingChangePasswordNewPassword = newPassword;
 	}
 	
-	private void changePasswordPostTap(SecureElementApplet secureElementApplet, String oldPassword, String newPassword) {
+	protected void changePasswordPostTap(SecureElementApplet secureElementApplet, SetPasswordOnCardAsyncTaskType type, String oldPassword, String newPassword) {
 		_logger.info("changePasswordPostTap: called");	
-		try {
-			secureElementApplet.setCardPassword(oldPassword, newPassword);
-			// if we got here it worked.  Tell the user the password was changed successfully
-			Toast.makeText(this, getResources().getString(R.string.nfc_aware_activity_password_successfully_changed), Toast.LENGTH_LONG).show();
-		} catch (IOException e) {
-			_logger.error("changePasswordPostTap: received bad exception: " + e.toString());
-			showException(e);
-		}
+		PleaseWaitDialogFragment pleaseWaitDialogFragment = PleaseWaitDialogFragment.show(getSupportFragmentManager());
+		(new SetPasswordOnCardAsyncTask(secureElementApplet, pleaseWaitDialogFragment, type, oldPassword, newPassword)).execute();
 	}
+	
+	public enum SetPasswordOnCardAsyncTaskType {
+		NORMAL, DOING_RESTORE, DOING_INITIALIZATION
+	}
+	
+	private class SetPasswordOnCardAsyncTask extends AsyncTask<Void, Void, IOException> {
+
+		
+		private SecureElementApplet _secureElementApplet;
+		private PleaseWaitDialogFragment _pleaseWaitDialogFragment;
+		private SetPasswordOnCardAsyncTaskType _type;;
+		private String _oldPassword;
+		private String _newPassword;
+
+		public SetPasswordOnCardAsyncTask(SecureElementApplet secureElementApplet, PleaseWaitDialogFragment pleaseWaitDialogFragment, SetPasswordOnCardAsyncTaskType type, String oldPassword, String newPassword) {
+			_secureElementApplet = secureElementApplet;
+			_pleaseWaitDialogFragment = pleaseWaitDialogFragment;
+			_type = type;
+			_oldPassword = oldPassword;
+			_newPassword = newPassword;
+		}
+
+		@Override
+		protected IOException doInBackground(Void... params) {
+			try {
+				_secureElementApplet.setCardPassword(_oldPassword, _newPassword);
+				if (_type == SetPasswordOnCardAsyncTaskType.DOING_RESTORE) {
+					_secureElementApplet.login(_newPassword);
+				}
+			} catch (IOException e) {
+				return e;
+			}
+			return null;
+		}
+		
+		@Override
+		protected void onPostExecute(IOException e) {
+			_pleaseWaitDialogFragment.dismiss();
+			try {
+				if (e == null) {
+					_logger.info("changePasswordAsyncTask: successful");
+					if (_type == SetPasswordOnCardAsyncTaskType.NORMAL) {
+						// if we got here it worked.  Tell the user the password was changed successfully
+						Toast.makeText(NFCAwareActivity.this, getResources().getString(R.string.nfc_aware_activity_password_successfully_changed), Toast.LENGTH_LONG).show();
+					} else if (_type == SetPasswordOnCardAsyncTaskType.DOING_RESTORE){
+						saveKeysToCardPostTap(_secureElementApplet);
+					} else if (_type == SetPasswordOnCardAsyncTaskType.DOING_INITIALIZATION) {
+						_logger.info("changePasswordAsyncTask: card initialized");
+						// now that we have initialized this card, save the card identifier as our most recently used card
+						try {
+							WalletGlobals.getInstance(NFCAwareActivity.this).setCardIdentifier(NFCAwareActivity.this, _secureElementApplet.getCardIdentifier());
+				            startActivity(new Intent(NFCAwareActivity.this, IntegrationConnector.WALLET_ACTIVITY_CLASS));
+					    	NFCAwareActivity.this.finish();
+						} catch (IOException error) {
+							e = error;
+							_logger.info("changePasswordAsyncTask: IO exception setting card identifier: " + e.toString());
+						}
+					}
+				}
+				if (e instanceof IOException) {
+					// error while logging in (possibly wrong password)
+					_logger.info("changePasswordAsyncTask: failed to change password");
+					
+					// draw some UI for the user to indicate the error
+					showException(e);
+
+					return;
+				}
+			} finally {
+				_oldPassword = null;
+				_newPassword = null;
+			}
+		}
+
+	}
+
 	
 	public void createKeyPreTap(String labelForKey) {
 		// get a secure element session that is authenticated (authenticated session needed to add a key)
@@ -1080,7 +1152,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		} else if (_pendingChangePasswordNewPassword != null) {
 			String newPassword = _pendingChangePasswordNewPassword;
 			_pendingChangePasswordNewPassword = null;
-			changePasswordPostTap(secureElementApplet, password, newPassword);
+			changePasswordPostTap(secureElementApplet, SetPasswordOnCardAsyncTaskType.NORMAL, password, newPassword);
 			return;
 		} else if (_pendingBackupCard) {
 			_pendingBackupCard = false;

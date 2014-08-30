@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import com.helioscard.wallet.bitcoin.IntegrationConnector;
 import com.helioscard.wallet.bitcoin.R;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet;
+import com.helioscard.wallet.bitcoin.ui.NFCAwareActivity.SetPasswordOnCardAsyncTaskType;
 import com.helioscard.wallet.bitcoin.wallet.WalletGlobals;
 
 import android.content.Intent;
@@ -78,19 +79,7 @@ public class InitializeCardActivity extends NFCAwareActivity {
 				// finish this operation later
 				return;
 			}
-			try {
-				secureElementApplet.setCardPassword(null, firstPassword);
-				
-                // now that we have initialized this card, save the card identifier as our most recently used card
-				WalletGlobals.getInstance(this).setCardIdentifier(this, secureElementApplet.getCardIdentifier());
-
-	            startActivity(new Intent(this, IntegrationConnector.WALLET_ACTIVITY_CLASS));
-		    	this.finish();
-			} catch (IOException e) {
-				_logger.info("initializeCard: failed IOException " + e.toString());
-				showException(e);
-                return;
-			}
+			changePasswordPostTap(secureElementApplet, SetPasswordOnCardAsyncTaskType.DOING_INITIALIZATION, null, firstPassword);
 		}
 	}
 	

@@ -501,9 +501,20 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
 		_logger.info("login: Got response: " + Util.bytesToHex(responseAPDU));
 		
+		
+		byte sw1 = responseAPDU[responseAPDU.length - 2];
+		byte sw2 = responseAPDU[responseAPDU.length - 1];
+		
+		if (sw1 == (byte)0x90 && sw2 == (byte)0x00) {
+			// if we logged in successfully, the response contains the initial state
+			// force a status refresh from the card to update the PIN attempts left count
+			readInitialStateFromResponseAPDU(responseAPDU);
+		} else {
+			// otherwise we have to send a command to force read it
+			ensureInitialStateRead(true);
+		}
+
 		ensureResponseEndsWith9000(responseAPDU);
-		// force a status refresh from the card to update the PIN attempts left count
-		readInitialStateFromResponseAPDU(responseAPDU);
 
 		return;
 	}

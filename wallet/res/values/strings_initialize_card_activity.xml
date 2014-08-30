@@ -6,4 +6,5 @@
     <string name="initialize_card_button_initialize_card">Initialize Card</string>
     <string name="initialize_card_error_passwords_dont_match">Passwords don\'t match</string>
     <string name="initialize_card_no_password_entered">No password entered</string>
+    <string name="initialize_card_instructions">Please create a password for your card.  The password will be securely stored by the card, and will be used to authenticate you when you try to send money.  The password will also be used to encrypt the data on the card.</string>
 </resources>

@@ -4,10 +4,10 @@
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
 	android:background="@android:color/black"
-	android:paddingLeft="3dp" 
-	android:paddingRight="3dp"
-	android:paddingTop="3dp"
-	android:paddingBottom="3dp" >
+	android:paddingLeft="7dp" 
+	android:paddingRight="7dp"
+	android:paddingTop="7dp"
+	android:paddingBottom="7dp" >
 
 	<TextView
 	    android:id="@+id/helios_card_info_fragment_card_identifier_title"

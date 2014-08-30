@@ -2,29 +2,38 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+	android:paddingLeft="15dp" 
+	android:paddingRight="15dp"
+	android:paddingTop="15dp"
+	android:paddingBottom="15dp"
     tools:context=".InitializeCardActivity" >
+    
+    <TextView
+        android:id="@+id/labelInitializeCardInstructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:text="@string/initialize_card_instructions"
+        android:textSize="@dimen/font_size_normal"
+    />
 
     <EditText
         android:id="@+id/editTextInitializeCardEnterNewPassword"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@id/labelInitializeCardInstructions"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginTop="28dp"
-        android:ems="10"
+        android:layout_marginTop="20dp"
         android:hint="@string/initialize_card_enter_new_password"
         android:inputType="textPassword" />
 
     <EditText
         android:id="@+id/editTextInitializeCardConfirmNewPassword"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_below="@+id/editTextInitializeCardEnterNewPassword"
-        android:layout_marginTop="21dp"
-        android:ems="10"
+        android:layout_below="@id/editTextInitializeCardEnterNewPassword"
+        android:layout_marginTop="20dp"
         android:hint="@string/initialize_card_confirm_new_password"
         android:inputType="textPassword" />
 
@@ -32,7 +41,7 @@
         android:id="@+id/buttonInitializeCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/editTextInitializeCardConfirmNewPassword"
+        android:layout_below="@id/editTextInitializeCardConfirmNewPassword"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="20dp"
         android:onClick="buttonInitializeCardClickHandler"

@@ -957,7 +957,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				// we just created a key - hide the get started dialog if appropriate
 				hideGetStartedDialogIfNeeded();
 
-			} else if (e instanceof TagLostException) {
+			} else if (e instanceof TagLostException || "Transceive failed".equals(e.toString())) {
 				// On some phones like Nexus 5, generating a key results in a tag lost exception because the phone couldn't sustain enough
 				// power for the card. However, the card actually generated the key - so prompt the user to retap so we get
 				// at the key

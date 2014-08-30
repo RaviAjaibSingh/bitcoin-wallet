@@ -31,12 +31,16 @@ public class Util {
     }
     
 	public static long bytesToLong(byte[] bytes) {
+		return bytesToLong(bytes, 0, bytes.length);
+	}
+	
+	public static long bytesToLong(byte[] bytes, int offset, int length) {
 	    ByteBuffer buffer = ByteBuffer.allocate(8);
-	    buffer.put(bytes);
+	    buffer.put(bytes, offset, length);
 	    buffer.flip(); //need flip 
 	    return buffer.getLong();
 	}
-	
+
 	public static byte[] longToBytes(long incomingLong) {
 	    ByteBuffer buffer = ByteBuffer.allocate(8);
 	    buffer.putLong(incomingLong);

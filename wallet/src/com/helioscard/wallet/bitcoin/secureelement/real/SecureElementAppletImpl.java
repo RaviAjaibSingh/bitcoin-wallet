@@ -46,6 +46,10 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	private int _passwordAttemptsLeft;
 	private PINState _pinState = PINState.NOT_SET;
 	private boolean _loggedIn;
+	private int _maxNumberOfKeys;
+	private int _currentNumberOfKeys;
+	private long _timeOfAppletInstallation;
+	private long _timeOfLastRefresh;
 
 	private static final int LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS = 256;
 	private static final int DEFAULT_ITERATION_COUNT = 20000;
@@ -72,11 +76,11 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 			_logger.info("ensureInitialStateRead: already read state information");
 			return;
 		}
-		
+
 		byte[] commandAPDU;
 		if (_currentState == SecureElementState.DISCONNECTED) {
 			// if we're not connected, we need to select the applet
-			commandAPDU = new byte[] {0x00, (byte)0xa4, 0x04, 0x00, 0x08, (byte)0xff, 0x73, 0x63, 0x63, 0x6a, 0x01, 0x01, 0x01, 0x00};
+			commandAPDU = new byte[] {0x00, (byte)0xa4, 0x04, 0x00, 0x0D, (byte)0xff, (byte)0x68, (byte)0x65, (byte)0x6c, (byte)0x69, (byte)0x6f, (byte)0x73, (byte)0x63, (byte)0x61, (byte)0x72, (byte)0x64, (byte)0x01, (byte)0x01, 0x00};
 		} else {
 			// otherwise the applet is already selected, just send get status command
 			commandAPDU = new byte[] {(byte)0x80, 0x01, 0x00, 0x00, 0x00};
@@ -86,7 +90,12 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
 		_logger.info("Got response: " + Util.bytesToHex(responseAPDU));
 		ensureResponseEndsWith9000(responseAPDU);
+		
+		readInitialStateFromResponseAPDU(responseAPDU);
+	}
 
+	private void readInitialStateFromResponseAPDU(byte[] responseAPDU) throws IOException {
+		
         // first 8 bytes are the card identifier
         _cardIdentifier = Util.bytesToHex(responseAPDU, 0, 8);
         _logger.info("Got card identifier of " + _cardIdentifier);
@@ -111,13 +120,23 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 
 		_passwordAttemptsLeft = responseAPDU[11] & 0xFF;
 		_logger.info("Password attempts left: " + _passwordAttemptsLeft);
-
-		byte lengthOfPasswordMetaData = (byte)(responseAPDU[12] & 0xFF);
+		
+		_maxNumberOfKeys = responseAPDU[12] & 0xFF;
+		_logger.info("Max number of keys: " + _maxNumberOfKeys);
+		_currentNumberOfKeys = responseAPDU[13] & 0xFF;
+		_logger.info("Current number of keys: " + _currentNumberOfKeys);
+		
+		_timeOfAppletInstallation = Util.bytesToLong(responseAPDU, 14, 8);
+		_logger.info("Time of applet installation: " + _timeOfAppletInstallation);		
+		_timeOfLastRefresh = Util.bytesToLong(responseAPDU, 22, 8);
+		_logger.info("Time of last refresh: " + _timeOfLastRefresh);
+		
+		byte lengthOfPasswordMetaData = (byte)(responseAPDU[30] & 0xFF);
 		_logger.info("Length of password meta data: " + lengthOfPasswordMetaData);
 		
 		if (lengthOfPasswordMetaData > 0) {
 			// the rest is TLE encoded - read the data out
-			ByteArrayInputStream stream = new ByteArrayInputStream(responseAPDU, 13, lengthOfPasswordMetaData);
+			ByteArrayInputStream stream = new ByteArrayInputStream(responseAPDU, 31, lengthOfPasswordMetaData);
 			try {
 				while (stream.available() > 0) {
 					int fieldType = stream.read();
@@ -313,7 +332,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		ensureResponseEndsWith9000(responseAPDU);
 
 		// force a refresh the secure element state
-		ensureInitialStateRead(true);
+		readInitialStateFromResponseAPDU(responseAPDU);
 	}
 
 	@Override
@@ -470,15 +489,10 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		byte[] responseAPDU = _smartCardReader.exchangeAPDU(commandAPDU);
 		_logger.info("login: Got response: " + Util.bytesToHex(responseAPDU));
 		
-		if (responseAPDU.length != 2) {
-			_logger.error("login: received response that wasn't 2 bytes");
-			throw new IOException("login: Received non 2-byte response from card");			
-		}
-		
-		// force a status refresh from the card to update the PIN attempts left count
-		ensureInitialStateRead(true);
 		ensureResponseEndsWith9000(responseAPDU);
-		
+		// force a status refresh from the card to update the PIN attempts left count
+		readInitialStateFromResponseAPDU(responseAPDU);
+
 		return;
 	}
 

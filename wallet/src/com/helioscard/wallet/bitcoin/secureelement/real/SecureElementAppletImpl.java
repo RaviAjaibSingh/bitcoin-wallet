@@ -93,6 +93,18 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 		
 		readInitialStateFromResponseAPDU(responseAPDU);
 	}
+	
+	@Override
+	public int getMaxNumberOfKeys() throws IOException {
+		ensureInitialStateRead(false);
+		return _maxNumberOfKeys;
+	}
+	
+	@Override
+	public int getCurrentNumberOfKeys() throws IOException {
+		ensureInitialStateRead(false);
+		return _currentNumberOfKeys;
+	}
 
 	private void readInitialStateFromResponseAPDU(byte[] responseAPDU) throws IOException {
 		

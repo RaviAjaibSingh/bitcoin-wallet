@@ -43,4 +43,8 @@ public abstract class SecureElementApplet {
     public abstract byte[] enableCachedSigning() throws IOException;
     
     public abstract byte[] getCachedSigningDataForIdentifier(String password, byte[] cacheIdentifer) throws IOException;
+    
+	public abstract int getMaxNumberOfKeys() throws IOException;
+	
+	public abstract int getCurrentNumberOfKeys() throws IOException;
 }

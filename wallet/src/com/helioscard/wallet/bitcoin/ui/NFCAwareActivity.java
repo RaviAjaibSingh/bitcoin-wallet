@@ -2,6 +2,7 @@ package com.helioscard.wallet.bitcoin.ui;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -43,6 +44,7 @@ import com.helioscard.wallet.bitcoin.Constants;
 import com.helioscard.wallet.bitcoin.IntegrationConnector;
 import com.helioscard.wallet.bitcoin.R;
 import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
+import com.helioscard.wallet.bitcoin.secureelement.ECUtil;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet;
 import com.helioscard.wallet.bitcoin.secureelement.SmartCardReader;
 import com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet.PINState;
@@ -873,13 +875,43 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
         	FragmentManager fragmentManager = getSupportFragmentManager();
     		String currentCardIdentifier = WalletGlobals.getInstance(this).getCardIdentifier();
             String newCardIdentifier = secureElementApplet.getCardIdentifier();
-            
-    		PromptToSaveBackupDataDialogFragment promptToSaveBackupDataDialogFragment = (PromptToSaveBackupDataDialogFragment)fragmentManager.findFragmentByTag(PromptToSaveBackupDataDialogFragment.TAG);
+                        
+            PromptToSaveBackupDataDialogFragment promptToSaveBackupDataDialogFragment = (PromptToSaveBackupDataDialogFragment)fragmentManager.findFragmentByTag(PromptToSaveBackupDataDialogFragment.TAG);
 			List<ECKeyEntry> listOfKeys = promptToSaveBackupDataDialogFragment.getKeysToBackup();
 			if (listOfKeys != null) {
-				int numKeys = listOfKeys.size();
-				_logger.info("saveKeysToCardPostTap: writing " + numKeys + " to new card from old card");
-				for (int i = 0; i < numKeys; i++) {
+				int numKeysToWrite = listOfKeys.size();
+
+				int spaceAvailableOnCard = secureElementApplet.getMaxNumberOfKeys() - secureElementApplet.getCurrentNumberOfKeys();
+				if (numKeysToWrite > spaceAvailableOnCard) {
+					// there won't be enough space on the card to hold the keys we are trying to write
+					// but first check to see if some of the keys we're trying to write are already on the card
+					// in which case, we won't count that
+					_logger.info("saveKeysToCardPostTap: trying to write " + numKeysToWrite + " but only " + spaceAvailableOnCard + " slots available");
+					int actualNumKeysToWrite = numKeysToWrite;
+					List<ECKeyEntry> keysOnCard = secureElementApplet.getECKeyEntries(false);
+					for (ECKeyEntry ecKeyEntryToWrite : listOfKeys) {
+						byte[] publicKeyBytesToWrite = ECUtil.getPublicKeyBytesFromEncoding(ecKeyEntryToWrite.getPublicKeyBytes(), false);
+						
+						for (ECKeyEntry keyOnCard : keysOnCard) {
+							byte[] publicKeyOnCard = ECUtil.getPublicKeyBytesFromEncoding(keyOnCard.getPublicKeyBytes(), false);
+							if (Arrays.equals(publicKeyBytesToWrite, publicKeyOnCard)) {
+								_logger.info("saveKeysToCardPostTap: key to restore matches key on card - not counting against total");
+								actualNumKeysToWrite--;
+								break;
+							}
+						}
+					}
+					
+					if (actualNumKeysToWrite > spaceAvailableOnCard) {
+						// there really isn't enough space to write the keys - show an error to the user
+						_logger.info("saveKeysToCardPostTap: trying to actually write " + actualNumKeysToWrite + " but only " + spaceAvailableOnCard + " slots available");
+						String stringToShow = String.format(getResources().getString(R.string.nfc_aware_activity_not_enough_space_on_card), numKeysToWrite, spaceAvailableOnCard);
+						Toast.makeText(this, stringToShow, Toast.LENGTH_LONG).show();
+						return;
+					}
+				}
+				_logger.info("saveKeysToCardPostTap: writing " + numKeysToWrite + " to new card from old card");
+				for (int i = 0; i < numKeysToWrite; i++) {
 					ECKeyEntry ecKeyEntry = listOfKeys.get(i);
 					try {
 						secureElementApplet.createOrInjectKey(ecKeyEntry.getAssociatedData(), null, ecKeyEntry.getPrivateKeyBytes(), ecKeyEntry.getPublicKeyBytes(), ecKeyEntry.getTimeOfKeyCreationSecondsSinceEpoch() * 1000);
@@ -893,9 +925,41 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				// we are restoring keys from a file
 				Wallet walletToRestore = promptToSaveBackupDataDialogFragment.getWalletFromFile();
 				List<ECKey> listOfKeysFromFile = walletToRestore.getKeys();
-				int numKeys = listOfKeysFromFile.size();
-				_logger.info("saveKeysToCardPostTap: writing " + numKeys + " to new card from file");
-				for (int i = 0; i < numKeys; i++) {
+				int numKeysToWrite = listOfKeysFromFile.size();
+
+				
+				int spaceAvailableOnCard = secureElementApplet.getMaxNumberOfKeys() - secureElementApplet.getCurrentNumberOfKeys();
+				if (numKeysToWrite > spaceAvailableOnCard) {
+					// there won't be enough space on the card to hold the keys we are trying to write
+					// but first check to see if some of the keys we're trying to write are already on the card
+					// in which case, we won't count that
+					_logger.info("saveKeysToCardPostTap: trying to write " + numKeysToWrite + " but only " + spaceAvailableOnCard + " slots available");
+					int actualNumKeysToWrite = numKeysToWrite;
+					List<ECKeyEntry> keysOnCard = secureElementApplet.getECKeyEntries(false);
+					for (ECKey ecKeyEntryToWrite : listOfKeysFromFile) {
+						byte[] publicKeyBytesToWrite = ECUtil.getPublicKeyBytesFromEncoding(ecKeyEntryToWrite.getPubKey(), false);
+						
+						for (ECKeyEntry keyOnCard : keysOnCard) {
+							byte[] publicKeyOnCard = ECUtil.getPublicKeyBytesFromEncoding(keyOnCard.getPublicKeyBytes(), false);
+							if (Arrays.equals(publicKeyBytesToWrite, publicKeyOnCard)) {
+								_logger.info("saveKeysToCardPostTap: key to restore matches key on card - not counting against total");
+								actualNumKeysToWrite--;
+								break;
+							}
+						}
+					}
+					
+					if (actualNumKeysToWrite > spaceAvailableOnCard) {
+						// there really isn't enough space to write the keys - show an error to the user
+						_logger.info("saveKeysToCardPostTap: trying to actually write " + actualNumKeysToWrite + " but only " + spaceAvailableOnCard + " slots available");
+						String stringToShow = String.format(getResources().getString(R.string.nfc_aware_activity_not_enough_space_on_card), numKeysToWrite, spaceAvailableOnCard);
+						Toast.makeText(this, stringToShow, Toast.LENGTH_LONG).show();
+						return;
+					}
+				}
+				
+				_logger.info("saveKeysToCardPostTap: writing " + numKeysToWrite + " to new card from file");
+				for (int i = 0; i < numKeysToWrite; i++) {
 					ECKey ecKey = listOfKeysFromFile.get(i);
 					try {
 						secureElementApplet.createOrInjectKey(null, "Key" + (i + 1), ecKey.getPrivKeyBytes(), ecKey.getPubKey(), ecKey.getCreationTimeSeconds() * 1000);

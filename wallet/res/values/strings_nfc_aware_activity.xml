@@ -62,4 +62,5 @@
     <string name="eula_and_safety_dialog_fragment_message">EULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\nEULA Message\n</string>
     <string name="eula_and_safety_dialog_fragment_i_agree">I Agree</string>
     <string name="eula_and_safety_dialog_fragment_display_every_time">Display this every time the application starts</string>
+    <string name="nfc_aware_activity_not_enough_space_on_card">Error: this card does not have enough space to hold the keys.  You are trying to write %1$d keys to the card, but the card only has space for %2$d more keys.</string>
 </resources>

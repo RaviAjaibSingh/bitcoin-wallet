@@ -28,6 +28,16 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 	}
 
 	@Override
+	public int getMaxNumberOfKeys() throws IOException {
+		return 5;
+	}
+	
+	@Override
+	public int getCurrentNumberOfKeys() throws IOException {
+		return 1;
+	}
+	
+	@Override
 	public List<ECKeyEntry> getECKeyEntries(boolean includePrivate) {
 		List<ECKeyEntry> list = new ArrayList<ECKeyEntry>();
 

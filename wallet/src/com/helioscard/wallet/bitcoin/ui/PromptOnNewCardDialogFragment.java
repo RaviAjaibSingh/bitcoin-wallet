@@ -12,10 +12,15 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 
 import com.helioscard.wallet.bitcoin.Constants;
+import com.helioscard.wallet.bitcoin.IntegrationConnector;
 import com.helioscard.wallet.bitcoin.R;
 import com.helioscard.wallet.bitcoin.secureelement.ECKeyEntry;
+import com.helioscard.wallet.bitcoin.wallet.WalletGlobals;
 
 import com.google.bitcoin.core.ECKey;
+import com.google.bitcoin.core.Wallet;
+
+import de.schildbach.wallet.AddressBookProvider;
 
 public class PromptOnNewCardDialogFragment extends DialogFragment {
     public static final String TAG = "PromptOnNewCardDialogFragment";
@@ -72,12 +77,39 @@ public class PromptOnNewCardDialogFragment extends DialogFragment {
 			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys), _cardBeingPromptedToSwitchToIdentifier);
 			for (int i = 0; i < numKeys; i++) {
 				ECKeyEntry ecKeyEntry = _ecPublicKeyEntries.get(i);
+				String label = ecKeyEntry.getFriendlyName();				
+				if (label == null || label.isEmpty()) {
+					label = getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_unlabeled);
+				}
+
 				alertMessage += "\n---------------\n";
-				alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_choose_keys_to_backup_dialog_label), ecKeyEntry.getFriendlyName(), new ECKey(null, ecKeyEntry.getPublicKeyBytes()).toAddress(Constants.NETWORK_PARAMETERS)); 
+				alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_choose_keys_to_backup_dialog_label), label, new ECKey(null, ecKeyEntry.getPublicKeyBytes()).toAddress(Constants.NETWORK_PARAMETERS)); 
 			}
 		} else {
 			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys), _cardBeingPromptedToSwitchToIdentifier);
 		}
+		
+		alertMessage += "\n\n";
+		
+		// Now show the user the keys on the current card
+		Wallet wallet = IntegrationConnector.getWallet(nfcAwareActivity);
+		List<ECKey> keysInWallet = wallet.getKeys();
+		numKeys = keysInWallet.size();
+		if (numKeys > 0) {
+			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys_current), _originalCardIdentifier);
+			for (ECKey ecKeyInWallet : keysInWallet) {
+				String addressString = ecKeyInWallet.toAddress(Constants.NETWORK_PARAMETERS).toString();
+				String label = AddressBookProvider.resolveLabel(nfcAwareActivity, addressString);
+				if (label == null || label.isEmpty()) {
+					label = getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_unlabeled);
+				}
+				alertMessage += "\n---------------\n";
+				alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_choose_keys_to_backup_dialog_label), label, addressString); 
+			}
+		} else {
+			alertMessage += String.format(getResources().getString(R.string.nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys_current), _originalCardIdentifier);
+		}
+		
 		alertDialogBuilder.setMessage(alertMessage);
 		
 		alertDialogBuilder.setTitle(getResources().getString(_type == TYPE_NEW_CARD ? R.string.nfc_aware_activity_prompt_on_new_card_dialog_title : R.string.nfc_aware_activity_prompt_on_new_card_dialog_title_save_successful));

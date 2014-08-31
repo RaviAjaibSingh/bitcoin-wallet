@@ -37,9 +37,12 @@
     <string name="nfc_aware_activity_password_successfully_changed">Your password was successfully changed.</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_save_successful">Keys were successfully restored to card %2$s.  Please review the list of keys on the card below.  Please note that your wallet is currently tracking card %1$s.  If you would like the wallet to switch to tracking the new card, tap it again.</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_title_save_successful">Successfully Restored Keys</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message">Your wallet is currently tracking card %1$s, but you have tapped card %2$s.  If you would like the wallet to switch to tracking the new card, tap it again.  Or, if you would like to copy keys between cards or to/from files, click the button below.</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys">Card %1$s contains no keys.</string>
-    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys">Card %1$s contains the following keys:</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message">Your wallet is currently tracking card %1$s, but you have tapped the new card %2$s.  If you would like the wallet to switch to tracking the new card, tap it again.  Or, if you would like to copy keys between cards or to/from files, click the button below.</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys">The new card %1$s contains no keys.</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys">The new card %1$s contains the following keys:</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_no_keys_current">The card your wallet is currently tracking, %1$s, contains no keys.</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_contains_keys_current">The card your wallet is currently tracking, %1$s, contains the following keys:</string>
+    <string name="nfc_aware_activity_prompt_on_new_card_dialog_message_unlabeled">(Unlabeled)</string>
     <string name="nfc_aware_activity_prompt_on_new_card_dialog_title">New Card Detected</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_message">You should backup your keys in case your card is lost or damaged.  You can copy keys from one card to another card or to a file, or restore keys from a file.</string>
     <string name="nfc_aware_activity_prompt_for_backup_or_restore_dialog_title">Backup or Restore Keys</string>

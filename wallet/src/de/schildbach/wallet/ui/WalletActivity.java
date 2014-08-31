@@ -139,6 +139,10 @@ public final class WalletActivity extends AbstractWalletActivity
 		config.touchLastUsed();
 
 		handleIntent(getIntent());
+
+		/* BEGIN CUSTOM CHANGE */
+		checkIfNFCRadioOnPromptUser(false);
+		/* END CUSTOM CHANGE */
 	}
 
 	@Override

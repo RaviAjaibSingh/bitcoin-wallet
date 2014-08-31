@@ -53,6 +53,8 @@ public class InitializeCardActivity extends NFCAwareActivity {
 		        return false;
 		    }
 		});
+		
+		checkIfNFCRadioOnPromptUser(false);
 	}
 
 	public void buttonInitializeCardClickHandler(View v) {
@@ -60,6 +62,10 @@ public class InitializeCardActivity extends NFCAwareActivity {
 	}
 	
 	private void initializeCard() {
+        if (!checkIfNFCRadioOnPromptUser(true)) {
+        	return;
+        }
+		
 		// The user has entered the password and would like it accepted now.
 		String firstPassword = _editTextInitializeCardEnterNewPassword.getText().toString();
 		String secondPassword = _editTextInitializeCardConfirmNewPassword.getText().toString();

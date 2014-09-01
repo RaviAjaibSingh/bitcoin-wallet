@@ -912,7 +912,9 @@ public final class SendCoinsFragment extends SherlockFragment
 			wallet.completeTx(sendRequest);
 			_secureElementTransactionSigner = new com.helioscard.wallet.bitcoin.wallet.SecureElementTransactionSigner(this, sendRequest.tx, returnAddress, finalAmount, wallet);
 			com.helioscard.wallet.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity();
-			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, true);
+			// don't re-use the existing session, force the user to login, so that we can get the hashedPasswordBytes in case we lose a connection to the card
+			// and need to log the user back in again
+			nfcAwareActivity.getSecureElementAppletPromptIfNeeded(true, false);
 			
 			// update the UI to show progress about how the signing is going
 			setProgressViewsInitialState();			
@@ -967,15 +969,18 @@ public final class SendCoinsFragment extends SherlockFragment
 	/* END CUSTOM CHANGE */
 
 	/* BEGIN CUSTOM CHANGE */
-	public void handleCardDetected(com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	public void handleCardDetected(com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, byte[] hashedPasswordBytes) {
 		// The SendCoinsActivity parent of this fragment will listen for card detection events and route the calls here
 		log.info("handleCardDetected called");
 		com.helioscard.wallet.bitcoin.ui.NFCAwareActivity nfcAwareActivity = (com.helioscard.wallet.bitcoin.ui.NFCAwareActivity)getActivity();
-		if (_secureElementTransactionSigner != null) {
-
+		if (_secureElementTransactionSigner != null) {			
 			// It's possible we've already run once, and we disconnected from the card due to a TagLostException
 			// recreate the AsyncTask based on the old one (we can't re-use the same one in case it already ran) and then run the new one
 			_secureElementTransactionSigner = new com.helioscard.wallet.bitcoin.wallet.SecureElementTransactionSigner(_secureElementTransactionSigner);
+			if (hashedPasswordBytes != null) {
+				// if this is the first tap to begin signing, we were given hashed password bytes, save them
+				_secureElementTransactionSigner.setHashedPasswordBytes(hashedPasswordBytes);
+			}
 			
 			// it's possible this is an ongoing transaction - this will continue the signing process or start it from scratch
 			// it will also run it in the background as its an asynctask

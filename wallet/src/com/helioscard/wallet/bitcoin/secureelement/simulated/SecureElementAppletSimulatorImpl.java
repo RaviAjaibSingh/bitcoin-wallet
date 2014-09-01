@@ -80,9 +80,9 @@ public class SecureElementAppletSimulatorImpl extends SecureElementApplet {
 
 
 	@Override
-	public void login(String password) {
+	public byte[] login(String password, byte[] hashedPasswordBytes) {
 		// TODO Auto-generated method stub
-		return;
+		return null;
 	}
 
 

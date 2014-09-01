@@ -28,7 +28,7 @@ public abstract class SecureElementApplet {
 	
 	public abstract void beginTransactionSigningOperation(String password, byte[] destinationAddress, long amount) throws IOException;
 	
-	public abstract void login(String password) throws IOException;
+	public abstract byte[] login(String password, byte[] hashedPasswordBytes) throws IOException;
 	
 	public abstract ECKeyEntry createOrInjectKey(byte[] associatedDataBytes, String friendlyName, byte[] privateKey, byte[] publicKey, long creationTimeMillis) throws IOException;
 	

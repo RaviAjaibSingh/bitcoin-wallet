@@ -90,7 +90,7 @@ public class InitializeCardActivity extends NFCAwareActivity {
 	}
 	
 	@Override
-	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, byte[] hashedPasswordBytes) {
 		if (tapRequested) {
 			// we are being called back because earlier the user had tried to set the password but
 			// the card wasn't present, so we requested the user tap.  Now that the user has tapped, try to

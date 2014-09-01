@@ -87,11 +87,11 @@ public final class SendCoinsActivity extends AbstractBindServiceActivity
 	
 	/* BEGIN CUSTOM CHANGE */
 	@Override
-	protected void handleCardDetected(com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	protected void handleCardDetected(com.helioscard.wallet.bitcoin.secureelement.SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, byte[] hashedPasswordBytes) {
 		// Override this function to hear about the fact that a card was tapped, and route the call to the SendCoinsFragment, which
 		// might be interested in the message, if it's waiting for a card tap to sign the transaction
 		SendCoinsFragment sendCoinsFragment = (SendCoinsFragment)getSupportFragmentManager().findFragmentById(R.id.send_coins_fragment);
-		sendCoinsFragment.handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
+		sendCoinsFragment.handleCardDetected(secureElementApplet, tapRequested, authenticated, hashedPasswordBytes);
 	}
 
 	@Override

@@ -475,17 +475,19 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 	}
 
 	@Override
-	public void login(String password) throws IOException {
+	public byte[] login(String password, byte[] passwordBytes) throws IOException {
 		_logger.info("login: called");
 		ensureInitialStateRead(false);
 		if (isAuthenticated()) {
 			// already authenticated, nothing to do
 			_logger.info("login: already authenticated");
-			return;
+			return null;
 		}
 
 		// use PKCS5 derivation to derive the password
-		byte[] passwordBytes = PKCS5Util.derivePKCS5Key(password, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
+		if (passwordBytes == null) {
+			passwordBytes = PKCS5Util.derivePKCS5Key(password, LENGTH_OF_PASSWORD_PKCS5_KEY_IN_BITS, _passwordPKCS5PasswordKeySalt, _passwordPKCS5IterationCount);
+		}
 		int lengthOfPasswordBytes = passwordBytes.length;
 				
 		byte[] commandAPDUHeader = new byte[] {(byte)0x80, 0x03, 0x00, 0x00, (byte)lengthOfPasswordBytes};
@@ -516,7 +518,7 @@ public class SecureElementAppletImpl extends SecureElementApplet {
 
 		ensureResponseEndsWith9000(responseAPDU);
 
-		return;
+		return passwordBytes;
 	}
 
 	@Override

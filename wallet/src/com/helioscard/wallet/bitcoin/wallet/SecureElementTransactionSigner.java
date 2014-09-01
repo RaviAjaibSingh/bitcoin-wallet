@@ -51,6 +51,7 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
     private volatile ECKey[] _signingKeys;
 	private volatile byte[][] _dataToSign;
 	private volatile int _currentInputIndex;
+	private volatile byte[] _hashedPasswordBytes; 
 	
 	public interface Listener {
 		public void secureElementTransactionSignerProgress(int progress);
@@ -81,6 +82,7 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	    _signingKeys = secureElementTransactionSigner._signingKeys;
 		_dataToSign = secureElementTransactionSigner._dataToSign;
 		_currentInputIndex = secureElementTransactionSigner._currentInputIndex;
+		_hashedPasswordBytes = secureElementTransactionSigner._hashedPasswordBytes;
 	}
 
 	public Transaction getTransaction() {
@@ -98,6 +100,10 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
 	public BigInteger getFinalAmount() {
 		return _finalAmount;
 	}
+	
+	public void setHashedPasswordBytes(byte[] hashedPasswordBytes) {
+		_hashedPasswordBytes = hashedPasswordBytes;
+	}
 
 	/*
      * This function is a combination of the core bitcoinj functions Transaction.signInputs,
@@ -110,7 +116,14 @@ public class SecureElementTransactionSigner extends AsyncTask<SecureElementApple
         _logger.info("signTransaction: attempting to sign transaction");
         int resultCode = SecureElementTransactionSigner.FINISHED;
         try {
-	        SecureElementApplet secureElementApplet = params[0];
+        	SecureElementApplet secureElementApplet = params[0];
+        	
+        	if (!secureElementApplet.isAuthenticated()) {
+                _logger.info("signTransaction: encountered unauthenticated secure element, trying to login");
+                secureElementApplet.login(null, _hashedPasswordBytes);
+        	}
+
+        	
 	        List<TransactionInput> inputs = _transaction.getInputs();
 	        List<TransactionOutput> outputs = _transaction.getOutputs();
 	        checkState(inputs.size() > 0);

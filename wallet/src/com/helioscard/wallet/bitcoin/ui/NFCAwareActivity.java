@@ -337,7 +337,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	        	}
 
                 // let the activity know a card has been detected
-                handleCardDetectedSuper(_cachedSecureElementApplet, tapRequested, false, null);
+                handleCardDetectedSuper(_cachedSecureElementApplet, tapRequested, false, null, null);
                 
                 // the wallet may have a key now - hide the get started dialog if it's showing
                 hideGetStartedDialogIfNeeded();
@@ -538,7 +538,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	protected void simulateSecureElementAppletDetected() {
 		_logger.info("simulateSecureElementAppletDetected: called");
 		_cachedSecureElementApplet = new SecureElementAppletSimulatorImpl();
-		handleCardDetectedSuper(_cachedSecureElementApplet, false, false, null);
+		handleCardDetectedSuper(_cachedSecureElementApplet, false, false, null, null);
 	}
 
 	protected boolean checkIfNFCRadioOnPromptUser(boolean messageStatesNFCIsRequired) {
@@ -652,7 +652,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				// then we're good to go
 				_logger.info("loginToCard: card already authenticated");
 				
-				handleCardDetectedSuper(secureElementApplet, true, true, password);
+				handleCardDetectedSuper(secureElementApplet, true, true, null, password);
 				return;
 			}
 
@@ -672,6 +672,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		private SecureElementApplet _secureElementApplet;
 		private PleaseWaitDialogFragment _pleaseWaitDialogFragment;
 		private String _password;
+		private volatile byte[] _hashedPasswordBytes;
 		public LoginToCardAsyncTask(SecureElementApplet secureElementApplet, PleaseWaitDialogFragment pleaseWaitDialogFragment, String password) {
 			_secureElementApplet = secureElementApplet;
 			_pleaseWaitDialogFragment = pleaseWaitDialogFragment;
@@ -681,7 +682,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 		@Override
 		protected IOException doInBackground(Void... params) {
 			try {
-				_secureElementApplet.login(_password);
+				_hashedPasswordBytes = _secureElementApplet.login(_password, null);
 			} catch (IOException e) {
 				return e;
 			}
@@ -695,7 +696,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				if (e == null) {
 					_logger.info("loginToCard: successful");
 					// logged in successfully
-					handleCardDetectedSuper(_secureElementApplet, true, true, _password);
+					handleCardDetectedSuper(_secureElementApplet, true, true, _hashedPasswordBytes, _password);
 				} else if (e instanceof IOException) {
 					// error while logging in (possibly wrong password)
 					_logger.info("loginToCard: failed to login");
@@ -709,6 +710,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 				}
 			} finally {
 				_password = null;
+				_hashedPasswordBytes = null;
 			}
 		}
 
@@ -848,7 +850,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			try {
 				_secureElementApplet.setCardPassword(_oldPassword, _newPassword);
 				if (_type == SetPasswordOnCardAsyncTaskType.DOING_RESTORE) {
-					_secureElementApplet.login(_newPassword);
+					_secureElementApplet.login(_newPassword, null);
 				}
 			} catch (IOException e) {
 				return e;
@@ -1129,7 +1131,7 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 	}
 
 	
-	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	protected void handleCardDetectedSuper(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, byte[] hashedPasswordBytes, String password) {
 		if (_pendingAddKeyLabel != null) {
 			// we had a request to add a key to the card, do that instead
 			_logger.info("handleCardDetectedSuper: generating key with label");
@@ -1164,10 +1166,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
 			return;
 		}
 
-		handleCardDetected(secureElementApplet, tapRequested, authenticated, password);
+		handleCardDetected(secureElementApplet, tapRequested, authenticated, hashedPasswordBytes);
 	}
 	
-	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, String password) {
+	protected void handleCardDetected(SecureElementApplet secureElementApplet, boolean tapRequested, boolean authenticated, byte[] hashedPasswordBytes) {
 		// default implementation does nothing, override to hear about card detection events
 	}
 

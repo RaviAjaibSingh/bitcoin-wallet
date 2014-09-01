@@ -29,12 +29,21 @@
         android:onClick="buttonMainSimulateCardRemovedClickHandler"
         android:text="Simulate Card Removed" />
  -->
+
+    <ImageView
+        android:id="@+id/heliosCardImage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/app_icon"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        />
  
     <TextView
         android:id="@+id/textViewMainWelcomeMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
+		android:layout_below="@id/heliosCardImage"
         android:layout_centerHorizontal="true"
         android:text="@string/main_welcome_message"
         android:textSize="@dimen/font_size_normal" />

@@ -298,6 +298,36 @@ public final class WalletAddressesFragment extends SherlockListFragment
 		if (adapter != null)
 			((BaseAdapter) adapter).notifyDataSetChanged();
 	}
+	
+	/* BEGIN CUSTOM CHANGE */
+	public void keysRemoved() {
+		// force a UI update if any keys are removed
+		// sort in the same way a sort happens when keys are added
+		if (adapter != null) {
+			final List<ECKey> keys = wallet.getKeys();
+
+			Collections.sort(keys, new Comparator<ECKey>()
+			{
+				@Override
+				public int compare(final ECKey lhs, final ECKey rhs)
+				{
+					final boolean lhsRotating = wallet.isKeyRotating(lhs);
+					final boolean rhsRotating = wallet.isKeyRotating(rhs);
+
+					if (lhsRotating != rhsRotating)
+						return lhsRotating ? 1 : -1;
+
+					if (lhs.getCreationTimeSeconds() != rhs.getCreationTimeSeconds())
+						return lhs.getCreationTimeSeconds() > rhs.getCreationTimeSeconds() ? 1 : -1;
+
+					return 0;
+				}
+			});
+
+			adapter.replace(keys);
+		}
+	}
+
 
 	private final Handler handler = new Handler();
 

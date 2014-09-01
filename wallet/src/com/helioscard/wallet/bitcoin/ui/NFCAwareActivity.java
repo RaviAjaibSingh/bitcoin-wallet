@@ -493,7 +493,10 @@ public abstract class NFCAwareActivity extends SherlockFragmentActivity {
                 startActivity(intentToRelaunchApplication);
                 this.finish();
                 return;
-            }            
+            } else {
+            	// ensure the wallet address list is updated, if the user is looking at it
+            	IntegrationConnector.ensureWalletAddressDisplayIsUpdated(this);
+            }
 		} catch (IOException e) {
 			showException(e);
 		}

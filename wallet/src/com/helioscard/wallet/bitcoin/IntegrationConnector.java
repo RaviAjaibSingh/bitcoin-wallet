@@ -1,7 +1,9 @@
 package com.helioscard.wallet.bitcoin;
 
+import de.schildbach.wallet.ui.AddressBookActivity;
 import de.schildbach.wallet.ui.WalletActivity;
 import de.schildbach.wallet.ui.WalletAddressFragment;
+import de.schildbach.wallet.ui.WalletAddressesFragment;
 import de.schildbach.wallet.AddressBookProvider;
 import de.schildbach.wallet.WalletApplication;
 
@@ -20,6 +22,8 @@ import com.helioscard.wallet.bitcoin.R;
 
 public class IntegrationConnector {
 	public static final Class<WalletActivity> WALLET_ACTIVITY_CLASS = de.schildbach.wallet.ui.WalletActivity.class;
+
+	
 	
 	public static Wallet getWallet(Activity activityContext) {
 		return ((WalletApplication)activityContext.getApplication()).getWallet();
@@ -29,6 +33,19 @@ public class IntegrationConnector {
 		WalletAddressFragment walletAddressFragment = (WalletAddressFragment)fragmentActivity.getSupportFragmentManager().findFragmentById(R.id.wallet_address_fragment);
 		if (walletAddressFragment != null) {
 			walletAddressFragment.updateView();
+		}
+		
+		
+		// update the address book if we're showing it.  If it's a two pane view, we find it as below
+		WalletAddressesFragment walletAddressesFragment = (WalletAddressesFragment)fragmentActivity.getSupportFragmentManager().findFragmentById(R.id.wallet_addresses_fragment);
+		if (walletAddressesFragment != null) {
+			walletAddressesFragment.keysRemoved();
+		}
+		
+		// if it's a one-pane view, we find it as below
+		walletAddressesFragment = (WalletAddressesFragment)fragmentActivity.getSupportFragmentManager().findFragmentByTag(AddressBookActivity.TAG_LEFT);
+		if (walletAddressesFragment != null) {
+			walletAddressesFragment.keysRemoved();
 		}
 	}
 	

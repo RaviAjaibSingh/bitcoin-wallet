@@ -58,7 +58,7 @@ public final class AddressBookActivity extends AbstractWalletActivity
 	private WalletAddressesFragment walletAddressesFragment;
 	private SendingAddressesFragment sendingAddressesFragment;
 
-	private static final String TAG_LEFT = "wallet_addresses";
+	public static final String TAG_LEFT = "wallet_addresses";
 	private static final String TAG_RIGHT = "sending_addresses";
 
 	@Override

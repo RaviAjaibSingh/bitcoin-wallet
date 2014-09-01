@@ -124,7 +124,7 @@ public class WalletGlobals {
                 
                 // delete all the keys in the cached wallet
 				for (ECKey keyToDeleteInCachedWallet : listFromCachedWallet) {
-					removeECKeyFromCachedWallet(activityContext, wallet, keyToDeleteInCachedWallet);
+					removeECKeyFromCachedWalletInternal(activityContext, wallet, keyToDeleteInCachedWallet);
 				}
 
 				cachedWalletWasCleared = true;
@@ -162,7 +162,7 @@ public class WalletGlobals {
 					serviceNeedsToClearAndRestart = true;
 					persistServiceNeedsToReplayBlockchain(activityContext);					
 					
-					removeECKeyFromCachedWallet(activityContext, wallet, keyFromCachedWallet);
+					removeECKeyFromCachedWalletInternal(activityContext, wallet, keyFromCachedWallet);
 				}
 			}
 		}
@@ -236,20 +236,17 @@ public class WalletGlobals {
 		ECKey ecKey = new ECKey(null, publicKeyBytes);
 		Wallet wallet = IntegrationConnector.getWallet(activityContext);
 		
-		// TODO: fix the race condition below where we are deleting a key from the wallet and restarting the block chain
-		// but the device could reset in between
+		// mark that we are about to make a change to the wallet and need to resync the service
+		persistServiceNeedsToReplayBlockchain(activityContext);
 		
 		// remove it from the cached wallet
-		removeECKeyFromCachedWallet(activityContext, wallet, ecKey);
-		
-		// remove all transactions - we have to restart the blockchain
-		wallet.clearTransactions(0);
-		
-		// race condition - restart the service
+		removeECKeyFromCachedWalletInternal(activityContext, wallet, ecKey);
+
+		// replay the block chain
 		IntegrationConnector.deleteBlockchainAndRestartService(activityContext);
 	}
 	
-	public static void removeECKeyFromCachedWallet(Context context, Wallet wallet, ECKey ecKeyToRemove) {
+	private static void removeECKeyFromCachedWalletInternal(Context context, Wallet wallet, ECKey ecKeyToRemove) {
 		wallet.removeKey(ecKeyToRemove);
 		
 		// now remove the address from the address book

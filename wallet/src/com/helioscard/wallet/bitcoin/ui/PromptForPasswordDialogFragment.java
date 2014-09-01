@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.InputFilter;
 import android.text.InputType;
+import android.text.method.PasswordTransformationMethod;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnKeyListener;
@@ -62,7 +63,9 @@ public class PromptForPasswordDialogFragment extends DialogFragment {
 		// Set an EditText view to get user input
 		final EditText input = new EditText(nfcAwareActivity);
 		input.setSingleLine(true);
-		input.setInputType(InputType.TYPE_TEXT_VARIATION_PASSWORD);
+		// Make it a password entry field
+		input.setTransformationMethod(PasswordTransformationMethod.getInstance());
+		input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
 		
 		/*
 		InputFilter[] filterArray = new InputFilter[1];
